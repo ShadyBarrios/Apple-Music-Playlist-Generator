@@ -15,10 +15,10 @@ class Song:
 
 # Playlist, a collection of songs
 class Playlist:
-    def __init__(self, filters):
-        self.songs = []
-        self.name = "playlist"
-        self.description = "description"
+    def __init__(self, songs, name, description, filters):
+        self.songs = songs
+        self.name = name
+        self.description = description
         self.filters = filters 
     
     def getSongs(self):
@@ -51,16 +51,36 @@ class BackendGenerator:
         print("TODO: MAKE REAL PARSING INSTEAD OF TEMP VARIABLES")
         self.spotifyLink = "link"
         
-        tempSongs = [Song("song1", "songLink", True, 50, ["Rock", "Indie"]),
-                     Song("song2", "songLink", False, 20, ["Rock", "Alternative"]),
-                     Song("song3", "songLink", False, 20, ["Rap", "Alternative"])]
+        tempSongs = [Song("Rock_Indie", "songLink", True, 50, ["Rock", "Indie"]),
+                     Song("Rock_Alt", "songLink", False, 20, ["Rock", "Alternative"]),
+                     Song("Rap_Alt", "songLink", False, 20, ["Rap", "Alternative"])]
         
         for i in tempSongs:
             self.songs.add(i)
-        
-        for i in self.songs:
             for j in i.genres:
                 self.genres.add(j)
+
+    def createPlaylist(self, playListName, filters):
+        possibleSongs = set()
+
+        # filter through the songs
+        print("TODO: before we can rlly make this good we need a clear list of filters that the spotify API can give us. Currently, filters are basically just genres to include")
+        for i in self.songs:
+            isIncluded = False 
+            for j in i.genres:
+                if j in filters:
+                    isIncluded = True 
+                    break
+            
+            if isIncluded:
+                possibleSongs.add(i)
+        
+        if len(possibleSongs) == 0:
+            print("WARNING: No songs fit filters for: " + playListName)
+            return 
+        
+        playlist = Playlist(possibleSongs, playListName, "desc", filters)
+        self.generatedPaylists.append(playlist)
 
     def getSongs(self):
         return self.songs
