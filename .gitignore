@@ -1,2 +1,5 @@
 # exe
 a.exe
+
+# temp folders
+src/__pycache__
