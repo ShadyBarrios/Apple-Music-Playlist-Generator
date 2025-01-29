@@ -7,7 +7,8 @@
     <script src = "https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
     <script>document.addEventListener("musickitloaded", async function() {
         MusicKit.configure({
-            developerToken: "",
+            developerToken: ""
+            ,
             app: {
                 name: "Custom Playlist Generator",
                 build: "1.0.0"
@@ -34,7 +35,7 @@
         <button onclick = "authenticate_user()">Authorize Apple Music</button>
         <p id = "status"></p>
 
-        <button onclick = "get_user_top_songs()">Get Top Songs</button>
-        <p id = "Top Songs"></p>
+        <button onclick = "get_user_playlists()">Get 10 Playlists</button>
+        <p id = "playlists"></p>
     </body>
 </html>
