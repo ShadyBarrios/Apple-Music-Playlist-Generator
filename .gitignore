@@ -3,3 +3,17 @@ a.exe
 
 # temp folders
 src/__pycache__
+node_modules/
+
+# venv
+virtual/
+
+# environment variables
+.env
+
+# python
+src/token_generator.py
+src/access.py
+
+# js
+src/login.js
