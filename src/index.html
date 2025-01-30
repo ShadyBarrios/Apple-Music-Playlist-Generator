@@ -7,8 +7,7 @@
     <script src = "https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
     <script>document.addEventListener("musickitloaded", async function() {
         MusicKit.configure({
-            developerToken: ""
-            ,
+            developerToken: "",
             app: {
                 name: "Custom Playlist Generator",
                 build: "1.0.0"
@@ -22,7 +21,7 @@
             const music = MusicKit.getInstance();
             const userToken = await music.authorize();
             console.log("Music User Token: ", userToken);
-            document.getElementById("status").innerText = "Successfully Authorized User";
+            document.getElementById("status").innerText = userToken;
         }
         catch(error){
             console.error("Error authorizing user: ", error);
@@ -35,7 +34,17 @@
         <button onclick = "authenticate_user()">Authorize Apple Music</button>
         <p id = "status"></p>
 
-        <button onclick = "get_user_playlists()">Get 10 Playlists</button>
+        <button onclick = "display_user_playlists()">Get 10 Playlists</button>
         <p id = "playlists"></p>
+
+        <button onclick = "display_user_recently_played()">Get 10 Most Recently Played</button>
+        <p id = "recently_played"></p>
+
+        <!--<button onclick = "get_genre_id()">Get recommendation based on Genre</button>
+        <input id = "input_genre" type="text" placeholder="Enter text here">
+        <p id = "genre_recommendation"></p>-->
+
+        <button onclick = "display_genre_dictionary()">View Genre Dictionary</button>
+        <p id = "genre_dictionary"></p>
     </body>
 </html>
