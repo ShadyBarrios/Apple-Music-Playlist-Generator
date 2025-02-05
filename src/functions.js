@@ -1,13 +1,12 @@
-developerToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw"
-userToken = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ=="
-let genreDictionary = {}
-
-function get_headers(){
-    return {
-        "Authorization": 'Bearer ' + developerToken,
-        "Music-User-Token": userToken
-    }
-}
+/*
+///////////////////////////////////////////
+// GLOBAL VARIABLES AND HELPER FUNCTIONS //
+///////////////////////////////////////////
+*/
+const developerToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw";
+const userToken = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
+let genreDictionary = {};
+let subgenreDictionary = {};
 
 async function add_to_genre_dictionary(genres){
     genres.forEach(genre => {
@@ -15,6 +14,24 @@ async function add_to_genre_dictionary(genres){
     })
 }
 
+async function add_to_subgenre_dictionary(subgenres){
+    subgenres.forEach(subgenre => {
+        subgenreDictionary[subgenre] = 1;
+    })
+}
+
+// reduces bloat
+function get_headers(){
+    return {
+        "Authorization": 'Bearer ' + developerToken,
+        "Music-User-Token": userToken
+    }
+}
+/*
+////////////////////////////////////////////////
+// FUNCTIONS THAT COMMUNICATE WITH INDEX.HTML //
+////////////////////////////////////////////////
+*/
 async function display_user_playlists(){
     let playlists = await get_user_playlists();
     let output = "10 or less of your playlists: \n";
@@ -28,7 +45,7 @@ async function display_user_recently_played(){
     let songs = await get_user_recently_played();
     let output = "10 of your most recently played songs: \n";
     songs.data.forEach((song, index) => {
-        output += "\n" + (index + 1) + ". " + (song.attributes.name) + " by " + (song.attributes.artistName) + " | Genres: " + (song.attributes.genreNames);
+        output += "\n" + (index + 1) + ". " + (song.attributes.name) + " by " + (song.attributes.artistName) + (" |-|-| Genres + Subgenres: ") + (song.attributes.genreNames);
     });
     document.getElementById("recently_played").innerText = output;
 }
@@ -39,6 +56,14 @@ async function display_genre_dictionary(){
         output += "\n" + genre + " | " + genreDictionary[genre];
     }
     document.getElementById("genre_dictionary").innerText = output;
+}
+
+async function display_subgenre_dictionary(){
+    let output = "Subgenres in your recently played songs: \n";
+    for(const subgenre in subgenreDictionary){
+        output += "\n" + subgenre;
+    }
+    document.getElementById("subgenre_dictionary").innerText = output;
 }
 
 async function display_genre_id(){
@@ -60,9 +85,14 @@ async function display_genre_song_recommendation(){
     output = "Recommended " + genre + " song: " + song_name + " by " + song_artist + " | Genres: " + song_genres;
     document.getElementById("genre_recommendation").innerText = output;
 }
-
+/*
+///////////////////////////////////////////////////////////////
+// RETRIEVAL FUNCTIONS THAT COMMUNICATE WITH APPLE MUSIC API //
+///////////////////////////////////////////////////////////////
+*/
+// Returns object containing user's playlist stored in data field
 async function get_user_playlists(){
-    const url = "https://api.music.apple.com/v1/me/library/playlists?limit=10";
+    const url = "https://api.music.apple.com/v1/me/library/playlists";
     console.log("Retrieving playlists...")
     try{
         const response = await fetch(url, {
@@ -82,43 +112,62 @@ async function get_user_playlists(){
     }
 }
 
+// Returns object containing user's recently played songs 
 async function get_user_recently_played(){
     const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=10";
     console.log("Retrieving recently played songs...")
     try{
         const response = await fetch(url, {
-            headers:{
-                "Authorization": 'Bearer ' + developerToken,
-                "Music-User-Token": userToken
-            }
+            headers: get_headers()
         });
 
         if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
         const data = await response.json();
         for(let i = 0; i < data.data.length; i++){
-            let genres = await get_genres(data.data[i].id, data.data[i].attributes.name);
+            let genres = await get_genres(data.data[i].id);
             add_to_genre_dictionary(genres);
+            add_to_subgenre_dictionary(data.data[i].attributes.genreNames);
         }
+
         return data;
     } catch(error){
         console.error("Error fetching top songs: ", error);
     }
 }
 
-async function get_genres(song_id, song_name){
+async function get_genres(song_id){
     let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
-    console.log("Retrieving genres for: " + song_name);
+    console.log("Retrieving genres for: " + song_id);
     try{
         const response = await fetch(url, {
             headers: get_headers()
         });
+
         if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
         const data = await response.json();
         return data.data[0].relationships.genres.data;
     }catch(error){
         console.error("Error fetching genres: ", error);
+    }
+}
+
+async function get_subgenres(song_id){
+    let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
+    console.log("Retrieving subgenres for: " + song_id);
+    try{
+        const response = await fetch(url, {
+            headers: get_headers()
+        });
+
+        if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
+
+        const data = await response.json();
+        return data.data[0].attributes.genreNames;
+    }
+    catch(error){
+        console.error("Error fetching subgenres: ", error);
     }
 }
 
@@ -134,17 +183,16 @@ async function get_genre_id(genre_name){
 
 async function get_genre_song_recommendation(genre_name){
     const id = genreDictionary[genre_name];
-    if(id == undefined){
-        console.error("Genre input is not valid.")
-        return undefined;
-    }
-    
     let url = "https://api.music.apple.com/v1/catalog/us/charts?genre=" + id + "&types=songs&limit=25";
     console.log("Retrieving recommendations from " + genre_name);
+    
     try{
+        if(id == undefined) throw new Error("Genre input is not valid.");
+
         const response = await fetch(url, {
             headers: get_headers()
         });
+
         if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
         const data = await response.json();
@@ -157,5 +205,5 @@ async function get_genre_song_recommendation(genre_name){
     }catch(error){
         console.error("Error fetching genres: ", error);
     }
-
 }
+

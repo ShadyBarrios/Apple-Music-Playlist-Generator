@@ -166,4 +166,4 @@ class BackendGenerator {
 
     backend.DEBUG_playlistPrint();
 
-  })();
+  });
