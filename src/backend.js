@@ -1,20 +1,3 @@
-// Song, the most basic of objects
-class Song {
-    constructor(name, spotifyLink, isLiked, recentPlayCount, genres) {
-        // check that we have good vars (note that isLiked is bool, so we use typeof)
-        if (!name || !spotifyLink || !(typeof isLiked) || !recentPlayCount || !genres) {
-            console.error("Song constructor var's are undefined");
-            return;
-        }
-
-        this.name = name;
-        this.spotifyLink = spotifyLink;
-        this.isLiked = isLiked;
-        this.recentPlayCount = recentPlayCount;
-        this.genres = genres;
-      }
-}
-
 // Playlist, a collection of songs
 class Playlist {
     constructor(songs, name, description, filters) {

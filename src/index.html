@@ -34,7 +34,7 @@
         <button onclick = "authenticate_user()">Authorize Apple Music</button>
         <p id = "status"></p>
 
-        <button onclick = "display_user_playlists()">Get 10 Playlists</button>
+        <button onclick = "display_user_playlists()">Get Playlists</button>
         <p id = "playlists"></p>
 
         <button onclick = "display_user_recently_played()">Get 10 Most Recently Played</button>
@@ -47,7 +47,20 @@
         <p id = "subgenre_dictionary"></p>
 
         <button onclick = "display_genre_song_recommendation()">Get recommendation based on Genre from Genre Dictionary</button>
-        <input id = "input_genre" type="text" placeholder="Enter text here">
+        <input id = "input_genre" type="text" placeholder="Genre Name">
         <p id = "genre_recommendation"></p>
+
+        <button onclick = "display_library_song_count()">Get User Library Song count</button>
+        <p id = "library_songs_count"></p>
+
+        <button onclick = "display_playlist_song_count()">Get User Playlist Song count</button>
+        <input id = "input_playlist_id" type="text" placeholder="Playlist ID">
+        <p id = "playlist_songs_count"></p>
+
+        <button onclick = "display_all_playlists_song_count()">Get All User Playlists Song count</button>
+        <p id = "all_playlists_songs_count"></p>
+
+        <button onclick = "display_user_all_songs_count()">Get User (Library + Playlist) Songs count</button>
+        <p id = "all_songs_count"></p>
     </body>
 </html>
