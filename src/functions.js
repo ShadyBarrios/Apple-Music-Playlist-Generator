@@ -75,6 +75,19 @@ async function add_to_subgenre_dictionary(subgenres){
 }
 
 /**
+ * Partitioner splits songIDs into chunks of 300 for Apple API requests
+ * @param {string[]} songIDs 
+ * @returns {string[][]} array of songID partitions
+ */
+async function songIDs_partitioner(songIDs){
+    const songIDsPartitions = [];
+    while (songIDs.length) {
+        songIDsPartitions.push(songIDs.splice(0, 300)); 
+    }
+    return songIDsPartitions;
+}
+
+/**
  * Bloat-reducing helper function for fetch requests
  * @returns headers for fetch requests
  */
@@ -193,6 +206,22 @@ async function display_playlist_song_count(){
 }
 
 /**
+ * Displays user's songs in a playlist given playlist id
+ */
+async function display_playlist_songs(){
+    const playlist_id = document.getElementById("input_playlist_id_2").value;
+    const songIDs = await get_all_user_playlist_song_IDs(playlist_id);
+    const songs = await get_user_songs(songIDs);
+    let output = "";
+
+    for(let i = 0; i < songs.length; i++){
+        output += (i + 1) + ". Catalog ID: " + songs[i].id + " | Genres: " + songs[i].genres + " | Subgenres: " + songs[i].subgenres + "\n";
+    }
+
+    document.getElementById("playlist_songs_IDs").innerText = output;
+}
+
+/**
  * Displays user's song count from all playlists
  */
 async function display_all_playlists_song_count(){
@@ -212,9 +241,24 @@ async function display_library_song_count(){
 /**
  * Displays user's song count in (library + playlists), no duplicates
  */
-async function display_user_all_songs_count(){
+async function display_all_songs_count(){
     const songs = await get_all_user_song_IDs();
     document.getElementById("all_songs_count").innerText = "Song count: " + songs.length;
+}
+
+/**
+ * Displays user's songs in (library + playlists), no duplicates
+ */
+async function display_all_songs(){
+    const songIDs = await get_all_user_song_IDs();
+    const songs = await get_user_songs(songIDs);
+    let output = "";
+
+    for(let i = 0; i < songs.length; i++){
+        output += (i + 1) + ". Catalog ID: " + songs[i].id + " | Genres: " + songs[i].genres + " | Subgenres: " + songs[i].subgenres + "\n";
+    }
+
+    document.getElementById("all_songs").innerText = output;
 }
 
 /*
@@ -369,17 +413,57 @@ async function get_genre_song_recommendation(genre_name){
 
 /**
  * Returns array containing all songs found in user's library and playlists.
- * @returns {Promise<Songs[]>} array of Songs objects
+ * @returns {Promise<Song[]>} array of Song objects
  */
 async function get_all_user_songs(){
-    // const songIDs = await get_user_all_song_IDs();
-    // let songs = [];
-    // for(let i = 0; i < songIDs.length; i++){
-    //     let song = await get_song(songIDs[i]);
-    //     songs.push(song);
-    // }
-    // return songs;
+    const songIDs = await get_all_user_song_IDs();
+    const songs = await get_user_songs(songIDs);
+    return songs;
 }
+
+/**
+ * Returns array containing all songs given song catalog ID array
+ * @param {string[]} songIDs - array of song catalog IDs
+ * @returns {Promise<Song[]>} array of Song objects
+ */
+ async function get_user_songs(songIDs){
+    let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
+    const partitions = await songIDs_partitioner(songIDs);
+    let songs = [];
+    console.log("Retrieving user songs...");
+    try{
+        for(let i = 0; i < partitions.length; i++){
+            const ids = partitions[i].join(",");
+
+            const response = await fetch(url + ids, {
+                headers: get_headers()
+            });
+
+            if(!response.ok){
+                if (response.status === 504) {
+                    console.error("Gateway Timeout (504) - Retrying...");
+                    // Retry after a delay (see below)
+                    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                    i--;
+                    continue; // Retry
+                }else {
+                    throw new Error("HTTP Error! Status: " + response.status);
+                }
+            }
+
+            const data = await response.json();
+
+            for(let i = 0; i < data.data.length; i++){
+                await add_to_genre_dictionary(data.data[i].relationships.genres.data);
+                await add_to_subgenre_dictionary(data.data[i].attributes.genreNames);
+                songs.push(new Song(data.data[i].id, data.data[i].relationships.genres.data.map(genre => genre.id), data.data[i].attributes.genreNames));
+            }
+        }
+        return [...new Set(songs)];
+    }catch(error){
+        console.error("Error fetching songs: ", error);
+    }
+ }
 
 /** 
  * Returns array containing all songs IDs found in user's library and playlists.
@@ -402,13 +486,13 @@ async function get_all_user_song_IDs(){
  */
 async function get_all_user_library_song_IDs(){
     const url = "https://api.music.apple.com/v1/me/library/songs?limit=100";
-    console.log("Retrieving user library songs...");
+    console.log("Retrieving user library songs' IDs...");
     accumulatedSongIDs = [];
     try{
         await get_user_library_song_IDs(url, accumulatedSongIDs);
         return [...new Set(accumulatedSongIDs)];
     }catch(error){
-        console.error("Error fetching user library songs: ", error);
+        console.error("Error fetching user library songs' IDs: ", error);
         return [];
     }
 }
@@ -451,7 +535,7 @@ async function get_user_library_song_IDs(url, accumulatedSongIDs){
             }
         }
     }catch(error){
-        console.error("Error fetching user library songs: ", error);
+        console.error("Error fetching user library songs' IDs: ", error);
         return [];
     }
 }
@@ -477,13 +561,13 @@ async function get_all_user_playlists_song_IDs(){
  */
 async function get_all_user_playlist_IDs(){
     let url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
-    console.log("Retrieving user library playlists...");
+    console.log("Retrieving user library playlist IDs...");
     accumulatedPlaylistIDs = [];
     try{
         await get_user_playlist_IDs(url, accumulatedPlaylistIDs);
         return accumulatedPlaylistIDs;
     }catch(error){
-        console.error("Error fetching user library playlists: ", error);
+        console.error("Error fetching user library playlist IDs: ", error);
         return [];
     }
 }
@@ -526,7 +610,7 @@ async function get_user_playlist_IDs(url, accumulatedPlaylistIDs){
             }
         }
     }catch(error){
-        console.error("Error fetching user library songs: ", error);
+        console.error("Error fetching user library playlist IDs: ", error);
         return [];
     }
 }
@@ -540,13 +624,13 @@ async function get_all_user_playlist_song_IDs(playlist_id){
     const url = "https://api.music.apple.com/v1/me/library/playlists/" + playlist_id + "/tracks?limit=100&offset=";
     let offset = 0;
     accumulatedSongIDs = [];
-    console.log("Retrieving user playlist songs...");
+    console.log("Retrieving user playlist songs' IDs...");
 
     try{
         await get_user_playlist_song_IDs(url, offset, accumulatedSongIDs);
         return [...new Set(accumulatedSongIDs)];
     }catch(error){
-        console.error("Error fetching user library playlist songs: ", error);
+        console.error("Error fetching user playlist songs' IDs: ", error);
         return [];
     }
 }
@@ -590,7 +674,7 @@ async function get_user_playlist_song_IDs(url, offset, accumulatedSongIDs){
             }
         }
     }catch(error){  
-        console.error("Error fetching user library playlist songs: ", error);
+        console.error("Error fetching user playlist songs' IDs: ", error);
         return [];
     }
 }
