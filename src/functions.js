@@ -100,7 +100,7 @@ function get_headers(){
 /** 
  * Lighweight class only containing vital Song information
  * */
-class Song {
+export class Song {
     /**
      * @param {string} id - Catalog ID
      * @param {string[]} genres - array of genre IDs
@@ -415,14 +415,12 @@ async function get_genre_song_recommendation(genre_name){
  * Returns array containing all songs found in user's library and playlists.
  * @returns {Promise<Song[]>} array of Song objects
  */
-async function get_all_user_songs(userLink){
+export async function get_all_user_songs(userLink){
     userToken = userLink; // update user link
 
     const songIDs = await get_all_user_song_IDs();
     const songs = await get_user_songs(songIDs);
     return songs;
-
-
 }
 
 /**
@@ -491,7 +489,7 @@ async function get_all_user_song_IDs(){
 async function get_all_user_library_song_IDs(){
     const url = "https://api.music.apple.com/v1/me/library/songs?limit=100";
     console.log("Retrieving user library songs' IDs...");
-    accumulatedSongIDs = [];
+    let accumulatedSongIDs = [];
     try{
         await get_user_library_song_IDs(url, accumulatedSongIDs);
         return [...new Set(accumulatedSongIDs)];
@@ -566,7 +564,7 @@ async function get_all_user_playlists_song_IDs(){
 async function get_all_user_playlist_IDs(){
     let url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
     console.log("Retrieving user library playlist IDs...");
-    accumulatedPlaylistIDs = [];
+    let accumulatedPlaylistIDs = [];
     try{
         await get_user_playlist_IDs(url, accumulatedPlaylistIDs);
         return accumulatedPlaylistIDs;
@@ -627,7 +625,7 @@ async function get_user_playlist_IDs(url, accumulatedPlaylistIDs){
 async function get_all_user_playlist_song_IDs(playlist_id){
     const url = "https://api.music.apple.com/v1/me/library/playlists/" + playlist_id + "/tracks?limit=100&offset=";
     let offset = 0;
-    accumulatedSongIDs = [];
+    let accumulatedSongIDs = [];
     console.log("Retrieving user playlist songs' IDs...");
 
     try{

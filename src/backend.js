@@ -1,5 +1,6 @@
 // get functions from function.js
-// import { get_all_user_songs } from "./functions.js"
+import { get_all_user_songs } from "./functions.js"
+import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
 class Playlist {
@@ -19,7 +20,7 @@ class Playlist {
 
 // BackendGenerator, generates playlists, has all information on user
 class BackendGenerator {
-    constructor(userLink) {
+    constructor(userLink, songs) {
         // check that we have good vars
         if (!userLink) {
             console.error("BackendGenerator constructor var's are undefined");
@@ -29,33 +30,15 @@ class BackendGenerator {
         this.userLink = userLink;
         this.generatedPlaylists = [];
         this.genres = new Set([]);
-        this.songs = new Set([]);
-
-        console.log("testing songs:");
-        const songs = get_all_user_songs(userLink);
-        for (let i = 0; i < 10; i++) {
-            console.log(songs[i].id);
-        }
-
-        // do user parsing here to get songs and genres and append them to arrays
-        // when creating a new song, include song information in constructor call
+        this.songs = songs;
     }
-    
-    TEMPsetVariables() {
-        console.log("TODO: MAKE REAL PARSING INSTEAD OF TEMP VARIABLES");
-        // this.userLink = "link";
-        
-        let tempSongs = [new Song("Rock_Indie", "songLink", true, 50, ["Rock", "Indie"]),
-                     new Song("Rock_Alt", "songLink", false, 20, ["Rock", "Alternative"]),
-                     new Song("Rap_Alt", "songLink", false, 20, ["Rap", "Alternative"])];
-        
-        for (let i = 0; i < tempSongs.length; i++) {
-            this.songs.add(tempSongs[i]);
 
-            for (let j = 0; j < tempSongs[i].genres.length; j++) {
-                this.genres.add(tempSongs[i].genres[j]);
-            }
-        } 
+    static async create(userLink) {
+        // get songs
+        const songs = await get_all_user_songs(userLink);
+
+        // return object
+        return new BackendGenerator(userLink, songs); 
     }
 
     createPlaylist(playListName, filters) {
@@ -96,27 +79,15 @@ class BackendGenerator {
     }
 
     DEBUG_backendPrint() {
-        // // genres
-        // process.stdout.write("\nGenres: ");
-        // for (let i of this.genres) {
-        //     process.stdout.write(i + ", ");
-        // }
-        // console.log();
+        console.log("testing from within");
 
-        // // songs
-        // for (let i of this.songs) {
-        //     process.stdout.write("Song: " + i.name + ", with: ");
-
-        //     for (let j of i.genres) {
-        //         process.stdout.write(j + ", ");
-        //     }
-        //     console.log();
-        // }
-        // console.log();
-        // for (let i = 0; i < 10; i++) {
-        //     console.log("test: " + this.songs[i].id);
-        // }
-
+        for (let i = 0; i < 20; i++) {
+            process.stdout.write(i + ": " + this.songs[i].id + ";\t");
+            for (let j = 0; j < this.songs[i].genres.length; j++) {
+                process.stdout.write(this.songs[i].genres[j] + ", ");
+            }
+            console.log();
+        }
     }
 
     DEBUG_playlistPrint() {
@@ -148,23 +119,9 @@ class BackendGenerator {
 }
 
 // main
-(function() {
-    console.log("testBack");
+(async () => {
     let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
-    let backend = new BackendGenerator(userLink);
-    // backend.TEMPsetVariables();
-
-    backend.DEBUG_backendPrint();
-
-    // // make a playlist
-    // let testFilters1 = ["Rock"];
-    // let testFilters2 = ["Alternative"];
-    // let testFilters3 = ["FakeGenre"];
     
-    // backend.createPlaylist("rock playlist", testFilters1);
-    // backend.createPlaylist("alt playlist", testFilters2);
-    // backend.createPlaylist("fake playlist", testFilters3);
-
-    // backend.DEBUG_playlistPrint();
-
-  })();
+    let backend = BackendGenerator.create(userLink);
+    (await backend).DEBUG_backendPrint();
+})();
