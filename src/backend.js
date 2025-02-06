@@ -1,5 +1,5 @@
 // get functions from function.js
-import { get_all_user_songs } from "./functions.js"
+import { SongDataFetchers } from "./functions.js"
 import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
@@ -35,7 +35,7 @@ class BackendGenerator {
 
     static async create(userLink) {
         // get songs
-        const songs = await get_all_user_songs(userLink);
+        const songs = await SongDataFetchers.get_all_user_songs(userLink);
 
         // return object
         return new BackendGenerator(userLink, songs); 
