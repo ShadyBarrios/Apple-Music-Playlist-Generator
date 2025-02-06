@@ -12,7 +12,7 @@
  * @property {string} attributes.name - Genre name
  */
 
-/**
+/**f
  * Songs object from Apple API
  * @typedef {Object} Songs
  * @property {string} id - Song ID
@@ -42,7 +42,7 @@
  */
 
 const developerToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw";
-const userToken = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
+let userToken = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
 
 /**
  * [name] = id if exists
@@ -415,10 +415,14 @@ async function get_genre_song_recommendation(genre_name){
  * Returns array containing all songs found in user's library and playlists.
  * @returns {Promise<Song[]>} array of Song objects
  */
-async function get_all_user_songs(){
+async function get_all_user_songs(userLink){
+    userToken = userLink; // update user link
+
     const songIDs = await get_all_user_song_IDs();
     const songs = await get_user_songs(songIDs);
     return songs;
+
+
 }
 
 /**
@@ -426,7 +430,7 @@ async function get_all_user_songs(){
  * @param {string[]} songIDs - array of song catalog IDs
  * @returns {Promise<Song[]>} array of Song objects
  */
- async function get_user_songs(songIDs){
+async function get_user_songs(songIDs){
     let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
     const partitions = await songIDs_partitioner(songIDs);
     let songs = [];
@@ -463,7 +467,7 @@ async function get_all_user_songs(){
     }catch(error){
         console.error("Error fetching songs: ", error);
     }
- }
+}
 
 /** 
  * Returns array containing all songs IDs found in user's library and playlists.
