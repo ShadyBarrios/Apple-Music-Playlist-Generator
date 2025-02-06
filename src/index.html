@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>  
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Apple Music API Login</title>
+    <script src = "https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <script>document.addEventListener("musickitloaded", async function() {
+        MusicKit.configure({
+            developerToken: "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw",
+            app: {
+                name: "Custom Playlist Generator",
+                build: "1.0.0"
+            }
+        });
+        console.log("MusicKit JS Loaded");
+    });
+    
+    async function authenticate_user(){
+        try{
+            const music = MusicKit.getInstance();
+            const userToken = await music.authorize();
+            console.log("Music User Token: ", userToken);
+            document.getElementById("status").innerText = userToken;
+        }
+        catch(error){
+            console.error("Error authorizing user: ", error);
+        }
+    }</script>
+    <script defer src = "functions.js"></script>
+    </head>
+
+    <body>
+        <button onclick = "authenticate_user()">Authorize Apple Music</button>
+        <p id = "status"></p>
+
+        <button onclick = "display_user_playlists()">Get Playlists</button>
+        <p id = "playlists"></p>
+
+        <button onclick = "display_user_recently_played()">Get 10 Most Recently Played</button>
+        <p id = "recently_played"></p>
+
+        <button onclick = "display_genre_dictionary()">View Genre Dictionary</button>
+        <p id = "genre_dictionary"></p>
+
+        <button onclick = "display_subgenre_dictionary()">View Subgenre Dictionary</button>
+        <p id = "subgenre_dictionary"></p>
+
+        <button onclick = "display_genre_song_recommendation()">Get recommendation based on Genre from Genre Dictionary</button>
+        <input id = "input_genre" type="text" placeholder="Genre Name">
+        <p id = "genre_recommendation"></p>
+
+        <button onclick = "display_library_song_count()">Get User Library Song count</button>
+        <p id = "library_songs_count"></p>
+
+        <button onclick = "display_playlist_song_count()">Get User Playlist Song count</button>
+        <input id = "input_playlist_id" type="text" placeholder="Playlist ID">
+        <p id = "playlist_songs_count"></p>
+
+        <button onclick = "display_all_playlists_song_count()">Get All User Playlists Song count</button>
+        <p id = "all_playlists_songs_count"></p>
+
+        <button onclick = "display_all_songs_count()">Get User (Library + Playlist) Songs count</button>
+        <p id = "all_songs_count"></p>
+
+        <button onclick = "display_playlist_songs()">Get User Playlist Songs</button>
+        <input id = "input_playlist_id_2" type="text" placeholder="Playlist ID">
+        <p id = "playlist_songs_IDs"></p>
+
+        <button onclick = "display_all_songs()">Get User (Library + Playlist) songs</button>
+        <p id = "all_songs"></p>
+    </body>
+</html>
