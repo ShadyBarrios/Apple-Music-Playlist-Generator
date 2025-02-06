@@ -87,6 +87,13 @@ let subgenreDictionary = {};
  */
 export class GlobalFunctions{
     /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+    
+    /**
      * Adds genres to the genre dictionary if not already included (dictionary[name] = id)
      * @param {Genres[]} genres - array of Genres objects
      */
@@ -156,6 +163,13 @@ export class GlobalFunctions{
  * Functions used to communicate with index.html
  */
 export class Displayer{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
     /**
      * Displays user's playlists in the playlists <p>
      */
@@ -304,6 +318,13 @@ export class Displayer{
  * Functions to fetch users' song data
  */
 export class SongDataFetchers{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
     /**
      * Returns array of user's 10 most recently played songs.
      * Updates Genre and Subgenre dictionaries.
@@ -547,6 +568,13 @@ export class SongDataFetchers{
  */
 export class PlaylistDataFetchers{
     /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
+    /**
      * Returns array of user's playlists - maximum size is 100 playlists
      * @returns {Promise<LibraryPlaylists[]>} array of LibraryPlaylists objects
      */
@@ -633,9 +661,16 @@ export class PlaylistDataFetchers{
 }
 
 /**
- * Functions to fetch users' playlist data
+ * Functions to fetch users' genre data
  */
 export class GenreDataFetchers{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
     /**
      * Returns array of genres for a song
      * @param {string} song_id - Catalog ID of song
@@ -682,7 +717,18 @@ export class GenreDataFetchers{
     }
 }
 
+/**
+ * Functions to recommend songs
+ */
 export class Recommender{
+
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
     /**
      * Returns a random song recommendation given a genre name from Apple Music charts
      * @param {string} genre_name - looked up in genreDictionary
