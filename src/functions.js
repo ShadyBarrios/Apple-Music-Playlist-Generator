@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Create .env in root folder with the following:
 const isInSrc = process.cwd().endsWith('\\src');
 const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
@@ -274,7 +275,7 @@ export class Displayer{
      */
     static async display_playlist_song_count(){
         const playlist_id = document.getElementById("input_playlist_id").value;
-        const songs = await SongDataFetchers.get_all_user_playlist_song_IDs(playlist_id);
+        const songs = await SongDataFetchers.get_user_playlist_song_IDs(playlist_id);
         document.getElementById("playlist_songs_count").innerText = "Song count: " + songs.length;
     }
 
@@ -283,7 +284,7 @@ export class Displayer{
      */
     static async display_playlist_songs(){
         const playlist_id = document.getElementById("input_playlist_id_2").value;
-        const songIDs = await SongDataFetchers.get_all_user_playlist_song_IDs(playlist_id);
+        const songIDs = await SongDataFetchers.get_user_playlist_song_IDs(playlist_id);
         const songs = await SongDataFetchers.get_user_songs(songIDs);
         let output = "";
 
@@ -298,7 +299,7 @@ export class Displayer{
      * Displays user's song count from all playlists
      */
     static async display_all_playlists_song_count(){
-        const songs = await SongDataFetchers.get_all_user_playlists_song_IDs();
+        const songs = await SongDataFetchers.get_all_user_playlist_song_IDs();
         document.getElementById("all_playlists_songs_count").innerText = "Song count: " + songs.length;
     }
 
@@ -355,7 +356,7 @@ export class SongDataFetchers{
     /**
      * Returns array of user's 10 most recently played songs.
      * Updates Genre and Subgenre dictionaries.
-     * @returns {Promise<Songs>} array of Songs objects
+     * @returns {Promise<Songs[]>} array of Songs objects
      */ 
     static async get_user_recently_played(){
         const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=10";
@@ -382,7 +383,7 @@ export class SongDataFetchers{
     /**
      * Returns array containing all songs found in user's library and playlists.
      * Expected runtime: 1:16 m:ss
-     * @returns {Promise<Song[]>} array of Song objects
+     * @returns {Promise<Set<Song>>} array of Song objects
      */
     static async get_all_user_songs(userLink){
         userToken = userLink; // update user link
@@ -394,7 +395,7 @@ export class SongDataFetchers{
     /**
      * Returns array containing all songs given song catalog ID array
      * @param {string[]} songIDs - array of song catalog IDs
-     * @returns {Promise<Song[]>} array of Song objects
+     * @returns {Promise<Set<Song>>} set of Song objects
      */
     static async get_user_songs(songIDs){
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
@@ -434,7 +435,7 @@ export class SongDataFetchers{
 
     /** 
      * Returns array containing all songs IDs found in user's library and playlists.
-     * @returns {Promise<string[]>} array of song catalog IDs
+     * @returns {Promise<Set<string>>} set of song catalog IDs
      */
     static async get_all_user_song_IDs(){
         // get all songs from the library section
@@ -527,10 +528,10 @@ export class PlaylistDataFetchers{
     static async get_all_user_playlist_IDs(){
         let url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
         console.log("Retrieving user library playlist IDs...");
-        let accumulatedPlaylistIDs = [];
+        let accumulated_playlist_IDs = [];
         try{
-            await PlaylistDataFetchers.get_user_playlist_IDs(url, accumulatedPlaylistIDs);
-            return accumulatedPlaylistIDs;
+            accumulated_playlist_IDs = await PlaylistDataFetchers.get_user_playlist_IDs(url, accumulated_playlist_IDs);
+            return accumulated_playlist_IDs;
         }catch(error){
             console.error("Error fetching user library playlist IDs: ", error);
             return [];
@@ -540,10 +541,10 @@ export class PlaylistDataFetchers{
     /**
      * Returns array of all playlist IDs in user's library page
      * @param {string} url - Apple API URL (used for pagination)
-     * @param {string[]} accumulatedPlaylistIDs - array of playlist IDs
-     * @returns {Promise<string[]>} accumulatedPlaylistIDs 
+     * @param {string[]} accumulated_playlist_IDs - array of playlist IDs
+     * @returns {Promise<Set<string>>} accumulated_playlist_IDs 
      */
-    static async get_user_playlist_IDs(url, accumulatedPlaylistIDs){
+    static async get_user_playlist_IDs(url, accumulated_playlist_IDs){
         try{
             while(true){
                 const response = await GlobalFunctions.fetchData(url);
@@ -562,14 +563,14 @@ export class PlaylistDataFetchers{
                 const data = await response.json();
 
                 /** @type {LibraryPlaylists[]} */ 
-                data.data.forEach(playlist=>accumulatedPlaylistIDs.push(playlist.id));
+                data.data.forEach(playlist=>accumulated_playlist_IDs.push(playlist.id));
             
                 if(data.next){
                     url = "https://api.music.apple.com" + data.next + "&limit=100";
                     continue;
                 }
                 else{
-                    return [...new Set(accumulatedPlaylistIDs)];
+                    return [...new Set(accumulated_playlist_IDs)];
                 }
             }
         }catch(error){
@@ -678,6 +679,7 @@ export class Recommender{
  * Functions to fetch data in parallel
  */
 export class ParallelDataFetchers{
+    
     /**
      * Parallelizes function passed as argument
      * @param {function} func - function to be parallelized
@@ -686,6 +688,7 @@ export class ParallelDataFetchers{
      * @param {number} listSize - size of list to be fetched/processed
      * @param {string} url - URL used in API fetch requesets
      * @param {number} offset - offset useed in fetch request URLs
+     * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
      */
     static async parallelize(func, collection, url, offset, thread_count, list_size){
         let result = [];
@@ -739,7 +742,7 @@ export class ParallelDataFetchers{
      * @param {string} collection - NOT USED, describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {string} accumulated_song_ids - array of song catalog IDs
-     * @returns {[Promise<string[]>, number]} [accumulated_song_ids, playlist_size]
+     * @returns {Promise<Set<string>, string>} [accumulated_song_ids, playlist_size]
      */
     static async get_first_page_of(collection, url, accumulated_song_ids){
         try{
