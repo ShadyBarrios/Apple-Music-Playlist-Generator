@@ -1,5 +1,6 @@
 // get functions from function.js
-import { SongDataFetchers } from "./functions.js"
+import { ParallelDataFetchers, SongDataFetchers } from "./functions.js"
+import { PlaylistDataFetchers } from "./functions.js"
 import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
@@ -90,6 +91,14 @@ class BackendGenerator {
         }
     }
 
+    static async DEBUG_SongIDsFetchTest(){
+        console.time("Parallel");
+        let output = await SongDataFetchers.get_all_user_song_IDs();
+        console.timeEnd("Parallel");
+
+        console.log(output);
+    }
+
     DEBUG_playlistPrint() {
         // for (let playlist of this.generatedPlaylists) {
         //     console.log("Playlist: " + playlist.name);
@@ -122,6 +131,5 @@ class BackendGenerator {
 (async () => {
     let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
     
-    let backend = BackendGenerator.create(userLink);
-    (await backend).DEBUG_backendPrint();
+    await BackendGenerator.DEBUG_SongIDsFetchTest();
 })();

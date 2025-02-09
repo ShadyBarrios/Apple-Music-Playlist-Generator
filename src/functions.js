@@ -1,3 +1,13 @@
+// Pull tokens from .env
+import dotenv from 'dotenv';
+import path from 'path';
+
+const isInSrc = process.cwd().endsWith('\\src');
+const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');
+dotenv.config({ path: envPath });
+const developerToken = process.env.DEVELOPER_TOKEN;
+let userToken = process.env.USER_TOKEN;
+
 /*
 /////////////////////
 // IMPORTANT TYPES //
@@ -69,9 +79,6 @@ export class Song {
 ///////////////////////////////////////////
 */
 
-const developerToken = "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw";
-let userToken = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
-
 /**
  * [name] = id if exists
  */
@@ -142,7 +149,18 @@ export class GlobalFunctions{
     }
 
     /**
-     * Bloat-reducing helper function for fetch requests
+     * Bloat reducer; used to fetch data from Apple API
+     * @param {string} url 
+     * @returns fetch response
+     */
+    static async fetchData(url){
+        return await fetch(url, {
+            headers: GlobalFunctions.get_headers()
+        });
+    }
+
+    /**
+     * bloat reducer; used to fetch data from Apple API
      * @returns headers for fetch requests
      */
     static get_headers(){
@@ -150,6 +168,15 @@ export class GlobalFunctions{
             "Authorization": 'Bearer ' + developerToken,
             "Music-User-Token": userToken
         }
+    }
+
+    /**
+     * Rounds up a number to the nearest integer (does not round if already a whole number)
+     * @param {number} number 
+     * @returns {number} rounded number
+     */
+    static roundUp(number){   
+        return number + ((1 - Number(number % 1 == 0)) - number % 1);
     }
 }
 
@@ -334,13 +361,12 @@ export class SongDataFetchers{
         const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=10";
         console.log("Retrieving recently played songs...")
         try{
-            const response = await fetch(url, {
-                headers: GlobalFunctions.get_headers()
-            });
+            const response = await GlobalFunctions.fetchData(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
             const data = await response.json();
+            
             for(let i = 0; i < data.data.length; i++){
                 let genres = await GenreDataFetchers.get_genres(data.data[i].id);
                 GlobalFunctions.add_to_genre_dictionary(genres);
@@ -355,11 +381,11 @@ export class SongDataFetchers{
 
     /**
      * Returns array containing all songs found in user's library and playlists.
+     * Expected runtime: 1:16 m:ss
      * @returns {Promise<Song[]>} array of Song objects
      */
     static async get_all_user_songs(userLink){
         userToken = userLink; // update user link
-
         const songIDs = await SongDataFetchers.get_all_user_song_IDs();
         const songs = await SongDataFetchers.get_user_songs(songIDs);
         return songs;
@@ -374,14 +400,11 @@ export class SongDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
         const partitions = await GlobalFunctions.songIDs_partitioner(songIDs);
         let songs = [];
-        console.log("Retrieving user songs...");
         try{
             for(let i = 0; i < partitions.length; i++){
                 const ids = partitions[i].join(",");
 
-                const response = await fetch(url + ids, {
-                    headers: GlobalFunctions.get_headers()
-                });
+                const response = await GlobalFunctions.fetchData(url + ids);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -416,7 +439,7 @@ export class SongDataFetchers{
     static async get_all_user_song_IDs(){
         // get all songs from the library section
         const librarySongIDs = await SongDataFetchers.get_all_user_library_song_IDs();
-        const playlistSongIDs = await SongDataFetchers.get_all_user_playlists_song_IDs();
+        const playlistSongIDs = await SongDataFetchers.get_all_user_playlist_song_IDs();
 
         // union array with no duplicates
         const allSongIDs = await [...new Set([...librarySongIDs, ...playlistSongIDs])];
@@ -425,141 +448,44 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns all song catalog ID's from all user's playlists
+     * Returns all song catalog ID's from all user's playlists.
      * @param {string} playlist_id - LibraryPlaylists ID
      * @returns {string[]} array of song catalog IDs
      */
-    static async get_all_user_playlists_song_IDs(){
+    static async get_all_user_playlist_song_IDs(){
         const playlistIDs = await PlaylistDataFetchers.get_all_user_playlist_IDs();
         let playlistSongIDs = [];
+        
+        console.log("Retrieving all song IDs from user playlists...");
+
         for(let i = 0; i < playlistIDs.length; i++){
-            playlistSongIDs.push(await SongDataFetchers.get_all_user_playlist_song_IDs(playlistIDs[i]));
+            playlistSongIDs.push(await SongDataFetchers.get_user_playlist_song_IDs(playlistIDs[i]));
         }
+
         return [...new Set(playlistSongIDs.flat())];
     }
 
     /**
-     * Returns all song catalog ID's in a user's playlist
+     * Returns all song catalog ID's in a user's playlist.
      * @param {string} playlist_id - LibraryPlaylists ID
      * @returns {string[]} array of song catalog IDs
      */
-    static async get_all_user_playlist_song_IDs(playlist_id){
+    static async get_user_playlist_song_IDs(playlist_id){
         const url = "https://api.music.apple.com/v1/me/library/playlists/" + playlist_id + "/tracks?limit=100&offset=";
-        let offset = 0;
-        let accumulatedSongIDs = [];
-        console.log("Retrieving user playlist songs' IDs...");
-
-        try{
-            await SongDataFetchers.get_user_playlist_song_IDs(url, offset, accumulatedSongIDs);
-            return [...new Set(accumulatedSongIDs)];
-        }catch(error){
-            console.error("Error fetching user playlist songs' IDs: ", error);
-            return [];
-        }
+        let result = await ParallelDataFetchers.get_all_user_song_IDs_from("User Playlist", url);
+        return result;
     }
 
     /**
-     * Return at most 100 song catalog IDs from a library playlist, based on offset
-     * @param {string} url - Apple API URL
-     * @param {number} offset - Apple API offset
-     * @param {string[]} accumulatedSongIDs - array of song catalog IDs
-     * @returns {Promise<string[]>} accumulatedSongIDs
-     */
-    static async get_user_playlist_song_IDs(url, offset, accumulatedSongIDs){
-        try{
-            while(true){
-                const response = await fetch(url + offset, {
-                    headers: GlobalFunctions.get_headers()
-                });
-
-                if(!response.ok){
-                    if (response.status === 504) {
-                        console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                        continue; // Retry
-                    }else {
-                        throw new Error("HTTP Error! Status: " + response.status);
-                    }
-                }
-
-                const data = await response.json();
-                
-                /** @type {LibrarySongs[]} */ 
-                data.data.forEach(song=>accumulatedSongIDs.push(song.attributes.playParams?.catalogId));
-                
-                if(data.next){
-                    offset += 100;
-                    continue;
-                }
-                else{
-                    return [...new Set(accumulatedSongIDs)];
-                }
-            }
-        }catch(error){  
-            console.error("Error fetching user playlist songs' IDs: ", error);
-            return [];
-        }
-    }
-
-    /**
-     * Returns array of all song catalog IDs in user's library
+     * Returns array of all song catalog IDs in user's library.
      * @returns {Promise<string[]>} array of song catalog IDs
      */
     static async get_all_user_library_song_IDs(){
-        const url = "https://api.music.apple.com/v1/me/library/songs?limit=100";
-        console.log("Retrieving user library songs' IDs...");
-        let accumulatedSongIDs = [];
-        try{
-            await SongDataFetchers.get_user_library_song_IDs(url, accumulatedSongIDs);
-            return [...new Set(accumulatedSongIDs)];
-        }catch(error){
-            console.error("Error fetching user library songs' IDs: ", error);
-            return [];
-        }
-    }
+        const url = "https://api.music.apple.com/v1/me/library/songs?limit=100&offset=";
 
-    /**
-     * Returns array of song catalog IDs in user's library page
-     * @param {string} url - Apple API URL (used for pagination)
-     * @param {string[]} accumulatedSongIDs - array of song catalog IDs
-     * @returns {Promise<string[]>} accumulatedSongIDs
-     */
-    static async get_user_library_song_IDs(url, accumulatedSongIDs){
-        try{
-            while(true){
-                const response = await fetch(url, {
-                    headers: GlobalFunctions.get_headers()
-                });
-
-                if(!response.ok){
-                    if (response.status === 504) {
-                        console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                        continue; // Retry
-                    }else {
-                        throw new Error("HTTP Error! Status: " + response.status);
-                    }
-                }
-
-                const data = await response.json();
-
-                /** @type {LibrarySongs[]} */ 
-                data.data.forEach(song=>accumulatedSongIDs.push(song.attributes.playParams?.catalogId));
-
-                if(data.next){
-                    url = "https://api.music.apple.com" + data.next + "&limit=100";
-                    continue;
-                }
-                else{
-                    return [...new Set(accumulatedSongIDs)];
-                }
-            }
-        }catch(error){
-            console.error("Error fetching user library songs' IDs: ", error);
-            return [];
-        }
+        console.log("Retrieving all song IDs from user library...");
+        let result = await ParallelDataFetchers.get_all_user_song_IDs_from("User Library", url);
+        return result;
     }
 }
 
@@ -582,12 +508,7 @@ export class PlaylistDataFetchers{
         const url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
         console.log("Retrieving playlists...")
         try{
-            const response = await fetch(url, {
-                headers:{
-                    "Authorization": 'Bearer ' + developerToken,
-                    "Music-User-Token": userToken
-                }
-            });
+            const response = await fetchData(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -619,15 +540,13 @@ export class PlaylistDataFetchers{
     /**
      * Returns array of all playlist IDs in user's library page
      * @param {string} url - Apple API URL (used for pagination)
-     * @param {string[]} accumulatedPlaylistIDs - array of LibraryPlaylists IDs
-     * @returns {Promise<string[]>} aaccumulatedPlaylistIDs
+     * @param {string[]} accumulatedPlaylistIDs - array of playlist IDs
+     * @returns {Promise<string[]>} accumulatedPlaylistIDs 
      */
     static async get_user_playlist_IDs(url, accumulatedPlaylistIDs){
         try{
             while(true){
-                const response = await fetch(url, {
-                    headers: GlobalFunctions.get_headers()
-                });
+                const response = await GlobalFunctions.fetchData(url);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -680,9 +599,7 @@ export class GenreDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
         console.log("Retrieving genres for: " + song_id);
         try{
-            const response = await fetch(url, {
-                headers: GlobalFunctions.get_headers()
-            });
+            const response = await GlobalFunctions.fetchData(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -702,9 +619,7 @@ export class GenreDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
         console.log("Retrieving subgenres for: " + song_id);
         try{
-            const response = await fetch(url, {
-                headers: GlobalFunctions.get_headers()
-            });
+            const response = await GlobalFunctions.fetchData(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -742,9 +657,7 @@ export class Recommender{
         try{
             if(id == undefined) throw new Error("Genre input is not valid.");
 
-            const response = await fetch(url, {
-                headers: GlobalFunctions.get_headers()
-            });
+            const response = await GlobalFunctions.fetchData(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -757,6 +670,203 @@ export class Recommender{
             return song;
         }catch(error){
             console.error("Error fetching genres: ", error);
+        }
+    }
+}
+
+/**
+ * Functions to fetch data in parallel
+ */
+export class ParallelDataFetchers{
+    /**
+     * Parallelizes function passed as argument
+     * @param {function} func - function to be parallelized
+     * @param {string} collection - describes where resource is being pulled from
+     * @param {number} thread_count - number of threads to be used
+     * @param {number} listSize - size of list to be fetched/processed
+     * @param {string} url - URL used in API fetch requesets
+     * @param {number} offset - offset useed in fetch request URLs
+     */
+    static async parallelize(func, collection, url, offset, thread_count, list_size){
+        let result = [];
+        if(thread_count === 1){
+            result = await Promise.allSettled([func(collection, url, offset+100, 1, list_size, [])]);
+        }
+        else if(thread_count === 2){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, offset+100, 2, list_size, []),
+                    func(collection, url, offset+200, 2, list_size, [])
+                ]
+            )
+        }
+        else if(thread_count === 3){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, offset+100, 3, list_size, []),
+                    func(collection, url, offset+200, 3, list_size, []),
+                    func(collection, url, offset+300, 3, list_size, []),
+                ]
+            )
+        }
+        else if(thread_count === 4){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, offset+100, 4, list_size, []),
+                    func(collection, url, offset+200, 4, list_size, []),
+                    func(collection, url, offset+300, 4, list_size, []),
+                    func(collection, url, offset+400, 4, list_size, [])
+                ]
+            )
+        }
+        else if(thread_count === 5){
+            result = await Promise.allSettled(
+                [  
+                    func(collection, url, offset+100, 5, list_size, []),
+                    func(collection, url, offset+200, 5, list_size, []),
+                    func(collection, url, offset+300, 5, list_size, []),
+                    func(collection, url, offset+400, 5, list_size, []),
+                    func(collection, url, offset+500, 5, list_size, []),
+                ]
+            )
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns first page of song catalog IDs from either a library playlist or user's library
+     * @param {string} collection - NOT USED, describes where resource is being pulled from
+     * @param {string} url - Apple API URL
+     * @param {string} accumulated_song_ids - array of song catalog IDs
+     * @returns {[Promise<string[]>, number]} [accumulated_song_ids, playlist_size]
+     */
+    static async get_first_page_of(collection, url, accumulated_song_ids){
+        try{
+            const response = await GlobalFunctions.fetchData(url + '0');
+
+            if(!response.ok) {
+                if(response.status === 404){
+                    return [[], 0];
+                }
+
+                throw new Error("HTTP Error! Status: " + response.status);
+            }
+
+            const data = await response.json();
+
+            // add all non-undefined song IDs to the array
+            accumulated_song_ids.push(...data.data.map(song=>song.attributes.playParams?.catalogId).filter(id => id != undefined));
+
+            return [[...new Set(accumulated_song_ids)], data.meta.total];
+        }catch(error){
+            console.error("Error fetching first page from " + collection + ": " + error);
+            return [[], 0];
+        }
+    }
+
+    /**
+     * Calculates the optimal number of fetch threads for a given set size
+     * @param {number} set_size - number of items to be fetched
+     * @param {number} upper_limit - max number of threads
+     * @returns {number} optimal number of threads
+     */
+    static thread_count_calculator(set_size, upper_limit){
+        if(set_size <= 100){
+            return 0;
+        }
+        else if(set_size >= 1800){
+            return 5;
+        }
+        
+        set_size = set_size - 100; // first 100 fetched in main thread
+        const thread_counts = Array.from({length: upper_limit}, (_, i) => i + 1.0); // ex: upper_limit = 5 ==> thread_counts = [1.0, 2.0, 3.0, 4.0, 5.0]
+        let result = [];
+
+        for(let i = 0; i < thread_counts.length; i++)
+            result.push([GlobalFunctions.roundUp(GlobalFunctions.roundUp(set_size/100) / thread_counts[i]), thread_counts[i]]);
+
+        result.sort((a,b) => a[0] - b[0]);
+
+        return result[0][1];
+    }
+
+    /**
+     * Returns set of all song catalog IDs from either a library playlist or user's library
+     * @param {string} collection - describes where resource is being pulled from
+     * @param {string} url - Apple API URL
+     * @returns {Promise<Set<string>>} set of song catalog IDs
+     */
+    static async get_all_user_song_IDs_from(collection, url){
+        let offset = 0; // will parallelize to 5 fetches working at 100 offset differences (0,100,200,300,400)
+        let accumulated_song_ids = [];
+
+        try{
+            const first_page = await ParallelDataFetchers.get_first_page_of(collection, url + '0', []);
+            const playlist_size = first_page[1];
+
+            const thread_count_max = 5;
+            const thread_count = ParallelDataFetchers.thread_count_calculator(playlist_size, thread_count_max);
+            
+            let result = [];
+            result = await ParallelDataFetchers.parallelize(ParallelDataFetchers.get_user_song_IDs_from, collection, url, offset, thread_count, playlist_size);
+    
+            first_page[0].forEach(songID => accumulated_song_ids.push(songID));
+            result.forEach(songIDs => accumulated_song_ids.push(...songIDs.value.flat()));
+           
+            return [...new Set(accumulated_song_ids)];
+        }catch(error){
+            console.error("Error fetching song catalog IDs from " + collection + ": ", error);
+            return [];
+        }
+    }
+
+    /**
+     * Returns set of song catalog IDs 100-count-batches from either a library playlist or user's library
+     * @param {string} collection - NOT USED, describes where resource is being pulled from
+     * @param {string} url - Apple API URL (used for pagination)
+     * @param {number} offset - Apple API URL offset
+     * @param {string[]} accumulated_song_ids - array of song catalog IDs
+     * @returns {Promise<Set<string>>} set of song catalog IDs
+     */
+    static async get_user_song_IDs_from(collection, url, offset, thread_count, list_size, accumulated_song_ids){
+        try{
+            while(true){
+                const response = await GlobalFunctions.fetchData(url + offset);
+
+                if(!response.ok){
+                    if (response.status === 504) {
+                        console.error("Gateway Timeout (504) - Retrying...");
+                        // Retry after a delay (see below)
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                        continue; // Retry
+                    }else if(response.status === 404){
+                        throw new Error(response.status)
+                    }
+                    else {
+                        throw new Error("HTTP Error! Status: " + response.status);
+                    }
+                }
+
+                const data = await response.json();
+                
+                /** @type {LibrarySongs[]} */ 
+                accumulated_song_ids.push(...data.data.map(song=>song.attributes.playParams?.catalogId).filter(id => id != undefined));
+                offset += (thread_count * 100); // max fetch size is 100, works with parallelism
+                
+                if(offset >= list_size){ // end of playlist reached
+                    return [...new Set(accumulated_song_ids)];
+                }
+
+                await new Promise(res => setTimeout(res, 300)); // 300 ms buffer
+            }
+        }catch(error){ 
+            if(Number(error.message) === 404){ // reached end of playlist
+                return [...new Set(accumulated_song_ids)];
+            }
+
+            console.error("Error fetching song IDs from " + collection + ": " + error);
+            return [];
         }
     }
 }
