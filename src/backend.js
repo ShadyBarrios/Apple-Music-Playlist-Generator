@@ -1,5 +1,6 @@
 // get functions from function.js
-import { SongDataFetchers } from "./functions.js"
+import { ParallelDataFetchers, SongDataFetchers } from "./functions.js"
+import { PlaylistDataFetchers } from "./functions.js"
 import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
@@ -91,21 +92,13 @@ class BackendGenerator {
     }
 
     static async DEBUG_SongIDsFetchTest(){
-        console.time("Sequential");
+        console.time("Parallel");
         let output = await SongDataFetchers.get_all_user_song_IDs();
-        console.timeEnd("Sequential");
+        console.timeEnd("Parallel");
 
-        let count = 0;
-        for(let i = 0; i < output.length; i++){
-            if(output[i] == undefined){
-                count++;
-            }
-        }
-
-        console.log("Undefined value count: " + count);
         console.log(output);
     }
-    
+
     DEBUG_playlistPrint() {
         // for (let playlist of this.generatedPlaylists) {
         //     console.log("Playlist: " + playlist.name);
