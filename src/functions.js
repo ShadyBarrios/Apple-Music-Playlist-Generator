@@ -176,7 +176,7 @@ export class GlobalFunctions{
      * @param {number} number 
      * @returns {number} rounded number
      */
-    static roundUp(number){   
+    static round_up(number){   
         return number + ((1 - Number(number % 1 == 0)) - number % 1);
     }
 }
@@ -679,7 +679,7 @@ export class Recommender{
  * Functions to fetch data in parallel
  */
 export class ParallelDataFetchers{
-    
+
     /**
      * Parallelizes function passed as argument
      * @param {function} func - function to be parallelized
@@ -787,7 +787,7 @@ export class ParallelDataFetchers{
         let result = [];
 
         for(let i = 0; i < thread_counts.length; i++)
-            result.push([GlobalFunctions.roundUp(GlobalFunctions.roundUp(set_size/100) / thread_counts[i]), thread_counts[i]]);
+            result.push([GlobalFunctions.round_up(GlobalFunctions.round_up(set_size/100) / thread_counts[i]), thread_counts[i]]);
 
         result.sort((a,b) => a[0] - b[0]);
 
