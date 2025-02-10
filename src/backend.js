@@ -1,7 +1,5 @@
 // get functions from function.js
 import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions} from "./functions.js"
-import { PlaylistDataFetchers } from "./functions.js"
-import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
 class Playlist {
