@@ -410,12 +410,12 @@ export class SongDataFetchers{
 
     /**
      * Returns set containing all songs found in user's library and playlists.
-     * Expected runtime: 1:16 m:ss
      * @returns {Promise<Set<Song>>} array of Song objects
      */
     static async get_all_user_songs(userLink){
         console.log("token: " + envPath);
         userToken = userLink; // update user link
+      
         const songIDs = await SongDataFetchers.get_all_user_song_IDs();
         const songs = await SongDataFetchers.get_user_songs(songIDs);
         return songs;
