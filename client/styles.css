@@ -1,0 +1,106 @@
+/* General Body Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+}
+
+/* Container for buttons and information */
+.container {
+  width: 80%;
+  max-width: 900px;
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Title Styles */
+h1 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Button Styles */
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  margin: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+button:active {
+  background-color: #3e8e41;
+}
+
+/* Input Field Styles */
+input[type="text"] {
+  padding: 8px;
+  margin: 10px 0;
+  width: 100%;
+  max-width: 300px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+input[type="text"]:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+/* Paragraph Styles */
+p {
+  font-size: 16px;
+  color: #555;
+  margin: 5px 0;
+}
+
+/* Styling for the Status Text */
+#status {
+  font-weight: bold;
+  color: #4CAF50;
+}
+
+/* Styling for output sections */
+#playlists,
+#recently_played,
+#genre_dictionary,
+#subgenre_dictionary,
+#genre_recommendation,
+#library_songs_count,
+#playlist_songs_count,
+#all_playlists_songs_count,
+#all_songs_count,
+#playlist_songs_IDs,
+#all_songs {
+  font-size: 14px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Button container for styling alignment */
+button {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+}
