@@ -1,6 +1,7 @@
 // Pull tokens from .env
 import dotenv from 'dotenv';
 import path from 'path';
+import {Mutex} from 'async-mutex';
 
 // Create .env in root folder with the following:
 const isInSrc = process.cwd().endsWith('\\src');
@@ -80,11 +81,21 @@ export class Song {
 ///////////////////////////////////////////
 */
 
+
+
+/**
+ * GenreDictionary Mutex
+ */
+const genreDictionaryMutex = new Mutex();
 /**
  * [name] = id if exists
  */
 let genreDictionary = {};
 
+/**
+ * SubgenreDictionary Mutex
+ */
+const subgenreDictionaryMutex = new Mutex();
 /**
  * [name] = 1 if exists
  */
@@ -100,15 +111,31 @@ export class GlobalFunctions{
     constructor() {
         throw new Error("This class cannot be instantiated.");
     }
-    
+
+    /**
+     * Accessor function to get copy of genre dictionary
+     * @returns {Record<string, number>} genre dictionary
+     */
+    static get_genre_dictionary(){
+        return {...genreDictionary};
+    }
+
+    /**
+     * Accessor function to get copy of subgenre dictionary
+     * @returns {Record<string, number>} subgenre dictionary
+     */
+    static get_subgenre_dictionary(){
+        return {...subgenreDictionary};
+    }
+
     /**
      * Adds genres to the genre dictionary if not already included (dictionary[name] = id)
      * @param {Genres[]} genres - array of Genres objects
      */
     static async add_to_genre_dictionary(genres){
-        genres.forEach(genre => {
-            genreDictionary[genre.attributes.name] = genre.id;
-        })
+        await genreDictionaryMutex.runExclusive(async () => {
+            genres.forEach(genre => genreDictionary[genre.attributes.name] = genre.id);
+        });
     }
 
     /**
@@ -116,9 +143,9 @@ export class GlobalFunctions{
      * @param {string[]} subgenres - array of subgenre names
      */
     static async add_to_subgenre_dictionary(subgenres){
-        subgenres.forEach(subgenre => {
-            subgenreDictionary[subgenre] = 1;
-        })
+        await subgenreDictionaryMutex.runExclusive(() => {
+            subgenres.forEach(subgenre => subgenreDictionary[subgenre] = 1);
+        });
     }
 
     /**
@@ -142,9 +169,10 @@ export class GlobalFunctions{
      * @returns {string[][]} array of songID partitions
      */
     static async songIDs_partitioner(songIDs){
+        let songIDsCopy = songIDs.slice(); // shallow copy
         const songIDsPartitions = [];
-        while (songIDs.length) {
-            songIDsPartitions.push(songIDs.splice(0, 300)); 
+        while (songIDsCopy.length) {
+            songIDsPartitions.push(songIDsCopy.splice(0, 300)); 
         }
         return songIDsPartitions;
     }
@@ -381,7 +409,7 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns array containing all songs found in user's library and playlists.
+     * Returns set containing all songs found in user's library and playlists.
      * Expected runtime: 1:16 m:ss
      * @returns {Promise<Set<Song>>} array of Song objects
      */
@@ -393,7 +421,7 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns array containing all songs given song catalog ID array
+     * Returns set containing all songs given song catalog ID array
      * @param {string[]} songIDs - array of song catalog IDs
      * @returns {Promise<Set<Song>>} set of Song objects
      */
@@ -401,40 +429,12 @@ export class SongDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
         const partitions = await GlobalFunctions.songIDs_partitioner(songIDs);
         let songs = [];
-        try{
-            for(let i = 0; i < partitions.length; i++){
-                const ids = partitions[i].join(",");
-
-                const response = await GlobalFunctions.fetchData(url + ids);
-
-                if(!response.ok){
-                    if (response.status === 504) {
-                        console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                        i--;
-                        continue; // Retry
-                    }else {
-                        throw new Error("HTTP Error! Status: " + response.status);
-                    }
-                }
-
-                const data = await response.json();
-
-                for(let i = 0; i < data.data.length; i++){
-                    await GlobalFunctions.add_to_genre_dictionary(data.data[i].relationships.genres.data);
-                    await GlobalFunctions.add_to_subgenre_dictionary(data.data[i].attributes.genreNames);
-                    songs.push(new Song(data.data[i].id, data.data[i].relationships.genres.data.map(genre => genre.id), data.data[i].attributes.genreNames));
-                }
-            }
-            return [...new Set(songs)];
-        }catch(error){
-            console.error("Error fetching songs: ", error);
-        }
+        songs = await ParallelDataFetchers.get_all_user_songs_from("Catalog", url, partitions, songIDs.length);
+        return songs;
     }
 
     /** 
-     * Returns array containing all songs IDs found in user's library and playlists.
+     * Returns set containing all songs IDs found in user's library and playlists.
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
     static async get_all_user_song_IDs(){
@@ -467,7 +467,7 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns all song catalog ID's in a user's playlist.
+     * Returns set of all song catalog ID's in a user's playlist.
      * @param {string} playlist_id - LibraryPlaylists ID
      * @returns {string[]} array of song catalog IDs
      */
@@ -478,7 +478,7 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns array of all song catalog IDs in user's library.
+     * Returns set of all song catalog IDs in user's library.
      * @returns {Promise<string[]>} array of song catalog IDs
      */
     static async get_all_user_library_song_IDs(){
@@ -679,9 +679,31 @@ export class Recommender{
  * Functions to fetch data in parallel
  */
 export class ParallelDataFetchers{
+    /**
+     * Calculates the optimal number of fetch threads for a given set size
+     * @param {number} set_size - number of items to be fetched
+     * @param {number} upper_limit - max number of threads
+     * @returns {number} optimal number of threads
+     */
+    static thread_count_calculator(set_size, upper_limit){
+        if(set_size <= 100){
+            return 0;
+        }
+        
+        set_size = set_size - 100; // first 100 fetched in main thread
+        const thread_counts = Array.from({length: upper_limit}, (_, i) => i + 1.0); // ex: upper_limit = 5 ==> thread_counts = [1.0, 2.0, 3.0, 4.0, 5.0]
+        let result = [];
+
+        for(let i = 0; i < thread_counts.length; i++)
+            result.push([GlobalFunctions.round_up(GlobalFunctions.round_up(set_size/100) / thread_counts[i]), thread_counts[i]]);
+
+        result.sort((a,b) => a[0] - b[0]);
+
+        return result[0][1];
+    }
 
     /**
-     * Parallelizes function passed as argument
+     * Parallelizes API fetch process when URL uses offset pagination
      * @param {function} func - function to be parallelized
      * @param {string} collection - describes where resource is being pulled from
      * @param {number} thread_count - number of threads to be used
@@ -690,7 +712,7 @@ export class ParallelDataFetchers{
      * @param {number} offset - offset useed in fetch request URLs
      * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
      */
-    static async parallelize(func, collection, url, offset, thread_count, list_size){
+    static async parallelize_using_offset(func, collection, url, offset, thread_count, list_size){
         let result = [];
         if(thread_count === 1){
             result = await Promise.allSettled([func(collection, url, offset+100, 1, list_size, [])]);
@@ -708,7 +730,7 @@ export class ParallelDataFetchers{
                 [
                     func(collection, url, offset+100, 3, list_size, []),
                     func(collection, url, offset+200, 3, list_size, []),
-                    func(collection, url, offset+300, 3, list_size, []),
+                    func(collection, url, offset+300, 3, list_size, [])
                 ]
             )
         }
@@ -729,7 +751,64 @@ export class ParallelDataFetchers{
                     func(collection, url, offset+200, 5, list_size, []),
                     func(collection, url, offset+300, 5, list_size, []),
                     func(collection, url, offset+400, 5, list_size, []),
-                    func(collection, url, offset+500, 5, list_size, []),
+                    func(collection, url, offset+500, 5, list_size, [])
+                ]
+            )
+        }
+
+        return result;
+    }
+
+    /**
+     * Parallelizes API fetch process when URL uses partition pagination
+     * @param {function} func - function to be parallelized
+     * @param {string} collection - describes where resource is being pulled from
+     * @param {string} url - URL used in API fetch requesets
+     * @param {string[][]} partitions - array of partitions used to fetch from Apple API URL
+     * @param {number} thread_count - number of threads to be used
+     * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
+     */
+    static async parallelize_using_partitions(func, collection, url, partitions, thread_count){
+        let result = [];
+
+        if(thread_count === 1){
+            result = await Promise.allSettled([func(collection, url, partitions, 0, thread_count)]);
+        }
+        else if(thread_count === 2){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, partitions, 0, thread_count),
+                    func(collection, url, partitions, 1, thread_count)
+                ]
+            )
+        }
+        else if(thread_count === 3){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, partitions, 0, thread_count),
+                    func(collection, url, partitions, 1, thread_count),
+                    func(collection, url, partitions, 2, thread_count)
+                ]
+            )
+        }
+        else if(thread_count === 4){
+            result = await Promise.allSettled(
+                [
+                    func(collection, url, partitions, 0, thread_count),
+                    func(collection, url, partitions, 1, thread_count),
+                    func(collection, url, partitions, 2, thread_count),
+                    func(collection, url, partitions, 3, thread_count)
+                ]
+            )
+        }
+        else if(thread_count === 5){
+            result = await Promise.allSettled(
+                [  
+                    func(collection, url, partitions, 0, thread_count),
+                    func(collection, url, partitions, 1, thread_count),
+                    func(collection, url, partitions, 2, thread_count),
+                    func(collection, url, partitions, 3, thread_count),
+                    func(collection, url, partitions, 4, thread_count)
                 ]
             )
         }
@@ -769,32 +848,6 @@ export class ParallelDataFetchers{
     }
 
     /**
-     * Calculates the optimal number of fetch threads for a given set size
-     * @param {number} set_size - number of items to be fetched
-     * @param {number} upper_limit - max number of threads
-     * @returns {number} optimal number of threads
-     */
-    static thread_count_calculator(set_size, upper_limit){
-        if(set_size <= 100){
-            return 0;
-        }
-        else if(set_size >= 1800){
-            return 5;
-        }
-        
-        set_size = set_size - 100; // first 100 fetched in main thread
-        const thread_counts = Array.from({length: upper_limit}, (_, i) => i + 1.0); // ex: upper_limit = 5 ==> thread_counts = [1.0, 2.0, 3.0, 4.0, 5.0]
-        let result = [];
-
-        for(let i = 0; i < thread_counts.length; i++)
-            result.push([GlobalFunctions.round_up(GlobalFunctions.round_up(set_size/100) / thread_counts[i]), thread_counts[i]]);
-
-        result.sort((a,b) => a[0] - b[0]);
-
-        return result[0][1];
-    }
-
-    /**
      * Returns set of all song catalog IDs from either a library playlist or user's library
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
@@ -812,7 +865,7 @@ export class ParallelDataFetchers{
             const thread_count = ParallelDataFetchers.thread_count_calculator(playlist_size, thread_count_max);
             
             let result = [];
-            result = await ParallelDataFetchers.parallelize(ParallelDataFetchers.get_user_song_IDs_from, collection, url, offset, thread_count, playlist_size);
+            result = await ParallelDataFetchers.parallelize_using_offset(ParallelDataFetchers.get_user_song_IDs_from, collection, url, offset, thread_count, playlist_size);
     
             first_page[0].forEach(songID => accumulated_song_ids.push(songID));
             result.forEach(songIDs => accumulated_song_ids.push(...songIDs.value.flat()));
@@ -841,7 +894,7 @@ export class ParallelDataFetchers{
                     if (response.status === 504) {
                         console.error("Gateway Timeout (504) - Retrying...");
                         // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
                         continue; // Retry
                     }else if(response.status === 404){
                         throw new Error(response.status)
@@ -870,6 +923,77 @@ export class ParallelDataFetchers{
 
             console.error("Error fetching song IDs from " + collection + ": " + error);
             return [];
+        }
+    }
+
+    /**
+     * Returns set containing all songs given song catalog ID array
+     * @param {string} collection - describes where resource is being pulled from
+     * @param {string[][]} partitions - array of song catalog ID partitions
+     * @param {number} list_size - number of songs to be fetched
+     * @returns {Promise<Set<Song>>} set of Song objects
+     */
+    static async get_all_user_songs_from(collection, url, partitions, list_size){
+        const max_thread_count = 5;
+        const thread_count = ParallelDataFetchers.thread_count_calculator(list_size, max_thread_count);
+        let accumulated_songs = [];
+
+        try{
+            let result = [];
+            result = await ParallelDataFetchers.parallelize_using_partitions(ParallelDataFetchers.get_user_songs_from, collection, url, partitions, thread_count);
+            result.forEach(songs => accumulated_songs.push(...songs.value.flat()));
+            return [... new Set(accumulated_songs)];
+        }catch(error){
+            console.error("Error fetching songs from " + collection + ": ", error);
+            return [];
+        }
+    }
+
+    /**
+     * Returns set containing all songs given song catalog ID partition
+     * @param {string} collection - describes where resource is being pulled from
+     * @param {string} url - Apple API URL
+     * @param {string[][]} partitions - partitions used to fetch from Apple API URL
+     * @param {number} start_index - Starting-point-partition used in fetch request URLs
+     * @param {number} thread_count - number of threads to be used
+     * @returns {Promise<Set<Song>>} accumulated_songs - array of song catalog IDs
+     */
+    static async get_user_songs_from(collection, url, partitions, start_index, thread_count){
+        let index = start_index;
+        let songs = [];
+        let count = 0;
+
+        try{
+            for(let i = index; i < partitions.length; i += thread_count){
+                const ids = partitions[i].join(",");
+
+                const response = await GlobalFunctions.fetchData(url + ids);
+
+                if(!response.ok){
+                    if (response.status === 504) {
+                        console.error("Gateway Timeout (504) - Retrying...");
+                        // Retry after a delay (see below)
+                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+                        i -= thread_count; // Retry
+                        continue; // Retry
+                    }else {
+                        throw new Error("HTTP Error! Status: " + response.status);
+                    }
+                }
+
+                const data = await response.json();
+
+                for(let i = 0; i < data.data.length; i++){
+                    count++;
+                    await GlobalFunctions.add_to_genre_dictionary(data.data[i].relationships.genres.data);
+                    await GlobalFunctions.add_to_subgenre_dictionary(data.data[i].attributes.genreNames);
+                    songs.push(new Song(data.data[i].id, data.data[i].relationships.genres.data.map(genre => genre.id), data.data[i].attributes.genreNames));
+                }
+            }
+
+            return [...new Set(songs)];
+        }catch(error){
+            console.error("Error fetching songs from " + collection + ": ", error);
         }
     }
 }

@@ -1,5 +1,5 @@
 // get functions from function.js
-import { ParallelDataFetchers, SongDataFetchers } from "./functions.js"
+import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions} from "./functions.js"
 import { PlaylistDataFetchers } from "./functions.js"
 import { Song } from "./functions.js"
 
@@ -92,11 +92,25 @@ class BackendGenerator {
     }
 
     static async DEBUG_SongIDsFetchTest(){
-        console.time("Parallel");
+        console.time("Total Parallel Song Fetch")
         let output = await SongDataFetchers.get_all_user_song_IDs();
-        console.timeEnd("Parallel");
 
-        console.log(output);
+        console.time("Parallel Song from ID fetch");
+        let output2 = await SongDataFetchers.get_user_songs(output);
+        console.timeEnd("Parallel Song from ID fetch");
+        
+        console.timeEnd("Total Parallel Song Fetch");
+
+        console.log("Songs Fetch Output size: " + output2.length);
+
+        console.log("Genre Dictionary length: " + Object.keys(GlobalFunctions.get_genre_dictionary()).length);
+        console.log("Subgenre Dictionary length: " + Object.keys(GlobalFunctions.get_subgenre_dictionary()).length);
+    }
+
+    static async DEBUG_ThreadCalculator(){
+        for(let i = 0; i < 6000; i += 100){
+            console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
+        }
     }
 
     DEBUG_playlistPrint() {
