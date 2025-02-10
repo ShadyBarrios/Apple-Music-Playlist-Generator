@@ -92,14 +92,17 @@ class BackendGenerator {
     }
 
     static async DEBUG_SongIDsFetchTest(){
-        console.time("Total Parallel Song Fetch")
-        let output = await SongDataFetchers.get_all_user_song_IDs();
+        console.time("Total PARALLEL song fetch time");
 
-        console.time("Parallel Song from ID fetch");
+        console.time("PARALLEL song ID fetch time");
+        let output = await SongDataFetchers.get_all_user_song_IDs();
+        console.timeEnd("PARALLEL song ID fetch time");
+    
+        console.time("PARALLEL song from ID fetch time");
         let output2 = await SongDataFetchers.get_user_songs(output);
-        console.timeEnd("Parallel Song from ID fetch");
-        
-        console.timeEnd("Total Parallel Song Fetch");
+        console.timeEnd("PARALLEL song from ID fetch time");
+    
+        console.timeEnd("Total PARALLEL song fetch time");
 
         console.log("Songs Fetch Output size: " + output2.length);
 
