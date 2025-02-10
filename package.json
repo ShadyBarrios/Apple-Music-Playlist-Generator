@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "login.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "jsdoc src/functions.js -d docs -t node_modules/docdash"
+    "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async-mutex": "^0.5.0",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

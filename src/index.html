@@ -7,7 +7,7 @@
     <script src = "https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
     <script>document.addEventListener("musickitloaded", async function() {
         MusicKit.configure({
-            developerToken: "eyJhbGciOiJFUzI1NiIsImtpZCI6Iks3N003Q0Q3VVciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiIyUTJLTUo1Mjk1IiwiaWF0IjoxNzM4MTU1MDUxLCJleHAiOjE3NTM5MzIwNTF9.wUBzRPzu2MJ0QYgLUm8XpOXgnpcySWqoSZzLkmUGHKVIoKy77vJfUpzmgE-bp-m8FVDAHj8O2bzjqxmB8qdLxw",
+            developerToken: "_",
             app: {
                 name: "Custom Playlist Generator",
                 build: "1.0.0"
@@ -27,11 +27,11 @@
             console.error("Error authorizing user: ", error);
         }
     }</script>
-    <script defer src = "functions.js"></script>
+    <script defer src = "functions.js" type="module"></script>
     </head>
 
     <body>
-        <button onclick = "authenticate_user()">Authorize Apple Music</button>
+        <!-- <button onclick = "authenticate_user()">Authorize Apple Music</button>
         <p id = "status"></p>
 
         <button onclick = "display_user_playlists()">Get Playlists</button>
@@ -68,6 +68,7 @@
         <p id = "playlist_songs_IDs"></p>
 
         <button onclick = "display_all_songs()">Get User (Library + Playlist) songs</button>
-        <p id = "all_songs"></p>
+        <p id = "all_songs"></p> -->
+        <p>Test code with node.js</p>
     </body>
 </html>

@@ -1,3 +1,8 @@
+// get functions from function.js
+import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions} from "./functions.js"
+import { PlaylistDataFetchers } from "./functions.js"
+import { Song } from "./functions.js"
+
 // Playlist, a collection of songs
 class Playlist {
     constructor(songs, name, description, filters) {
@@ -16,37 +21,25 @@ class Playlist {
 
 // BackendGenerator, generates playlists, has all information on user
 class BackendGenerator {
-    constructor(spotifyLink) {
+    constructor(userLink, songs) {
         // check that we have good vars
-        if (!spotifyLink) {
+        if (!userLink) {
             console.error("BackendGenerator constructor var's are undefined");
             return;
         }
 
-        this.spotifyLink = spotifyLink;
+        this.userLink = userLink;
         this.generatedPlaylists = [];
         this.genres = new Set([]);
-        this.songs = new Set([]);
-
-        // do user parsing here to get songs and genres and append them to arrays
-        // when creating a new song, include song information in constructor call
+        this.songs = songs;
     }
-    
-    TEMPsetVariables() {
-        console.log("TODO: MAKE REAL PARSING INSTEAD OF TEMP VARIABLES");
-        this.spotifyLink = "link";
-        
-        let tempSongs = [new Song("Rock_Indie", "songLink", true, 50, ["Rock", "Indie"]),
-                     new Song("Rock_Alt", "songLink", false, 20, ["Rock", "Alternative"]),
-                     new Song("Rap_Alt", "songLink", false, 20, ["Rap", "Alternative"])];
-        
-        for (let i = 0; i < tempSongs.length; i++) {
-            this.songs.add(tempSongs[i]);
 
-            for (let j = 0; j < tempSongs[i].genres.length; j++) {
-                this.genres.add(tempSongs[i].genres[j]);
-            }
-        } 
+    static async create(userLink) {
+        // get songs
+        const songs = await SongDataFetchers.get_all_user_songs(userLink);
+
+        // return object
+        return new BackendGenerator(userLink, songs); 
     }
 
     createPlaylist(playListName, filters) {
@@ -87,66 +80,73 @@ class BackendGenerator {
     }
 
     DEBUG_backendPrint() {
-        // genres
-        process.stdout.write("\nGenres: ");
-        for (let i of this.genres) {
-            process.stdout.write(i + ", ");
-        }
-        console.log();
+        console.log("testing from within");
 
-        // songs
-        for (let i of this.songs) {
-            process.stdout.write("Song: " + i.name + ", with: ");
-
-            for (let j of i.genres) {
-                process.stdout.write(j + ", ");
+        for (let i = 0; i < 20; i++) {
+            process.stdout.write(i + ": " + this.songs[i].id + ";\t");
+            for (let j = 0; j < this.songs[i].genres.length; j++) {
+                process.stdout.write(this.songs[i].genres[j] + ", ");
             }
             console.log();
         }
-        console.log();
+    }
+
+    static async DEBUG_SongIDsFetchTest(){
+        console.time("Total PARALLEL song fetch time");
+
+        console.time("PARALLEL song ID fetch time");
+        let output = await SongDataFetchers.get_all_user_song_IDs();
+        console.timeEnd("PARALLEL song ID fetch time");
+    
+        console.time("PARALLEL song from ID fetch time");
+        let output2 = await SongDataFetchers.get_user_songs(output);
+        console.timeEnd("PARALLEL song from ID fetch time");
+    
+        console.timeEnd("Total PARALLEL song fetch time");
+
+        console.log("Songs Fetch Output size: " + output2.length);
+
+        console.log("Genre Dictionary length: " + Object.keys(GlobalFunctions.get_genre_dictionary()).length);
+        console.log("Subgenre Dictionary length: " + Object.keys(GlobalFunctions.get_subgenre_dictionary()).length);
+    }
+
+    static async DEBUG_ThreadCalculator(){
+        for(let i = 0; i < 6000; i += 100){
+            console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
+        }
     }
 
     DEBUG_playlistPrint() {
-        for (let playlist of this.generatedPlaylists) {
-            console.log("Playlist: " + playlist.name);
-            console.log("\tDescription:\t" + playlist.description);
+        // for (let playlist of this.generatedPlaylists) {
+        //     console.log("Playlist: " + playlist.name);
+        //     console.log("\tDescription:\t" + playlist.description);
 
-            process.stdout.write("\tFilters:\t");
-            for (let j of playlist.filters) {
-                process.stdout.write(j + ", ");
-            }
-            console.log();
+        //     process.stdout.write("\tFilters:\t");
+        //     for (let j of playlist.filters) {
+        //         process.stdout.write(j + ", ");
+        //     }
+        //     console.log();
                 
-            process.stdout.write("\tSongs:\t\t");
-            for (let j of playlist.songs) {
-                if (!j) {
-                    console.error("Undefined value found in playlist.songs");
-                    continue; // Skip this iteration
-                }
-                process.stdout.write(j.name + ", ")
-            }
-            console.log();
-        }
+        //     process.stdout.write("\tSongs:\t\t");
+        //     for (let j of playlist.songs) {
+        //         if (!j) {
+        //             console.error("Undefined value found in playlist.songs");
+        //             continue; // Skip this iteration
+        //         }
+        //         process.stdout.write(j.name + ", ")
+        //     }
+        //     console.log();
+        // }
+        
+        
+
+
     }
 }
 
 // main
-(function() {
-    // Your code here
-    backend = new BackendGenerator("link");
-    backend.TEMPsetVariables();
-
-    backend.DEBUG_backendPrint();
-
-    // // make a playlist
-    let testFilters1 = ["Rock"];
-    let testFilters2 = ["Alternative"];
-    let testFilters3 = ["FakeGenre"];
+(async () => {
+    let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
     
-    backend.createPlaylist("rock playlist", testFilters1);
-    backend.createPlaylist("alt playlist", testFilters2);
-    backend.createPlaylist("fake playlist", testFilters3);
-
-    backend.DEBUG_playlistPrint();
-
-  });
+    await BackendGenerator.DEBUG_SongIDsFetchTest();
+})();
