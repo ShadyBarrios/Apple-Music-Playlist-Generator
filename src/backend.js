@@ -118,6 +118,13 @@ class BackendGenerator {
             console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
         }
     }
+
+    static async DEBUG_BackendGeneratorCreation(){
+        let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
+        
+        let backend = await BackendGenerator.create(userLink);
+        console.log(backend.songs.length);
+    }
 }
 
 // main
@@ -126,9 +133,3 @@ class BackendGenerator {
     
 //     await BackendGenerator.DEBUG_SongIDsFetchTest();
 // })();
-(async () => {
-    let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
-    
-    let backend = await BackendGenerator.create(userLink);
-    console.log(backend.songs.length);
-})();
