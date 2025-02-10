@@ -1,7 +1,5 @@
 // get functions from function.js
 import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions} from "./functions.js"
-import { PlaylistDataFetchers } from "./functions.js"
-import { Song } from "./functions.js"
 
 // Playlist, a collection of songs
 class Playlist {
@@ -17,6 +15,8 @@ class Playlist {
         this.description = description;
         this.filters = filters ;
     }
+
+    getSongs() { return this.songs; }
 }
 
 // BackendGenerator, generates playlists, has all information on user
@@ -35,7 +35,7 @@ class BackendGenerator {
     }
 
     static async create(userLink) {
-        // get songs
+        // get song IDs
         const songs = await SongDataFetchers.get_all_user_songs(userLink);
 
         // return object
@@ -63,7 +63,6 @@ class BackendGenerator {
                 }
             }
 
-            
             // if its included then add to possible songs
             if (isIncluded) {
                 possibleSongs.add(i);
@@ -80,8 +79,6 @@ class BackendGenerator {
     }
 
     DEBUG_backendPrint() {
-        console.log("testing from within");
-
         for (let i = 0; i < 20; i++) {
             process.stdout.write(i + ": " + this.songs[i].id + ";\t");
             for (let j = 0; j < this.songs[i].genres.length; j++) {
@@ -115,38 +112,11 @@ class BackendGenerator {
             console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
         }
     }
-
-    DEBUG_playlistPrint() {
-        // for (let playlist of this.generatedPlaylists) {
-        //     console.log("Playlist: " + playlist.name);
-        //     console.log("\tDescription:\t" + playlist.description);
-
-        //     process.stdout.write("\tFilters:\t");
-        //     for (let j of playlist.filters) {
-        //         process.stdout.write(j + ", ");
-        //     }
-        //     console.log();
-                
-        //     process.stdout.write("\tSongs:\t\t");
-        //     for (let j of playlist.songs) {
-        //         if (!j) {
-        //             console.error("Undefined value found in playlist.songs");
-        //             continue; // Skip this iteration
-        //         }
-        //         process.stdout.write(j.name + ", ")
-        //     }
-        //     console.log();
-        // }
-        
-        
-
-
-    }
 }
 
 // main
 (async () => {
     let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
     
-    await BackendGenerator.DEBUG_SongIDsFetchTest();
+    await BackendGenerator.create(userLink);
 })();
