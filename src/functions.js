@@ -8,7 +8,7 @@ const isInSrc = process.cwd().endsWith('\\src');
 const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 const developerToken = process.env.DEVELOPER_TOKEN;
-let userToken = process.env.USER_TOKEN;
+let userToken = "";
 
 /*
 /////////////////////
@@ -206,6 +206,14 @@ export class GlobalFunctions{
      */
     static round_up(number){   
         return number + ((1 - Number(number % 1 == 0)) - number % 1);
+    }
+
+    /**
+     * Updates userToken
+     * @param {string} token
+     */
+    static update_user_token(token){
+        userToken = token;
     }
 }
 
@@ -412,10 +420,7 @@ export class SongDataFetchers{
      * Returns set containing all songs found in user's library and playlists.
      * @returns {Promise<Set<Song>>} array of Song objects
      */
-    static async get_all_user_songs(userLink){
-        console.log("token: " + envPath);
-        userToken = userLink; // update user link
-      
+    static async get_all_user_songs(){
         const songIDs = await SongDataFetchers.get_all_user_song_IDs();
         const songs = await SongDataFetchers.get_user_songs(songIDs);
         return songs;
