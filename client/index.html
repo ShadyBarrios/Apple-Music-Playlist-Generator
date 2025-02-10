@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Playlist Generator</title>
+  <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+  <script>
+    // MusicKit setup and user authorization
+    document.addEventListener("musickitloaded", async function() {
+      MusicKit.configure({
+        developerToken: "YOUR_DEVELOPER_TOKEN",
+        app: {
+          name: "Custom Playlist Generator",
+          build: "1.0.0"
+        }
+      });
+      console.log("MusicKit JS Loaded");
+    });
+
+    async function authenticateUser() {
+      try {
+        const music = MusicKit.getInstance();
+        const userToken = await music.authorize();
+        console.log("Music User Token: ", userToken);
+        document.getElementById("status").innerText = userToken;
+      } catch (error) {
+        console.error("Error authorizing user: ", error);
+      }
+    }
+  </script>
+  <script defer src="client.js"></script>
+</head>
+<body>
+  <h1>Welcome to the Music Playlist Generator</h1>
+  <button id="login" onclick="authenticateUser()">Authorize Apple Music</button>
+  <p id="status"></p>
+</body>
+</html>
