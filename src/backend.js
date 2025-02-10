@@ -150,3 +150,7 @@ export { Playlist, BackendGenerator };
     
 //     await BackendGenerator.DEBUG_SongIDsFetchTest();
 // })();
+
+(async () => {
+    // await BackendGenerator.DEBUG_BackendGeneratorCreation();
+})();
