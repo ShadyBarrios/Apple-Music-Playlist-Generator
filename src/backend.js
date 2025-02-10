@@ -135,5 +135,5 @@ class BackendGenerator {
 // })();
 
 (async () => {
-    await BackendGenerator.DEBUG_BackendGeneratorCreation();
+    // await BackendGenerator.DEBUG_BackendGeneratorCreation();
 })();
