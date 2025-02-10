@@ -133,3 +133,7 @@ class BackendGenerator {
     
 //     await BackendGenerator.DEBUG_SongIDsFetchTest();
 // })();
+
+(async () => {
+    await BackendGenerator.DEBUG_BackendGeneratorCreation();
+})();
