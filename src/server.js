@@ -10,10 +10,13 @@ const port = 3000;
 const developerToken = process.env.DEVELOPER_TOKEN;
 const userToken = process.env.USER_TOKEN;  // Get user token from .env file
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const initialDirname = path.dirname(new URL(import.meta.url).pathname);
+let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
+processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
+const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
-// Serve static files from the /client directory
-app.use(express.static(path.join(__dirname, '../client')));
+  // Serve static files from the /client directory
+app.use(express.static(path.join(__dirname, 'client')));
 
 // Endpoint to handle the login API (using the userToken from .env file)
 app.post('/api/login', (req, res) => {
