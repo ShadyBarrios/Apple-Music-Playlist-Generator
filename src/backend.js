@@ -21,25 +21,31 @@ class Playlist {
 
 // BackendGenerator, generates playlists, has all information on user
 class BackendGenerator {
-    constructor(userLink, songs) {
+    constructor(songs) {
         // check that we have good vars
-        if (!userLink) {
+        if (!songs) {
             console.error("BackendGenerator constructor var's are undefined");
             return;
         }
 
-        this.userLink = userLink;
         this.generatedPlaylists = [];
         this.genres = new Set([]);
         this.songs = songs;
     }
 
-    static async create(userLink) {
+    static async create(userToken) {
+        if(!userToken){
+            console.error("User token is undefined");
+            return;
+        }
+
+        GlobalFunctions.update_user_token(userToken);
+
         // get song IDs
-        const songs = await SongDataFetchers.get_all_user_songs(userLink);
+        const songs = await SongDataFetchers.get_all_user_songs();
 
         // return object
-        return new BackendGenerator(userLink, songs); 
+        return new BackendGenerator(songs); 
     }
 
     createPlaylist(playListName, filters) {
@@ -118,5 +124,6 @@ class BackendGenerator {
 (async () => {
     let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
     
-    await BackendGenerator.create(userLink);
+    let backend = await BackendGenerator.create(userLink);
+    console.log(backend.songs.length);
 })();
