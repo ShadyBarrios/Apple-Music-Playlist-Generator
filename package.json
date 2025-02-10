@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "create-env": "touch .env"
   },
   "keywords": [],
   "author": "",
