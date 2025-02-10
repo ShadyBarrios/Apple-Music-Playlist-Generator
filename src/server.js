@@ -28,7 +28,6 @@ app.post('/api/login', (req, res) => {
   res.status(200).json({ message: 'Login successful with token from .env file' });
 });
 
-// Serve the index.html file
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'index.html'));
 });
