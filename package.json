@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash"
+    "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash",
+    "create-env": "touch .env"
   },
   "keywords": [],
   "author": "",
