@@ -1,34 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>  
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Apple Music API Login</title>
-    <script src = "https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
-    <script>document.addEventListener("musickitloaded", async function() {
-        MusicKit.configure({
-            developerToken: "_",
-            app: {
-                name: "Custom Playlist Generator",
-                build: "1.0.0"
-            }
-        });
-        console.log("MusicKit JS Loaded");
-    });
-    
-    async function authenticate_user(){
-        try{
-            const music = MusicKit.getInstance();
-            const userToken = await music.authorize();
-            console.log("Music User Token: ", userToken);
-            document.getElementById("status").innerText = userToken;
-        }
-        catch(error){
-            console.error("Error authorizing user: ", error);
-        }
-    }</script>
-    <script defer src = "functions.js" type="module"></script>
-    </head>
 
     <body>
         <!-- <button onclick = "authenticate_user()">Authorize Apple Music</button>
@@ -69,6 +38,8 @@
 
         <button onclick = "display_all_songs()">Get User (Library + Playlist) songs</button>
         <p id = "all_songs"></p> -->
+        
         <p>Test code with node.js</p>
+
     </body>
 </html>

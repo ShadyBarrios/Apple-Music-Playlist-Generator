@@ -81,8 +81,6 @@ export class Song {
 ///////////////////////////////////////////
 */
 
-
-
 /**
  * GenreDictionary Mutex
  */
@@ -346,7 +344,6 @@ export class Displayer{
         const songs = await SongDataFetchers.get_all_user_library_song_IDs();
         document.getElementById("library_songs_count").innerText = "Song count: " + songs.length;
     }
-
 
     /**
      * Displays user's song count in (library + playlists), no duplicates
