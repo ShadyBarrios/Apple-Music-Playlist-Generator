@@ -2,7 +2,7 @@
 Group project to interact with Apple Music API.<br>
 
 #### .env Setup
-1 - From root folder: run "npm create-env". This will create .env file in root folder<br>
+1 - From root folder: run "npm run create-env". This will create .env file in root folder<br>
 2 - Copy and paste token values exactly. Ex - token_name=token_value<br>
 
 #### Environment Setup
