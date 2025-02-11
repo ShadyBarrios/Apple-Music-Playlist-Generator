@@ -8,7 +8,7 @@ const app = express();
 const port = 3000;
 
 const developerToken = process.env.DEVELOPER_TOKEN;
-const userToken = process.env.USER_TOKEN;  // Get user token from .env file
+let userToken = "";  // Get user token from .env file
 
 const initialDirname = path.dirname(new URL(import.meta.url).pathname);
 let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
@@ -17,15 +17,24 @@ const __dirname = decodeURIComponent(processedDirname); // decodes the URI encod
 
   // Serve static files from the /client directory
 app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.json());
 
-// Endpoint to handle the login API (using the userToken from .env file)
-app.post('/api/login', (req, res) => {
+// Endpoint to handle the login API (using the developerToken from .env file)
+app.post('/api-login', (req, res) => {
+  userToken = req.body.token;
   if (!userToken) {
-    return res.status(400).json({ error: 'User token not available' });
+    return res.status(400).json({ error: 'User token is required' });
   }
 
-  console.log('Using user token from .env:', userToken);  // Process token (you can store/validate it)
-  res.status(200).json({ message: 'Login successful with token from .env file' });
+  console.log('SERVER.JS: Using developer token from .env: ', developerToken);  // Process token (you can store/validate it)
+  console.log();
+  console.log('SERVER.JS: Using fetched user token: ', userToken);  // Process token (you can store/validate it)
+
+  res.json({ message: 'User token fetch successful' });
+});
+
+app.post('/get-dev-token', (req, res) => {
+  res.json({ developerToken: developerToken });
 });
 
 app.get('*', (req, res) => {

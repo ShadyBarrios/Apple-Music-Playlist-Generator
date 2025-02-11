@@ -1,7 +1,7 @@
 // Function to handle the login API call
-async function loginUser() {
+async function login_user() {
   try {
-    const response = await fetch('/api/login', {  // POST to /api/login
+    const response = await fetch('/api-login', {  // POST to /api/login
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,7 +19,73 @@ async function loginUser() {
   }
 }
 
+async function send_user_token(user_token){
+  try{
+    console.log("user: " + user_token);
+
+    const response = await fetch('/api-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token: user_token }),
+    });
+
+    
+    const data = await response.json();
+    console.log('Send Token Response:', data.message);
+  }catch(error){
+    console.error('Error sending user token:', error);
+  }
+}
+
+async function get_dev_token(){
+  try{
+    const response = await fetch('/get-dev-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get developer token');
+    }
+
+    const data = await response.json();
+    return data.developerToken;
+  }catch(error){
+    console.error('Error getting developer token:', error);
+  }
+}
+
 // Adding event listener to login button
 document.getElementById("login").addEventListener("click", () => {
-  loginUser();  // Call the loginUser function when the login button is clicked
+  login_user();  // Call the loginUser function when the login button is clicked
+});
+
+
+// get user token and send to backend
+document.getElementById("authorize").addEventListener("click", async () => {
+  const developer_token = await get_dev_token();
+
+  try {
+      // Initialize MusicKit with your developer token
+      const music = await MusicKit.configure({
+          developerToken: developer_token,
+          app: {
+              name: "Custom Playlist Generator",
+              build: "1.0.0",
+          },
+      });
+
+      // Request user authorization
+      await music.authorize();
+
+      // Retrieve the user token
+      const userToken = music.musicUserToken;
+      await send_user_token(userToken);
+  } catch (error) {
+      console.error("Error authorizing with Apple Music:", error);
+  }
 });
