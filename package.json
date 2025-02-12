@@ -5,7 +5,7 @@
   "main": "login.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --require @babel/register ./test/test.js",
     "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash",
     "start": "node src/server.js",
     "create-env": "touch .env"
@@ -21,6 +21,13 @@
     "minami": "^1.2.3"
   },
   "devDependencies": {
-    "docdash": "^2.0.2"
+    "@babel/core": "^7.26.8",
+    "@babel/preset-env": "^7.26.8",
+    "@babel/register": "^7.25.9",
+    "chai": "^5.1.2",
+    "chai-http": "^5.1.1",
+    "docdash": "^2.0.2",
+    "mocha": "^11.1.0",
+    "supertest": "^7.0.0"
   }
 }
