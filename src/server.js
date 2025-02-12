@@ -11,14 +11,17 @@ const port = 3000;
 const developerToken = process.env.DEVELOPER_TOKEN;
 const userToken = process.env.USER_TOKEN;  // Get user token from .env file
 
+//uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
 // let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
 // processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
 // const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
+//comment for mac machine
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-  // Serve static files from the /client directory
+
+//call client directory
 app.use(express.static(path.join(__dirname, 'client')));
 
 // Endpoint to handle the login API (using the userToken from .env file)
