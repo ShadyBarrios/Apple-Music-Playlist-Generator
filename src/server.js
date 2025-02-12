@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -10,11 +11,13 @@ const port = 3000;
 const developerToken = process.env.DEVELOPER_TOKEN;
 const userToken = process.env.USER_TOKEN;  // Get user token from .env file
 
-const initialDirname = path.dirname(new URL(import.meta.url).pathname);
-let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
-processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
-const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
+// const initialDirname = path.dirname(new URL(import.meta.url).pathname);
+// let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
+// processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
+// const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
   // Serve static files from the /client directory
 app.use(express.static(path.join(__dirname, 'client')));
 
@@ -29,7 +32,7 @@ app.post('/api/login', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
 });
 
 app.listen(port, () => {
