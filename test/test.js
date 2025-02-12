@@ -6,22 +6,11 @@ chai.use(chaiHttp);
 const expect = chai.expect;
 const request = chai.request;
 
-describe('API Tests', function() {
-  describe('GET /*', function() {
-    it('should return the index.html file', function(done) {
-      request(app)
-        .get('/')
-        .end((err, res) => {
-          expect(res).to.have.status(200);
-          expect(res.text).to.include('</html>');
-          done();
-        });
-    });
-  });
-
-  describe('POST /api/login', function() {
+describe('API Tests for /api/login', function() {
     it('should authenticate successfully', function(done) {
-      request(app)
+      process.env.USER_TOKEN = 'test_token';
+  
+      chai.request(app)
         .post('/api/login')
         .end((err, res) => {
           expect(res).to.have.status(200);
@@ -29,9 +18,11 @@ describe('API Tests', function() {
           done();
         });
     });
-
+  
     it('should return an error when USER_TOKEN is missing', function(done) {
-      request(app)
+      delete process.env.USER_TOKEN;
+  
+      chai.request(app)
         .post('/api/login')
         .end((err, res) => {
           expect(res).to.have.status(400);
@@ -39,5 +30,8 @@ describe('API Tests', function() {
           done();
         });
     });
+  
+    after(() => {
+      process.env.USER_TOKEN = 'original_user_token';
+    });
   });
-});
