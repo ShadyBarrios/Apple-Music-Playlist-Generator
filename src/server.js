@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import {BackendGenerator} from './backend.js';
 
 dotenv.config();
 
@@ -9,6 +10,8 @@ const port = 3000;
 
 const developerToken = process.env.DEVELOPER_TOKEN;
 let userToken = "";  // Get user token from .env file
+
+let backend;
 
 const initialDirname = path.dirname(new URL(import.meta.url).pathname);
 let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
@@ -20,21 +23,34 @@ app.use(express.static(path.join(__dirname, 'client')));
 app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
-app.post('/api-login', (req, res) => {
+app.post('/api-login', async (req, res) => {
   userToken = req.body.token;
   if (!userToken) {
-    return res.status(400).json({ error: 'User token is required' });
+    return res.status(400).json({ error: 'User Token fetch failed' });
   }
 
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);  // Process token (you can store/validate it)
   console.log();
   console.log('SERVER.JS: Using fetched user token: ', userToken);  // Process token (you can store/validate it)
 
-  res.json({ message: 'User token fetch successful' });
+  backend = await BackendGenerator.create(userToken);
+  console.log("Backend init");
+
+  res.json({ message: 'User Token fetch successful' });
 });
 
+app.post('/get-backend-object-numbers', (req, res) => {
+  const obj = {
+    songsLength: backend.songs.length,
+    genresLength: Object.keys(backend.genre_dictionary).length,
+    subgenresLength: Object.keys(backend.subgenre_dictionary).length,
+  };
+
+  res.json({ data: obj });
+})
+
 app.post('/get-dev-token', (req, res) => {
-  res.json({ developerToken: developerToken });
+  res.json({ data: developerToken });
 });
 
 app.get('*', (req, res) => {

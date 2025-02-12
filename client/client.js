@@ -1,3 +1,4 @@
+
 // Function to handle the login API call
 async function login_user() {
   try {
@@ -19,10 +20,16 @@ async function login_user() {
   }
 }
 
+function update_loading_status(status){
+  document.getElementById("loading_status").innerText = status;
+}
+
+function update_numbers(data){
+  document.getElementById("numbers").innerText = data;
+}
+
 async function send_user_token(user_token){
   try{
-    console.log("user: " + user_token);
-
     const response = await fetch('/api-login', {
       method: 'POST',
       headers: {
@@ -31,11 +38,34 @@ async function send_user_token(user_token){
       body: JSON.stringify({ token: user_token }),
     });
 
-    
     const data = await response.json();
-    console.log('Send Token Response:', data.message);
+
+    console.log(data.message);
   }catch(error){
     console.error('Error sending user token:', error);
+  }
+}
+
+async function display_user_numbers(){
+  try{
+    const response = await fetch('/get-backend-object-numbers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      update_numbers("Failed to get backend object numbers");
+      throw new Error('Failed to get backend object numbers');
+    }
+
+    const data = await response.json();
+
+    const output = "Song Count: " + data.data.songsLength + "| Genre count: " + data.data.genresLength + " | Subgenre count: " + data.data.subgenresLength;
+    update_numbers(output);
+  }catch(error){
+    console.error('Error getting backend object numbers:', error);
   }
 }
 
@@ -53,20 +83,25 @@ async function get_dev_token(){
     }
 
     const data = await response.json();
-    return data.developerToken;
+    return data.data;
   }catch(error){
     console.error('Error getting developer token:', error);
   }
 }
 
 // Adding event listener to login button
-document.getElementById("login").addEventListener("click", () => {
-  login_user();  // Call the loginUser function when the login button is clicked
+// document.getElementById("login").addEventListener("click", () => {
+//   login_user();  // Call the loginUser function when the login button is clicked
+// });
+
+document.getElementById("get_numbers").addEventListener("click", async () => {
+  await display_user_numbers();
 });
 
-
 // get user token and send to backend
-document.getElementById("authorize").addEventListener("click", async () => {
+document.getElementById("login").addEventListener("click", async () => {
+  update_loading_status("Loading...");
+  console.time("login time");
   const developer_token = await get_dev_token();
 
   try {
@@ -85,6 +120,8 @@ document.getElementById("authorize").addEventListener("click", async () => {
       // Retrieve the user token
       const userToken = music.musicUserToken;
       await send_user_token(userToken);
+      update_loading_status("Loaded");
+      console.timeEnd("login time");
   } catch (error) {
       console.error("Error authorizing with Apple Music:", error);
   }
