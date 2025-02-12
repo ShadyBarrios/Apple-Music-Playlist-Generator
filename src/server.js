@@ -20,12 +20,21 @@ let backend;
 // processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
 // const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
+
 //comment for mac machine
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 //call client directory
 app.use(express.static(path.join(__dirname, 'client')));
+
+//comment for mac machine
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+  // Serve static files from the /client directory
+app.use(express.static(path.join(__dirname, '../client')));
+// (personal path issues, probably from mac machine)
 app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
@@ -60,7 +69,11 @@ app.post('/get-dev-token', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
+
+  //res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
+
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+// (personal path issues, probably from mac machine)
 });
 
 app.listen(port, () => {

@@ -1,4 +1,3 @@
-
 // Function to handle the login API call
 async function login_user() {
   try {
