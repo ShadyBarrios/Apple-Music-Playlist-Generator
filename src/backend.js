@@ -1,5 +1,6 @@
 // get functions from function.js
-import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions} from "./functions.js"
+import { generatePrime } from "crypto";
+import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions, Song } from "./functions.js"
 
 // Playlist, a collection of songs
 class Playlist {
@@ -21,7 +22,14 @@ class Playlist {
 
 // BackendGenerator, generates playlists, has all information on user
 class BackendGenerator {
-    constructor(songs) {
+    /**
+     * Constructor
+     * @param {Set<Song>} songs 
+     * @param {Record<string, number>} genre_dictionary
+     * @param {Record<string, number>} subgenre_dictionary 
+     * @returns {BackendGenerator} backend object
+     */
+    constructor(songs, genre_dictionary, subgenre_dictionary) {
         // check that we have good vars
         if (!songs) {
             console.error("BackendGenerator constructor var's are undefined");
@@ -29,7 +37,8 @@ class BackendGenerator {
         }
 
         this.generatedPlaylists = [];
-        this.genres = new Set([]);
+        this.genre_dictionary = genre_dictionary;
+        this.subgenre_dictionary = subgenre_dictionary;
         this.songs = songs;
     }
 
@@ -43,9 +52,11 @@ class BackendGenerator {
 
         // get song IDs
         const songs = await SongDataFetchers.get_all_user_songs();
+        const genre_dictionary = GlobalFunctions.get_genre_dictionary();
+        const subgenre_dictionary = GlobalFunctions.get_subgenre_dictionary();
 
         // return object
-        return new BackendGenerator(songs); 
+        return new BackendGenerator(songs, genre_dictionary, subgenre_dictionary); 
     }
 
     createPlaylist(playListName, filters) {
@@ -123,7 +134,6 @@ class BackendGenerator {
         let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
         
         let backend = await BackendGenerator.create(userLink);
-        console.log(backend.songs.length);
     }
 }
 
@@ -136,6 +146,6 @@ export { Playlist, BackendGenerator };
 //     await BackendGenerator.DEBUG_SongIDsFetchTest();
 // })();
 
-(async () => {
-    // await BackendGenerator.DEBUG_BackendGeneratorCreation();
-})();
+// (async () => {
+//     await BackendGenerator.DEBUG_BackendGeneratorCreation();
+// })();

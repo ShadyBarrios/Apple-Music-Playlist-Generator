@@ -152,7 +152,10 @@ export class GlobalFunctions{
      * @returns {Promise<string>} genre ID
      */
     static async get_genre_id(genre_name){
-        const id = genreDictionary[genre_name];
+        let id = undefined;
+
+        await genreDictionaryMutex.runExclusive(async () => id = genreDictionary[genre_name]);
+
         console.log("Searching dictionary for ID of " + genre_name);
         if(id == undefined){
             console.error(genre_name + " is not in genre dictionary.")
@@ -166,7 +169,7 @@ export class GlobalFunctions{
      * @param {string[]} songIDs 
      * @returns {string[][]} array of songID partitions
      */
-    static async songIDs_partitioner(songIDs){
+    static songIDs_partitioner(songIDs){
         let songIDsCopy = songIDs.slice(); // shallow copy
         const songIDsPartitions = [];
         while (songIDsCopy.length) {
@@ -430,7 +433,7 @@ export class SongDataFetchers{
      */
     static async get_user_songs(songIDs){
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
-        const partitions = await GlobalFunctions.songIDs_partitioner(songIDs);
+        const partitions = GlobalFunctions.songIDs_partitioner(songIDs);
         let songs = [];
         songs = await ParallelDataFetchers.get_all_user_songs_from("Catalog", url, partitions, songIDs.length);
         return songs;
