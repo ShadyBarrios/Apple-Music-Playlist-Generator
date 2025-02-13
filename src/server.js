@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 import {BackendGenerator} from './backend.js';
 
 dotenv.config();
@@ -13,12 +14,17 @@ let userToken = "";  // Get user token from .env file
 
 let backend;
 
-const initialDirname = path.dirname(new URL(import.meta.url).pathname);
-let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
-processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
-const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
+//uncomment for windows machine
+// const initialDirname = path.dirname(new URL(import.meta.url).pathname);
+// let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
+// processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
+// const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
-  // Serve static files from the /client directory
+//comment for mac machine
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+//call client directory
 app.use(express.static(path.join(__dirname, 'client')));
 app.use(express.json());
 
@@ -54,7 +60,7 @@ app.post('/get-dev-token', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
 });
 
 app.listen(port, () => {
