@@ -21,6 +21,7 @@ async function login_user() {
 
 function update_loading_status(status) {
 
+  document.getElementById("loading_status").innerText = status;
   const loadingAnimate = document.getElementById("loading_animate");
 
   if (status === "Loading...") {
@@ -29,7 +30,11 @@ function update_loading_status(status) {
     loadingAnimate.style.display = "none"; // Hide video after loading
   }
 
-  document.getElementById("loading_status").innerText = status;
+  if (status === "Loaded") {
+    document.getElementById("get_numbers").style.display = "block"; // show button
+  } else {
+    document.getElementById("get_numbers").style.display = "none";
+  }
 }
 
 function update_numbers(data){

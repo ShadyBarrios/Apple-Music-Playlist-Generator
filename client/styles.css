@@ -110,9 +110,8 @@ video {
   box-shadow: none !important;
   border: none !important;
   outline: none !important;
-  background: transparent; /* Ensures no background color */
-  filter: none; /* Removes any potential filters */
-  mix-blend-mode: normal; /* Ensure default blending */
-  image-rendering: pixelated; /* Prevents soft edges */
+  background: transparent; 
+  filter: none; 
+  mix-blend-mode: normal;
 }
 
