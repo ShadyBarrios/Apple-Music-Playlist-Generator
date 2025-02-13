@@ -15,14 +15,14 @@ let userToken = "";  // Get user token from .env file
 let backend;
 
 //uncomment for windows machine
-// const initialDirname = path.dirname(new URL(import.meta.url).pathname);
-// let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
-// processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
-// const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
+const initialDirname = path.dirname(new URL(import.meta.url).pathname);
+let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
+processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
+const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
 //comment for mac machine
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 //call client directory
 app.use(express.static(path.join(__dirname, 'client')));

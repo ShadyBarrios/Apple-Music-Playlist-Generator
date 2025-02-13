@@ -1,6 +1,7 @@
 // get functions from function.js
 import { generatePrime } from "crypto";
-import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions, Song } from "./functions.js"
+import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions, Song, GenreDictionary, SubgenreDictionary} from "./functions.js"
+import { genre_dictionary, subgenre_dictionary } from "./functions.js";
 
 // Playlist, a collection of songs
 class Playlist {
@@ -25,8 +26,8 @@ class BackendGenerator {
     /**
      * Constructor
      * @param {Set<Song>} songs 
-     * @param {Record<string, number>} genre_dictionary
-     * @param {Record<string, number>} subgenre_dictionary 
+     * @param {GenreDictionary} genre_dictionary
+     * @param {SubgenreDictionary} subgenre_dictionary 
      * @returns {BackendGenerator} backend object
      */
     constructor(songs, genre_dictionary, subgenre_dictionary) {
@@ -52,8 +53,8 @@ class BackendGenerator {
 
         // get song IDs
         const songs = await SongDataFetchers.get_all_user_songs();
-        const genre_dictionary = GlobalFunctions.get_genre_dictionary();
-        const subgenre_dictionary = GlobalFunctions.get_subgenre_dictionary();
+        const genre_dictionary = GenreDictionary.get();
+        const subgenre_dictionary = SubgenreDictionary.get();
 
         // return object
         return new BackendGenerator(songs, genre_dictionary, subgenre_dictionary); 
@@ -120,8 +121,8 @@ class BackendGenerator {
 
         console.log("Songs Fetch Output size: " + output2.length);
 
-        console.log("Genre Dictionary length: " + Object.keys(GlobalFunctions.get_genre_dictionary()).length);
-        console.log("Subgenre Dictionary length: " + Object.keys(GlobalFunctions.get_subgenre_dictionary()).length);
+        console.log("Genre Dictionary length: " + Object.keys(GenreDictionary.get()).length);
+        console.log("Subgenre Dictionary length: " + Object.keys(SubgenreDictionary.get()).length);
     }
 
     static async DEBUG_ThreadCalculator(){
