@@ -19,7 +19,16 @@ async function login_user() {
   }
 }
 
-function update_loading_status(status){
+function update_loading_status(status) {
+
+  const loadingAnimate = document.getElementById("loading_animate");
+
+  if (status === "Loading...") {
+    loadingAnimate.style.display = "block"; // Show video when loading
+  } else {
+    loadingAnimate.style.display = "none"; // Hide video after loading
+  }
+
   document.getElementById("loading_status").innerText = status;
 }
 

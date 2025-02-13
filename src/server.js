@@ -33,8 +33,12 @@ app.use(express.static(path.join(__dirname, 'client')));
 // const __dirname = path.dirname(__filename);
 
   // Serve static files from the /client directory
+<<<<<<< HEAD
 app.use(express.static(path.join(__dirname, '../client')));
 // (personal path issues, probably from mac machine)
+=======
+app.use(express.static(path.join(__dirname, '../client'))); // find client directory from root
+>>>>>>> 23d624e (added loading animation, need to fix drop shadow and more ui stuff i think though)
 app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
@@ -69,11 +73,15 @@ app.post('/get-dev-token', (req, res) => {
 });
 
 app.get('*', (req, res) => {
+<<<<<<< HEAD
 
   //res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
 
   res.sendFile(path.join(__dirname, '../client/index.html'));
 // (personal path issues, probably from mac machine)
+=======
+  res.sendFile(path.join(__dirname, '../client/index.html')); //appending index.html only not the extra ../client
+>>>>>>> 23d624e (added loading animation, need to fix drop shadow and more ui stuff i think though)
 });
 
 app.listen(port, () => {
