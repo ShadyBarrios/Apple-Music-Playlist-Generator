@@ -104,3 +104,34 @@ button {
   max-width: 300px;
   margin: 10px auto;
 }
+
+/*video has no outline/drop shadow */
+video {
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent; 
+  filter: none; 
+  mix-blend-mode: normal;
+}
+
+.login, .select-genres {
+  width:100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  
+  align-items: center; 
+  height: 100vh; 
+  text-align: center;
+}
+
+#loading_animate {
+  max-width: 300px; /* Adjust this as needed */
+}
+
+

@@ -20,12 +20,26 @@ let backend;
 // processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
 // const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
+//comment for mac machine
+
 // Comment for mac machine
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'client')));
+
+//comment for mac machine
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+  // Serve static files from the /client directory
+
+app.use(express.static(path.join(__dirname, '../client')));
+// (personal path issues, probably from mac machine)
+
+app.use(express.static(path.join(__dirname, '../client'))); // find client directory from root
 app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
@@ -44,6 +58,20 @@ app.post('/api-login', async (req, res) => {
   res.json({ message: 'User Token fetch successful' });
 });
 
+app.post('/get-genres', (req, res) => {
+  console.log("Genres endpoint hit!");
+
+  if (!backend.genre_dictionary) {
+    console.error("Error: backend.genre_dictionary is undefined or null.");
+    return res.status(500).json({ error: "Genre dictionary not found on the server." });
+  }
+
+  console.log(backend.genre_dictionary);
+  const allGenres = Object.keys(backend.genre_dictionary);
+  res.json({ data: allGenres });
+});
+
+
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
     songsLength: backend.songs.length,
@@ -58,8 +86,13 @@ app.post('/get-dev-token', (req, res) => {
   res.json({ data: developerToken });
 });
 
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
+
+  //res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
+
+// (personal path issues, probably from mac machine)
+  res.sendFile(path.join(__dirname, '../client/index.html')); //appending index.html only not the extra ../client
 });
 
 // Start server only if this module is run directly
