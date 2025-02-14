@@ -1,13 +1,6 @@
 // Pull tokens from .env
-import dotenv from 'dotenv';
-import path from 'path';
 import {Mutex} from 'async-mutex';
 
-// Create .env in root folder with the following:
-const isInSrc = process.cwd().endsWith('\\src');
-const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');
-dotenv.config({ path: envPath });
-const developerToken = process.env.DEVELOPER_TOKEN;
 /*
 /////////////////////
 // IMPORTANT TYPES //
@@ -246,9 +239,10 @@ class InteractAPI{
      * Bloat reducer; used to fetch data from Apple API
      * @param {string} url 
      * @param {string} userToken
+     * @param {string} developerToken
      * @returns fetch response
      */
-    static async fetchData(url, userToken){
+    static async fetchData(url, userToken, developerToken){
         return await fetch(url, {
             headers: {
                 "Authorization": 'Bearer ' + developerToken,

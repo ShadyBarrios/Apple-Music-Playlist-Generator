@@ -4,13 +4,16 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import {BackendGenerator} from './backend.js';
 
-dotenv.config();
+// Create .env in root folder with the following:
+const isInSrc = process.cwd().endsWith('\\src');
+const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');
+dotenv.config({ path: envPath });
+const developerToken = process.env.DEVELOPER_TOKEN;
 
 const app = express();
 const port = 3000;
 
-const developerToken = process.env.DEVELOPER_TOKEN;
-let userToken = "";  // Get user token from .env file
+let userToken = "";  // Get user token from frontend
 
 let backend;
 
