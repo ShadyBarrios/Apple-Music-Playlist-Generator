@@ -19,7 +19,7 @@ const userToken = process.env.USER_TOKEN;  // Get user token from .env file
 const __filename = fileURLToPath (import.meta.url);
 const __dirname = path.dirname(__filename); // Correctly extracts the directory
   // Serve static files from the /client directory
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(path.join(__dirname, '../client')));
 
 // Endpoint to handle the login API (using the userToken from .env file)
 app.post('/api/login', (req, res) => {

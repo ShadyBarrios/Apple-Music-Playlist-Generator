@@ -24,6 +24,7 @@
     "@babel/core": "^7.26.8",
     "@babel/preset-env": "^7.26.8",
     "@babel/register": "^7.25.9",
+    "@types/chai-http": "^4.2.4",
     "chai": "^5.1.2",
     "chai-http": "^5.1.1",
     "docdash": "^2.0.2",
