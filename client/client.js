@@ -20,7 +20,6 @@ async function login_user() {
 }
 
 function update_loading_status(status) {
-
   document.getElementById("loading_status").innerText = status;
   const loadingAnimate = document.getElementById("loading_animate");
 
@@ -32,10 +31,12 @@ function update_loading_status(status) {
 
   if (status === "Loaded") {
     document.getElementById("get_numbers").style.display = "block"; // show button
+    fetchGenres();
   } else {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
+
 
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
@@ -139,3 +140,49 @@ document.getElementById("login").addEventListener("click", async () => {
       console.error("Error authorizing with Apple Music:", error);
   }
 });
+
+async function fetchGenres() {
+  try {
+    const response = await fetch('/get-genres', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch genres');
+    }
+
+    const data = await response.json(); // Parse the JSON response
+    console.log('Fetched Genres:', data);  // Check if genres are received
+    displayGenres(data.data);
+
+  } catch (error) {
+    console.error('Error fetching genres:', error);
+  }
+}
+
+function displayGenres(genres) {
+  const genresContainer = document.querySelector('.select-genres');  
+
+  let buttonsContainer = document.querySelector('.genre-buttons');
+  if (!buttonsContainer) {
+    buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('genre-buttons');
+    genresContainer.appendChild(buttonsContainer);
+  }
+
+  buttonsContainer.innerHTML = '';
+
+  genres.forEach(genre => {
+    const button = document.createElement('button');
+    button.innerText = genre;
+    button.addEventListener('click', () => {
+      console.log(`Selected Genre: ${genre}`);
+    });
+    buttonsContainer.appendChild(button);
+  });
+}
+
+

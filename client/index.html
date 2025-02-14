@@ -32,17 +32,25 @@
   </script>
 </head>
 <body>
-  <h1>Welcome to the Music Playlist Generator</h1>
-  <button id="login">Login</button>
-  <video id="loading_animate" autoplay loop muted playsinline style="display: none;">
-    <source src="/images/output.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <div class ="login">
+    <h1>Welcome to the Music Playlist Generator</h1>
+    <button id="login">Login</button>
+    <video id="loading_animate" autoplay loop muted playsinline style="display: none;">
+      <source src="/images/output.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
 
-  <p id="loading_status"></p>
-  
-  <button id="get_numbers" style="display: none;">Get Numbers</button>
-  <p id="numbers"></p>
+    <p id="loading_status"></p>
+    
+    <button id="get_numbers" style="display: none;">Get Numbers</button>
+    <p id="numbers"></p>
+  </div>
+
+  <div class ="select-genres">
+    <h1> Please select genres here</h1>
+  </div>
+
+
   <script defer src="/client.js"></script>
 </body>
 </html>

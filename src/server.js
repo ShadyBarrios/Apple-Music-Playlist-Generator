@@ -57,6 +57,20 @@ app.post('/api-login', async (req, res) => {
   res.json({ message: 'User Token fetch successful' });
 });
 
+app.post('/get-genres', (req, res) => {
+  console.log("Genres endpoint hit!");
+
+  if (!backend.genre_dictionary) {
+    console.error("Error: backend.genre_dictionary is undefined or null.");
+    return res.status(500).json({ error: "Genre dictionary not found on the server." });
+  }
+
+  console.log(backend.genre_dictionary);
+  const allGenres = Object.keys(backend.genre_dictionary);
+  res.json({ data: allGenres });
+});
+
+
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
     songsLength: backend.songs.length,
@@ -71,11 +85,11 @@ app.post('/get-dev-token', (req, res) => {
   res.json({ data: developerToken });
 });
 
+
 app.get('*', (req, res) => {
 
   //res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
 
-  res.sendFile(path.join(__dirname, '../client/index.html'));
 // (personal path issues, probably from mac machine)
   res.sendFile(path.join(__dirname, '../client/index.html')); //appending index.html only not the extra ../client
 });
