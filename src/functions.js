@@ -74,6 +74,28 @@ export class Song {
 }
 
 /**
+ * Lightweight class encapsulating user data
+ */
+export class UserData{
+    /**
+     * @param {Song[]} songs - array of Song objects
+     * @param {GenreDictionary} genre_dictionary - GenreDictionary object
+     * @param {SubgenreDictionary} subgenre_dictionary - SubgenreDictionary object
+     */
+    constructor(songs, genre_dictionary, subgenre_dictionary) {
+        // check that we have good vars
+        if (!songs || !genre_dictionary || !subgenre_dictionary) {
+            console.error("UserData constructor var's are undefined");
+            return;
+        }
+
+        this.songs = songs;
+        this.genre_dictionary = genre_dictionary;
+        this.subgenre_dictionary = subgenre_dictionary;
+    }
+}
+
+/**
  * Genre Dictionary Interface
  */
 export class GenreDictionary{
@@ -88,7 +110,7 @@ export class GenreDictionary{
 
     /**
      * Accessor function to get copy of the dictionary
-     * @returns {Record<string, number>} genre dictionary
+     * @returns {Promise<Record<string, number>>} genre dictionary
      */
     async get(){
         let copy = {}
@@ -100,9 +122,9 @@ export class GenreDictionary{
      * Adds genres to the dictionary if not already included (dictionary[name] = id)
      * @param {Genres[]} genres - array of Genres objects
      */
-    static async add(genres){
+    async add(genres){
         await mutex_genre_dictionary.runExclusive(async () => {
-            genres.forEach(genre => this.dictionary[genre.attributes.name] = genre.id);
+            genres.map(genre => genre != "Music").forEach(genre => this.#dictionary[genre.attributes.name] = genre.id);
         });
     }
 
@@ -132,7 +154,7 @@ export class SubgenreDictionary{
 
     /**
      * Accessor function to get copy of the dictionary
-     * @returns {Record<string, number>} subgenre dictionary
+     * @returns {Promise<Record<string, number>>} subgenre dictionary
      */
     async get(){
         let copy = {};
@@ -144,9 +166,9 @@ export class SubgenreDictionary{
      * Adds subgenres to the dictionary if not already included (dictionary[name] = 1 if exists)
      * @param {string[]} subgenres - array of subgenre names
      */
-    async add(subgenres){
+    async add(subgenres){;
         await mutex_subgenre_dictionary.runExclusive(async () => {
-            subgenres.forEach(subgenre => this.#dictionary[subgenre] = 1);
+            subgenres.map(subgenre => subgenre != "Music").subgenres.forEach(subgenre => this.#dictionary[subgenre] = 1)
         });
     }
 
@@ -165,19 +187,30 @@ export class SubgenreDictionary{
 
     /**
      * Removes keys from SubgenreDictionary if present in GenreDictionary
-     * @param {GenreDictionary} genreDictionary
-     * @returns {Promise<SubgenreDictionary>} updated subgenre dictionary
+     * @param {string[]} genres - GenreDictionary keys
      */
-    async clean(genreDictionary){
-        const genreKeys = Object.keys(genreDictionary.get());
-        let subgenreKeys = Object.keys(this.get());
+    async clean(genres){
+        await mutex_subgenre_dictionary.runExclusive(async () => {
+            let subgenres = Object.keys(this.#dictionary);
+            let duplicateKeys = genres.filter(genre => subgenres.includes(genre));
+            
+            for(let i = 0; i < duplicateKeys.length; i++){
+                delete this.#dictionary[duplicateKeys[i]];
+            }
+        });
+    }
 
-        let duplicateKeys = genreKeys.filter(genre => subgenreKeys.includes(genre));
-        for(let i = 0; i < duplicateKeys.length; i++){
-            await mutex_subgenre_dictionary.runExclusive(() => delete this.#dictionary[duplicateKeys[i]]);
-        }
-
-        return subgenreDictionary;
+    /**
+     * Gets subgenres with main genre included in the name
+     * @param {string} genre_name - genre name
+     * @returns {Promise<string[]>} array of subgenre names with genre_name included (ex: "Rock" -> "Rock & Roll")
+     */
+    async get_subgenres_of(genre_name){
+        let subgenres = [];
+        mutex_subgenre_dictionary.runExclusive(async () => {
+            subgenres = this.#dictionary.filter(subgenre => subgenre.includes(genre_name));
+        });
+        return subgenres;
     }
 }
 
@@ -217,7 +250,13 @@ class InteractAPI{
     }
 }
 
-class GenreSubgenreRelations{
+/*
+///////////////////////////////////////////////////////////////
+// RETRIEVAL FUNCTIONS THAT COMMUNICATE WITH APPLE MUSIC API //
+///////////////////////////////////////////////////////////////
+*/
+
+export class DataFetchers{
     /**
      * This class is not meant to be instantiated
      */
@@ -226,22 +265,18 @@ class GenreSubgenreRelations{
     }
 
     /**
-     * Gets subgenres with main genre included in the name
-     * @param {string} genre_name - genre name
-     * @param {string[]} subgenres - array of subgenre names
-     * @returns {string[]} array of subgenre names with genre_name included (ex: "Rock" -> "Rock & Roll")
+     * Gets all users' songs, genres and subgenres
+     * @param {string} userToken - Apple Music User Token
+     * @returns {Promise<UserData>} Songs, Genres, Subgenres
      */
-    static get_subgenres_of_genre(genre_name, subgenres){
-        return subgenres.filter(subgenre => subgenre.includes(genre_name));
+    static async get_all_user_data(){
+        let songs = "";
+        let genre_dictionary = "";
+        let subgenre_dictionary = "";
+
+        return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }
 }
-
-/*
-///////////////////////////////////////////////////////////////
-// RETRIEVAL FUNCTIONS THAT COMMUNICATE WITH APPLE MUSIC API //
-///////////////////////////////////////////////////////////////
-*/
-
 /**
  * Functions to fetch users' song data
  */
@@ -353,6 +388,47 @@ export class SongDataFetchers{
         let result = await ParallelDataFetchers.get_all_user_song_IDs_from("User Library", url);
         return result;
     }
+
+    /**
+     * Returns array of genres for a song
+     * @param {string} song_id - Catalog ID of song
+     * @returns {Promise<Genres>} array of Genres objects
+     */
+    static async get_genres(song_id){
+        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
+        console.log("Retrieving genres for: " + song_id);
+        try{
+            const response = await GlobalFunctions.fetchData(url);
+
+            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
+
+            const data = await response.json();
+            return data.data[0].relationships.genres.data;
+        }catch(error){
+            console.error("Error fetching genres: ", error);
+        }
+    }
+
+    /**
+     * Returns array of subgenre names for a song
+     * @param {string} song_id 
+     * @returns {string[]} array of subgenre names
+     */
+    static async get_subgenres(song_id){
+        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
+        console.log("Retrieving subgenres for: " + song_id);
+        try{
+            const response = await GlobalFunctions.fetchData(url);
+
+            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
+
+            const data = await response.json();
+            return data.data[0].attributes.genreNames;
+        }
+        catch(error){
+            console.error("Error fetching subgenres: ", error);
+        }
+    }
 }
 
 /**
@@ -441,102 +517,6 @@ export class PlaylistDataFetchers{
         }catch(error){
             console.error("Error fetching user library playlist IDs: ", error);
             return [];
-        }
-    }
-}
-
-/**
- * Functions to fetch users' genre data
- */
-export class GenreDataFetchers{
-    /**
-     * This class is not meant to be instantiated
-     */
-    constructor() {
-        throw new Error("This class cannot be instantiated.");
-    }
-
-    /**
-     * Returns array of genres for a song
-     * @param {string} song_id - Catalog ID of song
-     * @returns {Promise<Genres>} array of Genres objects
-     */
-    static async get_genres(song_id){
-        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
-        console.log("Retrieving genres for: " + song_id);
-        try{
-            const response = await GlobalFunctions.fetchData(url);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
-            const data = await response.json();
-            return data.data[0].relationships.genres.data;
-        }catch(error){
-            console.error("Error fetching genres: ", error);
-        }
-    }
-
-    /**
-     * Returns array of subgenre names for a song
-     * @param {string} song_id 
-     * @returns {string[]} array of subgenre names
-     */
-    static async get_subgenres(song_id){
-        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
-        console.log("Retrieving subgenres for: " + song_id);
-        try{
-            const response = await GlobalFunctions.fetchData(url);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
-            const data = await response.json();
-            return data.data[0].attributes.genreNames;
-        }
-        catch(error){
-            console.error("Error fetching subgenres: ", error);
-        }
-    }
-}
-
-/**
- * Functions to recommend songs
- */
-export class Recommender{
-
-    /**
-     * This class is not meant to be instantiated
-     */
-    constructor() {
-        throw new Error("This class cannot be instantiated.");
-    }
-
-    /**
-     * Returns a random song recommendation given a genre name from Apple Music charts
-     * @param {string} genre_name - looked up in GenreDictionary
-     * @returns {Promise<Songs>} Apple API Songs object
-     */
-    static async get_genre_song_recommendation(genre_name){
-        const dictionary = GenreDictionary.get();
-        const id = dictionary[genre_name];
-        let url = "https://api.music.apple.com/v1/catalog/us/charts?genre=" + id + "&types=songs&limit=25";
-        console.log("Retrieving recommendations from " + genre_name);
-        
-        try{
-            if(id == undefined) throw new Error("Genre input is not valid.");
-
-            const response = await GlobalFunctions.fetchData(url);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
-            const data = await response.json();
-            const songs = data.results.songs[0].data;
-            if(songs.length == 0){
-                console.error("No results");
-            }
-            const song = songs[Math.floor(Math.random() * songs.length)];
-            return song;
-        }catch(error){
-            console.error("Error fetching genres: ", error);
         }
     }
 }
