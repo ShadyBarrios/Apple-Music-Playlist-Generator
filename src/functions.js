@@ -90,8 +90,10 @@ export class GenreDictionary{
      * Accessor function to get copy of the dictionary
      * @returns {Record<string, number>} genre dictionary
      */
-    get(){
-        return {...(this.#dictionary)};
+    async get(){
+        let copy = {}
+        await mutex_genre_dictionary.runExclusive(async () => copy = {...this.#dictionary});
+        return copy;
     }
 
     /**
@@ -132,8 +134,10 @@ export class SubgenreDictionary{
      * Accessor function to get copy of the dictionary
      * @returns {Record<string, number>} subgenre dictionary
      */
-    get(){
-        return {...(this.#dictionary)};
+    async get(){
+        let copy = {};
+        await mutex_genre_dictionary.runExclusive(async () => copy = {...this.#dictionary});
+        return copy;
     }
 
     /**
@@ -141,7 +145,7 @@ export class SubgenreDictionary{
      * @param {string[]} subgenres - array of subgenre names
      */
     async add(subgenres){
-        await mutex_subgenre_dictionary.runExclusive(() => {
+        await mutex_subgenre_dictionary.runExclusive(async () => {
             subgenres.forEach(subgenre => this.#dictionary[subgenre] = 1);
         });
     }
@@ -157,6 +161,23 @@ export class SubgenreDictionary{
         await mutex_subgenre_dictionary.runExclusive(async () => exists = this.#dictionary[subgenre_name] != undefined);
 
         return exists;
+    }
+
+    /**
+     * Removes keys from SubgenreDictionary if present in GenreDictionary
+     * @param {GenreDictionary} genreDictionary
+     * @returns {Promise<SubgenreDictionary>} updated subgenre dictionary
+     */
+    async clean(genreDictionary){
+        const genreKeys = Object.keys(genreDictionary.get());
+        let subgenreKeys = Object.keys(this.get());
+
+        let duplicateKeys = genreKeys.filter(genre => subgenreKeys.includes(genre));
+        for(let i = 0; i < duplicateKeys.length; i++){
+            await mutex_subgenre_dictionary.runExclusive(() => delete this.#dictionary[duplicateKeys[i]]);
+        }
+
+        return subgenreDictionary;
     }
 }
 
@@ -193,6 +214,25 @@ class InteractAPI{
                 "Music-User-Token": userToken
             }
         });
+    }
+}
+
+class GenreSubgenreRelations{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
+    /**
+     * Gets subgenres with main genre included in the name
+     * @param {string} genre_name - genre name
+     * @param {string[]} subgenres - array of subgenre names
+     * @returns {string[]} array of subgenre names with genre_name included (ex: "Rock" -> "Rock & Roll")
+     */
+    static get_subgenres_of_genre(genre_name, subgenres){
+        return subgenres.filter(subgenre => subgenre.includes(genre_name));
     }
 }
 
