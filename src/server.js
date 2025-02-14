@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import {BackendGenerator} from './backend.js';
+import { BackendGenerator } from './backend.js';
 
 dotenv.config();
 
@@ -14,18 +14,20 @@ let userToken = "";  // Get user token from .env file
 
 let backend;
 
-//uncomment for windows machine
+// Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
 // let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
 // processedDirname = processedDirname.endsWith("/src") ? processedDirname.slice(0, -4) : processedDirname; // removes the /src from the end
 // const __dirname = decodeURIComponent(processedDirname); // decodes the URI encoding
 
-
 //comment for mac machine
+
+// Comment for mac machine
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-//call client directory
+// Serve static files
 app.use(express.static(path.join(__dirname, 'client')));
 
 //comment for mac machine
@@ -47,9 +49,8 @@ app.post('/api-login', async (req, res) => {
     return res.status(400).json({ error: 'User Token fetch failed' });
   }
 
-  console.log('SERVER.JS: Using developer token from .env: ', developerToken);  // Process token (you can store/validate it)
-  console.log();
-  console.log('SERVER.JS: Using fetched user token: ', userToken);  // Process token (you can store/validate it)
+  console.log('SERVER.JS: Using developer token from .env: ', developerToken);
+  console.log('SERVER.JS: Using fetched user token: ', userToken);
 
   backend = await BackendGenerator.create(userToken);
   console.log("Backend init");
@@ -79,7 +80,7 @@ app.post('/get-backend-object-numbers', (req, res) => {
   };
 
   res.json({ data: obj });
-})
+});
 
 app.post('/get-dev-token', (req, res) => {
   res.json({ data: developerToken });
@@ -94,6 +95,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/index.html')); //appending index.html only not the extra ../client
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+// Start server only if this module is run directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
+// Export the app for testing
+export default app;
