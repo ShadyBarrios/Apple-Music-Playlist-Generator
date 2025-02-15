@@ -1,7 +1,7 @@
 // get functions from function.js
-import { generatePrime } from "crypto";
-import { ParallelDataFetchers, SongDataFetchers, GlobalFunctions, Song, GenreDictionary, SubgenreDictionary} from "./functions.js"
-import { genre_dictionary, subgenre_dictionary } from "./functions.js";
+// import { generatePrime } from "crypto";
+import { ParallelDataFetchers, SongDataFetchers, Song, GenreDictionary, SubgenreDictionary} from "./functions.js"
+// import { genre_dictionary, subgenre_dictionary } from "./functions.js";
 
 // Playlist, a collection of songs
 class Playlist {
@@ -21,19 +21,20 @@ class Playlist {
     getSongs() { return this.songs; }
 }
 
-// BackendGenerator, generates playlists, has all information on user
-class BackendGenerator {
+// UserBackend, generates playlists, has all information on user
+class UserBackend {
     /**
      * Constructor
      * @param {Set<Song>} songs 
      * @param {GenreDictionary} genre_dictionary
      * @param {SubgenreDictionary} subgenre_dictionary 
-     * @returns {BackendGenerator} backend object
+     * @returns {UserBackend} backend object
      */
-    constructor(songs, genre_dictionary, subgenre_dictionary) {
+
+    constructor(songs, genre_dictionary, subgenre_dictionary, clientToken) {
         // check that we have good vars
         if (!songs) {
-            console.error("BackendGenerator constructor var's are undefined");
+            console.error("UserBackend constructor var's are undefined");
             return;
         }
 
@@ -41,26 +42,45 @@ class BackendGenerator {
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
         this.songs = songs;
+        this.clientToken = clientToken;
+        console.log("OBJECT: " + this.clientToken);
     }
 
-    static async create(userToken) {
-        if(!userToken){
+    static async create(appleToken, clientToken) {
+        if(!appleToken){
             console.error("User token is undefined");
             return;
         }
 
-        GlobalFunctions.update_user_token(userToken);
-
         // get song IDs
-        const songs = await SongDataFetchers.get_all_user_songs();
-        const genre_dictionary = GenreDictionary.get();
-        const subgenre_dictionary = SubgenreDictionary.get();
+        // const songs = await SongDataFetchers.get_all_user_songs(appleToken);
+        // const genre_dictionary = GenreDictionary.get();
+        // const subgenre_dictionary = SubgenreDictionary.get();
+
+        const songs = new Set([]);
+        const genre_dictionary = new Set([]);
+        const subgenre_dictionary = new Set([]);
+
+        console.log("PARSING FROM APPLE");
+        await new Promise(resolve => setTimeout(() => {
+            console.log("\t5 seconds have passed!");
+            resolve();
+        }, 0));
 
         // return object
-        return new BackendGenerator(songs, genre_dictionary, subgenre_dictionary); 
+        return new UserBackend(songs, genre_dictionary, subgenre_dictionary, clientToken); 
     }
 
     createPlaylist(playListName, filters) {
+        // TEMP SONGS
+        this.songs.add(new Song("R", ["Rock"], []));
+        this.songs.add(new Song("P", ["Pop"], []));
+        this.songs.add(new Song("I", ["Indie"], []));
+        this.songs.add(new Song("RPI", ["Rock", "Pop", "Indie"], []));
+        for (let i = 1; i < 500; i++) {
+            this.songs.add(new Song("R" + String(i), ["Rock"], []));
+        }
+
         // check that we have good vars
         if (!playListName || !filters) {
             console.error("createPlaylist var's are undefined");
@@ -87,13 +107,39 @@ class BackendGenerator {
             }
         }
 
+        // check if we have a size of 0
         if (possibleSongs.size == 0) {
             console.log("WARNING: No songs fit filters for: " + playListName);
-            return;
+            return [];
         }
 
-        let playlist = new Playlist(possibleSongs, playListName, "desc", filters);
+        // turn set into an array and perform Fisher-Yates shuffle
+        const possibleArray = [...possibleSongs];
+
+        for (let i = possibleArray.length - 1; i > 0; i--) {
+            const randomIndex = Math.floor(Math.random() * (i + 1)); // Get a random index
+            [possibleArray[i], possibleArray[randomIndex]] = [possibleArray[randomIndex], possibleArray[i]]; // Swap elements
+        }
+        
+        // final check and return
+        let playlistArr = [];
+        if (possibleArray.length <= 100) { playlistArr = possibleArray; } // less than 100, just return the randomized list
+        else { playlistArr = possibleArray.slice(0, 100); } // more than 100 get a slice
+
+        let playlist = new Playlist(playlistArr, playListName, "desc", filters);
         this.generatedPlaylists.push(playlist);
+
+        let cnt = 0;
+        for (let i of playlist.songs) {
+            process.stdout.write(i.id + ", ");
+            cnt++;
+            if (cnt == 10) {
+                console.log();
+                cnt = 0;
+            }
+        }
+
+        return playlist;
     }
 
     DEBUG_backendPrint() {
@@ -130,23 +176,70 @@ class BackendGenerator {
             console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
         }
     }
+}
 
-    static async DEBUG_BackendGeneratorCreation(){
-        let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
+class Backend {
+    constructor() {
+        this.clientUsers = [];
+        this.appleTokens = [];
+    }
+
+    async createUser(appleToken) {
+        // this will be the current index of the usersArray
+        let clientToken = this.clientUsers.length;
         
-        let backend = await BackendGenerator.create(userLink);
+        console.log("before");
+
+        // make new client and push arrays
+        let newClient = await UserBackend.create(appleToken, this.clientUsers.length);
+        this.clientUsers.push(newClient);
+        this.appleTokens.push(appleToken); 
+
+        console.log("after");
+
+        // return token
+        return clientToken;
+    }
+
+    async pushApplePlaylist(playlist) {
+        // will get a playlist from client side and then create it in user library
+        console.log("SENDING PLAYLIST TO APPLE");
+        await new Promise(resolve => setTimeout(() => {
+            console.log("\t5 seconds have passed!");
+            resolve();
+        }, 5000));
     }
 }
 
-export { Playlist, BackendGenerator };
+export { Playlist, UserBackend };
 
 // main
-// (async () => {
-//     let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
-    
-//     await BackendGenerator.DEBUG_SongIDsFetchTest();
-// })();
+(async () => {
+    let userLink = "AlLe4L3iXChGjyf4RQXdJ2Kqm6Y9MqN2b/ArL1owtg4TQm/DHcymgUxCh4y42MXK6GAysfrUwHpAzScihOWCyFO86M7d4WOZjpJaOLQHN+mJoZEoSa2pk38ACwZ5BSJvqdlBHS8OL56yGR6XVtjcG1b2GLPJMKe0+PNbOucFucvS2sHYsgx6YHTI0wnPLbdAIrXWtNEV8j/VvbcfJsvA3o8JbbupUdhDNE0kAg2FCIoElPHVKQ==";
 
-// (async () => {
-//     await BackendGenerator.DEBUG_BackendGeneratorCreation();
-// })();
+    // Test ASYNC stuff
+    
+    // let backend = new Backend();
+
+    // console.log("BEFORE 1: ");
+    // const clientNum = await backend.createUser(userLink);
+    // console.log("AFTER 1: " + clientNum + "\n\n");
+
+    // console.log("BEFORE 2: ");
+    // const clientNum1 = await backend.createUser(userLink);
+    // console.log("AFTER 2: " + clientNum1 + "\n\n");
+
+    // console.log("Making Playlist");
+    // await backend.pushApplePlaylist(clientNum1.generatedPlaylists)
+    // console.log("AFTER PLAYLIST\n\n");
+
+    // console.log("BEFORE 3: ");
+    // const clientNum2 = await backend.createUser(userLink);
+    // console.log("AFTER 3: " + clientNum2 + "\n\n");
+
+    // make a playlist (client side) test
+    let user = await UserBackend.create(userLink, 0);
+    user.createPlaylist("playlist1", ["Rock", "Pop"])
+
+
+})();
