@@ -139,6 +139,7 @@ class Dictionary{
 
 /**
  * Genre Dictionary
+ * @extends Dictionary
  */
 export class GenreDictionary extends Dictionary{
     /**
@@ -169,6 +170,7 @@ export class GenreDictionary extends Dictionary{
 
 /**
  * Subgenre Dictionary
+ * @extends Dictionary
  */
 export class SubgenreDictionary extends Dictionary{
     /**
