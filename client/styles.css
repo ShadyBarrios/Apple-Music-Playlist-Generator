@@ -140,3 +140,22 @@ video {
   background-color: #5a0505;
 }
 
+
+.login, .select-genres {
+  width:100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  
+  align-items: center; 
+  height: 100vh; 
+  text-align: center;
+}
+
+#loading_animate {
+  max-width: 300px; /* Adjust this as needed */
+}
