@@ -1,3 +1,4 @@
+//client.js
 // Function to handle the login API call
 async function login_user() {
   try {
@@ -110,6 +111,13 @@ async function get_dev_token(){
 document.getElementById("get_numbers").addEventListener("click", async () => {
   await display_user_numbers();
 });
+
+//redirect index to home
+document.getElementById("startButton").addEventListener("click", function() {
+  window.location.href = "/home.html"; 
+});
+
+
 
 // get user token and send to backend
 document.getElementById("login").addEventListener("click", async () => {
