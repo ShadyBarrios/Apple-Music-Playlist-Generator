@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>PlaylistDataFetchers - Documentation</title>
+    <title>UserBackend - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -35,7 +35,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">PlaylistDataFetchers</h1>
+    <h1 class="page-title">UserBackend</h1>
     
 
     
@@ -49,11 +49,9 @@
     
         <h2>
         
-            PlaylistDataFetchers
+            UserBackend
         
         </h2>
-        
-            <div class="class-description usertext">Functions to fetch users' playlist data</div>
         
     
 </header>
@@ -65,10 +63,8 @@
             
 
     
-    <h2>Constructor</h2>
-    
 
-    <h4 class="name" id="PlaylistDataFetchers"><span class="type-signature"></span>new PlaylistDataFetchers<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="UserBackend"><span class="type-signature"></span>new UserBackend<span class="signature">(songs, genre_dictionary, subgenre_dictionary)</span><span class="type-signature"> &rarr; {<a href="UserBackend.html">UserBackend</a>}</span></h4>
 
     
 
@@ -78,234 +74,13 @@
 <dl class="details">
     
     <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li>This class is not meant to be instantiated</li></ul></dd>
+    <dd class="tag-description"><ul class="dummy"><li>Constructor</li></ul></dd>
     
 
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="functions.js.html">functions.js</a>, <a href="functions.js.html#line442">line 442</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-        </div>
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Classes</h3>
-
-        <dl>
-            <dt><a href="PlaylistDataFetchers.html">PlaylistDataFetchers</a></dt>
-            <dd></dd>
-        </dl>
-    
-    
-    
-
-     
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    <h4 class="name" id=".get_all_user_playlist_IDs"><span class="type-signature type-signature-async, static">(async, static) </span>get_all_user_playlist_IDs<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;string>>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li>Returns array of all playlist IDs in user's library</li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="functions.js.html">functions.js</a>, <a href="functions.js.html#line474">line 474</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-<div class="param-desc">
-    array of LibraryPlaylists IDs
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;string>></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".get_user_playlist_IDs"><span class="type-signature type-signature-async, static">(async, static) </span>get_user_playlist_IDs<span class="signature">(url, accumulated_playlist_IDs)</span><span class="type-signature"> &rarr; {Promise.&lt;Set.&lt;string>>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li>Returns array of all playlist IDs in user's library page</li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="functions.js.html">functions.js</a>, <a href="functions.js.html#line493">line 493</a>
+        <a href="backend.js.html">backend.js</a>, <a href="backend.js.html#line34">line 34</a>
     </li></ul></dd>
     
 
@@ -377,13 +152,13 @@
 
         <tr>
             
-                <td class="name"><code>url</code></td>
+                <td class="name"><code>songs</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">Set.&lt;<a href="Song.html">Song</a>></span>
 
 
 
@@ -394,20 +169,20 @@
 
             
 
-            <td class="description last">Apple API URL (used for pagination)</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>accumulated_playlist_IDs</code></td>
+                <td class="name"><code>genre_dictionary</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;string></span>
+<span class="param-type"><a href="GenreDictionary.html">GenreDictionary</a></span>
 
 
 
@@ -418,7 +193,31 @@
 
             
 
-            <td class="description last">array of playlist IDs</td>
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>subgenre_dictionary</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="SubgenreDictionary.html">SubgenreDictionary</a></span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
         </tr>
 
     
@@ -444,7 +243,7 @@
 
         
 <div class="param-desc">
-    accumulated_playlist_IDs
+    backend object
 </div>
 
 
@@ -455,7 +254,7 @@
     </dt>
     <dd>
         
-<span class="param-type">Promise.&lt;Set.&lt;string>></span>
+<span class="param-type"><a href="UserBackend.html">UserBackend</a></span>
 
 
 
@@ -467,28 +266,7 @@
 
 
         
-            
-
-    
-
-    <h4 class="name" id=".get_user_playlists"><span class="type-signature type-signature-async, static">(async, static) </span>get_user_playlists<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#LibraryPlaylists">LibraryPlaylists</a>>>}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-    
-    <dt class="tag-description">Description:</dt>
-    <dd class="tag-description"><ul class="dummy"><li>Returns array of user's playlists - maximum size is 100 playlists</li></ul></dd>
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="functions.js.html">functions.js</a>, <a href="functions.js.html#line454">line 454</a>
-    </li></ul></dd>
+        </div>
     
 
     
@@ -496,85 +274,15 @@
     
 
     
+    
+    
+
+     
 
     
 
     
 
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5 class="h5-returns">Returns:</h5>
-
-        
-<div class="param-desc">
-    array of LibraryPlaylists objects
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#LibraryPlaylists">LibraryPlaylists</a>>></span>
-
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
     
 
     
