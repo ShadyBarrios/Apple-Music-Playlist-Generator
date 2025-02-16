@@ -260,6 +260,9 @@ class InteractAPI{
 ///////////////////////////////////////////////////////////////
 */
 
+/**
+ * Interface to retrieve user data
+ */
 export class DataFetchers{
     /**
      * This class is not meant to be instantiated
@@ -282,6 +285,7 @@ export class DataFetchers{
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }
 }
+
 /**
  * Functions to fetch users' song data
  */
