@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Music Playlist Generator -start</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <script src="/client.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Playlist Generator - Start</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/client.js" defer></script>
 </head>
 <body>
-  <h1>Welcome to the Music Playlist Generator</h1>
-  <button id="startButton">Start</button>
-  <script>
-    document.getElementById("startButton").addEventListener("click", function() {
+    <div class="welcome-container">
+        <div class="logo-container">
+            
+            <video autoplay loop muted playsinline class="welcome-icon">
+                <source src="/images/output.mp4" type="video/mp4">
+            </video>
+        </div>
+        <h1 class="welcome-title">Welcome to the Music Playlist Generator</h1>
+        <p class="welcome-subtitle">Create custom playlists based on your favorite genres</p>
+        <button id="startButton" class="welcome-button">Get Started</button>
+    </div>
+    
+<script>
+  document.getElementById("startButton").addEventListener("click", function() {
       window.location.href = "/home.html";
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
