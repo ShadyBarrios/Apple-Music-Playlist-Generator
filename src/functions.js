@@ -1,5 +1,6 @@
 // Pull tokens from .env
 import {Mutex} from 'async-mutex';
+import {Playlist} from './backend.js';
 
 /*
 /////////////////////
@@ -42,6 +43,19 @@ import {Mutex} from 'async-mutex';
  * @property {Object} attributes - Song attributes
  * @property {Object} attributes.playParams - Song play parameters
  * @property {string} attributes.playParams.catalogId - Song catalog ID
+ */
+
+/**
+ * Request body object for creating library playlist
+ * @typedef {Object} PlaylistCreationRequest
+ * @property {Object} attributes - Playlist attributes
+ * @property {string} attributes.description
+ * @property {string} attributes.name
+ * @property {Object} relationships - Playlist relationships
+ * @property {Object} relationships.tracks - Playlist tracks
+ * @property {[{id: string, type: string}]} relationships.tracks.data - Playlist tracks data
+ * @property {string} relationships.tracks.data.id - Song catalog ID
+ * @property {string} relationships.tracks.data.type - Song type 
  */
 
 /** 
@@ -238,19 +252,50 @@ export class SubgenreDictionary extends Dictionary{
  */
 class InteractAPI{
     /**
-     * Bloat reducer; used to fetch data from Apple API
-     * @param {string} url 
-     * @param {string} userToken
-     * @param {string} developerToken
-     * @returns fetch response
+     * This class is not meant to be instantiated
      */
-    static async fetchData(url, userToken, developerToken){
-        return await fetch(url, {
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
+    /**
+     * Bloat reducer, API call
+     */
+    static async fetch_data(url, request){
+        const response = await fetch(url, request);
+        return response;
+    }
+
+    /**
+     * Bloat reducer; used to retrieve data from Apple API
+     * @param {string} developerToken
+     * @param {string} userToken
+     */
+    static retrieve_data_request(developerToken, userToken){
+        return {
             headers: {
                 "Authorization": 'Bearer ' + developerToken,
                 "Music-User-Token": userToken
             }
-        });
+        };
+    }
+
+    /**
+     * Bloat reducer; used to send data to Apple API
+     * @param {string} developerToken
+     * @param {string} userToken
+     * @param {Object} body
+     */
+    static send_data_request(developerToken, userToken, body){
+        return {
+            method: 'POST',
+            headers: {
+                "Authorization": 'Bearer ' + developerToken,
+                "Music-User-Token": userToken,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        };
     }
 }
 
@@ -287,6 +332,35 @@ export class DataFetchers{
 }
 
 /**
+ * Interface to send user data
+ */
+export class DataSenders{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
+    /**
+     * Adds playlist (with songs) to user library
+     * @param {Playlist} playlist - Playlist object
+     * @param {string} developerToken - Apple Music Developer Token
+     * @param {string} userToken - Apple Music User Token
+     * @returns {Promise<boolean>} true if successful
+     */
+    static async add_playlist(playlist, developerToken, userToken){
+        const songs = playlist.songs;
+        const song_ids = songs.map(song => song.id);
+        const playlist_name = playlist.getName();
+        const description = playlist.getDescription();
+
+        // add playlist to user library
+        const result = await PlaylistDataSenders.send_playlist(playlist_name, description, song_ids, developerToken, userToken);
+    }
+}
+
+/**
  * Functions to fetch users' song data
  */
 export class SongDataFetchers{
@@ -299,15 +373,16 @@ export class SongDataFetchers{
 
     /**
      * Returns array of user's 10 most recently played songs.
-     * Updates Genre and Subgenre dictionaries.
+     * @param {string} developerToken - Apple Music Developer Token
+     * @param {string} userToken - Apple Music User Token
      * @returns {Promise<Songs[]>} array of Songs objects
      */ 
-    static async get_user_recently_played(){
+    static async get_user_recently_played(developerToken, userToken){
         const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=10";
         console.log("Retrieving recently played songs...");
 
         try{
-            const response = await InteractAPI.fetchData(url);
+            const response = await InteractAPI.fetch_data(url, developerToken, userToken);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -323,9 +398,9 @@ export class SongDataFetchers{
      * Returns set containing all songs found in user's library and playlists.
      * @returns {Promise<Set<Song>>} array of Song objects
      */
-    static async get_all_user_songs(){
-        const songIDs = await SongDataFetchers.get_all_user_song_IDs();
-        const songs = await SongDataFetchers.get_user_songs(songIDs);
+    static async get_all_user_songs(developerToken, userToken){
+        const songIDs = await SongDataFetchers.get_all_user_song_IDs(developerToken, userToken);
+        const songs = await SongDataFetchers.get_user_songs(songIDs, developerToken, userToken);
         return songs;
     }
 
@@ -334,11 +409,10 @@ export class SongDataFetchers{
      * @param {string[]} songIDs - array of song catalog IDs
      * @returns {Promise<Set<Song>>} set of Song objects
      */
-    static async get_user_songs(songIDs){
+    static async get_user_songs(songIDs, developerToken, userToken){
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
-        const partitions = GlobalFunctions.songIDs_partitioner(songIDs);
         let songs = [];
-        songs = await ParallelDataFetchers.get_all_user_songs_from("Catalog", url, partitions, songIDs.length);
+        songs = await ParallelDataFetchers.get_all_user_songs_from("Catalog", url, songIDs, songIDs.length);
         return songs;
     }
 
@@ -352,7 +426,7 @@ export class SongDataFetchers{
         const playlistSongIDs = await SongDataFetchers.get_all_user_playlist_song_IDs();
 
         // union array with no duplicates
-        const allSongIDs = await [...new Set([...librarySongIDs, ...playlistSongIDs])];
+        const allSongIDs = [...new Set([...librarySongIDs, ...playlistSongIDs])];
         
         return allSongIDs;
     }
@@ -360,7 +434,7 @@ export class SongDataFetchers{
     /**
      * Returns all song catalog ID's from all user's playlists.
      * @param {string} playlist_id - LibraryPlaylists ID
-     * @returns {string[]} array of song catalog IDs
+     * @returns {Promise<string[]>} array of song catalog IDs
      */
     static async get_all_user_playlist_song_IDs(){
         const playlistIDs = await PlaylistDataFetchers.get_all_user_playlist_IDs();
@@ -378,7 +452,7 @@ export class SongDataFetchers{
     /**
      * Returns set of all song catalog ID's in a user's playlist.
      * @param {string} playlist_id - LibraryPlaylists ID
-     * @returns {string[]} array of song catalog IDs
+     * @returns {Promise<string[]>} array of song catalog IDs
      */
     static async get_user_playlist_song_IDs(playlist_id){
         const url = "https://api.music.apple.com/v1/me/library/playlists/" + playlist_id + "/tracks?limit=100&offset=";
@@ -407,7 +481,7 @@ export class SongDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
         console.log("Retrieving genres for: " + song_id);
         try{
-            const response = await GlobalFunctions.fetchData(url);
+            const response = await InteractAPI.fetch_data(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -427,7 +501,7 @@ export class SongDataFetchers{
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
         console.log("Retrieving subgenres for: " + song_id);
         try{
-            const response = await GlobalFunctions.fetchData(url);
+            const response = await InteractAPI.fetch_data(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -459,7 +533,7 @@ export class PlaylistDataFetchers{
         const url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
         console.log("Retrieving playlists...")
         try{
-            const response = await fetchData(url);
+            const response = await InteractAPI.fetch_data(url);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -497,7 +571,7 @@ export class PlaylistDataFetchers{
     static async get_user_playlist_IDs(url, accumulated_playlist_IDs){
         try{
             while(true){
-                const response = await GlobalFunctions.fetchData(url);
+                const response = await InteractAPI.fetch_data(url);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -526,6 +600,66 @@ export class PlaylistDataFetchers{
         }catch(error){
             console.error("Error fetching user library playlist IDs: ", error);
             return [];
+        }
+    }
+}
+
+/**
+ * Functions to send users' playlist data
+ */
+export class PlaylistDataSenders{
+    /**
+     * This class is not meant to be instantiated
+     */
+    constructor() {
+        throw new Error("This class cannot be instantiated.");
+    }
+
+    /**
+     * Send a playlist to be added to user's library
+     * @param {string} playlist_name - name of playlist
+     * @param {string} description - description of playlist
+     * @param {string[]} song_ids - array of song catalog IDs
+     * @param {string} developerToken - Apple Music Developer Token
+     * @param {string} userToken - Apple Music User Token
+     */
+    static async send_playlist(playlist_name, description, song_ids, developerToken, userToken){
+        const url = "https://api.music.apple.com/v1/me/library/playlists";
+        const body = PlaylistDataSenders.#create_body(playlist_name, description, song_ids);
+        const request = InteractAPI.send_data_request(developerToken, userToken, body);
+
+        try{
+            const response = await InteractAPI.fetch_data(url, request);
+
+            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
+
+            return true;
+        }catch(error){
+            console.error("Error sending playlist to user library: ", error);
+        }
+    }
+
+    /**
+     * Creates body for POST request to add playlist to user's library
+     * @param {string} playlist_name - name of playlist
+     * @param {string} description - description of playlist
+     * @param {string[]} song_ids - array of song catalog IDs
+     * @returns {PlaylistCreationRequest} body
+     */
+    static #create_body(playlist_name, description, song_ids){
+        return {
+            attributes: {
+                "name": playlist_name,
+                "description": description
+            },
+            relationships: {
+                tracks: {
+                    data: song_ids.map(id => ({
+                        id: id, 
+                        type: "songs"
+                    }))
+                }
+            }
         }
     }
 }
@@ -703,7 +837,7 @@ export class ParallelDataFetchers{
      */
     static async get_first_page_of(collection, url, accumulated_song_ids){
         try{
-            const response = await InteractAPI.fetchData(url + '0');
+            const response = await InteractAPI.fetch_data(url + '0');
 
             if(!response.ok) {
                 if(response.status === 404){
@@ -740,7 +874,7 @@ export class ParallelDataFetchers{
             const playlist_size = first_page[1];
 
             const thread_count_max = 5;
-            const thread_count = ParallelDataFetchers.thread_count_calculator(playlist_size, thread_count_max);
+            const thread_count = ParallelDataFetchers.#thread_count_calculator(playlist_size, thread_count_max);
             
             let result = [];
             result = await ParallelDataFetchers.parallelize_using_offset(ParallelDataFetchers.get_user_song_IDs_from, collection, url, offset, thread_count, playlist_size);
@@ -766,7 +900,7 @@ export class ParallelDataFetchers{
     static async get_user_song_IDs_from(collection, url, offset, thread_count, list_size, accumulated_song_ids){
         try{
             while(true){
-                const response = await GlobalFunctions.fetchData(url + offset);
+                const response = await InteractAPI.fetch_data(url + offset);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -807,13 +941,15 @@ export class ParallelDataFetchers{
     /**
      * Returns set containing all songs given song catalog ID array
      * @param {string} collection - describes where resource is being pulled from
-     * @param {string[][]} partitions - array of song catalog ID partitions
+     * @param {string} url - Apple API URL
+     * @param {string[]} list - array of song catalog IDs
      * @param {number} list_size - number of songs to be fetched
      * @returns {Promise<Set<Song>>} set of Song objects
      */
-    static async get_all_user_songs_from(collection, url, partitions, list_size){
+    static async get_all_user_songs_from(collection, url, list, list_size){
         const max_thread_count = 5;
-        const thread_count = ParallelDataFetchers.thread_count_calculator(list_size, max_thread_count);
+        const thread_count = ParallelDataFetchers.#thread_count_calculator(list_size, max_thread_count);
+        const partitions = ParallelDataFetchers.#song_ids_partitioner(list);
         let accumulated_songs = [];
 
         try{
@@ -845,7 +981,7 @@ export class ParallelDataFetchers{
             for(let i = index; i < partitions.length; i += thread_count){
                 const ids = partitions[i].join(",");
 
-                const response = await GlobalFunctions.fetchData(url + ids);
+                const response = await InteractAPI.fetch_data(url + ids);
 
                 if(!response.ok){
                     if (response.status === 504) {

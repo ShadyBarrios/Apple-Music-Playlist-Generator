@@ -19,7 +19,11 @@ class Playlist {
     }
 
     getSongs() { return this.songs; }
+    getName() { return this.name; }
+    getDescription() { return this.description; }
 }
+
+export {Playlist};
 
 // UserBackend, generates playlists, has all information on user
 class UserBackend {
