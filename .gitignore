@@ -16,4 +16,5 @@ src/token_generator.py
 src/access.py
 
 # js
+src/functionsTest.js
 src/login.js
