@@ -58,6 +58,21 @@ import {Playlist} from './backend.js';
  * @property {string} relationships.tracks.data.type - Song type 
  */
 
+/**
+ * Fetch Request Headers
+ * @typedef {Object} Headers
+ * @property {string} Authorization - Developer token
+ * @property {string} MusicUserToken - User Token
+ * @property {string} [ContentType] - Optional Content Type
+ */
+/**
+ * Fetch Request description
+ * @typedef {Object} Request
+ * @property {string} [method] - optional, usually "POST"
+ * @property {Headers} headers - request headers
+ * @property {string} [body] - request body
+ */
+
 /** 
  * Lighweight class only containing vital Song information
  * */
@@ -260,6 +275,9 @@ class InteractAPI{
 
     /**
      * Bloat reducer, API call
+     * @param {string} url
+     * @param {Request} request
+     * @returns {Promise<Response>} Response object
      */
     static async fetch_data(url, request){
         const response = await fetch(url, request);
@@ -270,6 +288,7 @@ class InteractAPI{
      * Bloat reducer; used to retrieve data from Apple API
      * @param {string} developerToken
      * @param {string} userToken
+     * @returns {Request} Formatted Request
      */
     static retrieve_data_request(developerToken, userToken){
         return {
@@ -285,6 +304,7 @@ class InteractAPI{
      * @param {string} developerToken
      * @param {string} userToken
      * @param {Object} body
+     * @returns {Request} Formatted Request
      */
     static send_data_request(developerToken, userToken, body){
         return {
@@ -318,16 +338,40 @@ export class DataFetchers{
 
     /**
      * Gets all users' songs, genres and subgenres
+     * @param {string} developerToken - Developer Token
      * @param {string} userToken - Apple Music User Token
      * @returns {Promise<UserData>} Songs, Genres, Subgenres
      */
-    static async get_all_user_data(){
-        let songs = [new Song("1", ["1"], ["Rock"])]; // placeholder
+    static async get_all_user_data(developerToken, userToken){
+        const request = InteractAPI.retrieve_data_request(developerToken, userToken);
+
+        const songs = SongDataFetchers.get_all_songs(request);
+
         let genres = [... new Set(songs.map(song => song.genres).flat())];
-        let genre_dictionary = new GenreDictionary();
-        let subgenre_dictionary = "";
+        let genre_dictionary = await GenreDictionary.create(genres)
+
+        let subgenres = [... new Set(songs.map(song => song.subgenres).flat())];
+        let subgenre_dictionary = await SubgenreDictionary.create(subgenres);
+        subgenre_dictionary.clean(genres); // delete subgenres that are also genres
 
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
+    }
+
+    /**
+     * Gets n most recently played songs
+     * @param {number} limit - number of songs to retrieve
+     * @param {string} developerToken - Apple Music Developer Token
+     * @param {string} userToken - Apple Music User Token
+     * @returns {Promise<Songs[]>} array of Songs objects
+     */
+    static async get_user_recently_played(limit, developerToken, userToken){
+        const request = InteractAPI.retrieve_data_request(developerToken, userToken);
+
+        if(limit <= 0) return [];
+        else if(limit > 100) limit = 100;
+
+        const result = await SongDataFetchers.get_recently_played(limit, request);
+        return result;
     }
 }
 
@@ -349,14 +393,19 @@ export class DataSenders{
      * @param {string} userToken - Apple Music User Token
      * @returns {Promise<boolean>} true if successful
      */
-    static async add_playlist(playlist, developerToken, userToken){
+    static async create_user_playlist(playlist, developerToken, userToken){
         const songs = playlist.songs;
         const song_ids = songs.map(song => song.id);
         const playlist_name = playlist.getName();
         const description = playlist.getDescription();
 
+        const body = PlaylistDataSenders.create_body(playlist_name, description, song_ids);
+        const request = InteractAPI.send_data_request(developerToken, userToken, body);
+
         // add playlist to user library
-        const result = await PlaylistDataSenders.send_playlist(playlist_name, description, song_ids, developerToken, userToken);
+        const result = await PlaylistDataSenders.send_playlist(request);
+
+        return result;
     }
 }
 
@@ -372,17 +421,17 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns array of user's 10 most recently played songs.
-     * @param {string} developerToken - Apple Music Developer Token
-     * @param {string} userToken - Apple Music User Token
+     * Returns array of user's n most recently played songs.
+     * @param {number} limit - n songs to retrieve
+     * @param {Request} request - fetch request info
      * @returns {Promise<Songs[]>} array of Songs objects
      */ 
-    static async get_user_recently_played(developerToken, userToken){
-        const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=10";
+    static async get_recently_played(limit, request){
+        const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=" + limit;
         console.log("Retrieving recently played songs...");
 
         try{
-            const response = await InteractAPI.fetch_data(url, developerToken, userToken);
+            const response = await InteractAPI.fetch_data(url, request);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -396,34 +445,37 @@ export class SongDataFetchers{
 
     /**
      * Returns set containing all songs found in user's library and playlists.
+     * @param {Request} request - fetch request info
      * @returns {Promise<Set<Song>>} array of Song objects
      */
-    static async get_all_user_songs(developerToken, userToken){
-        const songIDs = await SongDataFetchers.get_all_user_song_IDs(developerToken, userToken);
-        const songs = await SongDataFetchers.get_user_songs(songIDs, developerToken, userToken);
+    static async get_all_songs(request){
+        const songIDs = await SongDataFetchers.get_all_song_IDs(request);
+        const songs = await SongDataFetchers.get_songs(songIDs, request);
         return songs;
     }
 
     /**
      * Returns set containing all songs given song catalog ID array
      * @param {string[]} songIDs - array of song catalog IDs
+     * @param {Request} request - fetch request info
      * @returns {Promise<Set<Song>>} set of Song objects
      */
-    static async get_user_songs(songIDs, developerToken, userToken){
+    static async get_songs(songIDs, request){
         let url = "https://api.music.apple.com/v1/catalog/us/songs?include=genres&ids=";
         let songs = [];
-        songs = await ParallelDataFetchers.get_all_user_songs_from("Catalog", url, songIDs, songIDs.length);
+        songs = await ParallelDataFetchers.get_all_songs_from("Catalog", url, request, songIDs, songIDs.length);
         return songs;
     }
 
     /** 
      * Returns set containing all songs IDs found in user's library and playlists.
+     * @param {Request} request - fetch request info
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
-    static async get_all_user_song_IDs(){
+    static async get_all_song_IDs(request){
         // get all songs from the library section
-        const librarySongIDs = await SongDataFetchers.get_all_user_library_song_IDs();
-        const playlistSongIDs = await SongDataFetchers.get_all_user_playlist_song_IDs();
+        const librarySongIDs = await SongDataFetchers.get_all_library_song_IDs(request);
+        const playlistSongIDs = await SongDataFetchers.get_all_playlist_song_IDs(request);
 
         // union array with no duplicates
         const allSongIDs = [...new Set([...librarySongIDs, ...playlistSongIDs])];
@@ -433,17 +485,17 @@ export class SongDataFetchers{
 
     /**
      * Returns all song catalog ID's from all user's playlists.
-     * @param {string} playlist_id - LibraryPlaylists ID
+     * @param {Request} request - fetch request info
      * @returns {Promise<string[]>} array of song catalog IDs
      */
-    static async get_all_user_playlist_song_IDs(){
-        const playlistIDs = await PlaylistDataFetchers.get_all_user_playlist_IDs();
+    static async get_all_playlist_song_IDs(request){
+        const playlistIDs = await PlaylistDataFetchers.get_all_playlist_IDs(request);
         let playlistSongIDs = [];
         
         console.log("Retrieving all song IDs from user playlists...");
 
         for(let i = 0; i < playlistIDs.length; i++){
-            playlistSongIDs.push(await SongDataFetchers.get_user_playlist_song_IDs(playlistIDs[i]));
+            playlistSongIDs.push(await SongDataFetchers.get_playlist_song_IDs(playlistIDs[i], request));
         }
 
         return [...new Set(playlistSongIDs.flat())];
@@ -452,36 +504,39 @@ export class SongDataFetchers{
     /**
      * Returns set of all song catalog ID's in a user's playlist.
      * @param {string} playlist_id - LibraryPlaylists ID
+     * @param {Request} request - fetch request info
      * @returns {Promise<string[]>} array of song catalog IDs
      */
-    static async get_user_playlist_song_IDs(playlist_id){
+    static async get_playlist_song_IDs(playlist_id, request){
         const url = "https://api.music.apple.com/v1/me/library/playlists/" + playlist_id + "/tracks?limit=100&offset=";
-        let result = await ParallelDataFetchers.get_all_user_song_IDs_from("User Playlist", url);
+        let result = await ParallelDataFetchers.get_all_song_IDs_from("User Playlist", url, request);
         return result;
     }
 
     /**
      * Returns set of all song catalog IDs in user's library.
+     * @param {Request} request - fetch request info
      * @returns {Promise<string[]>} array of song catalog IDs
      */
-    static async get_all_user_library_song_IDs(){
+    static async get_all_library_song_IDs(request){
         const url = "https://api.music.apple.com/v1/me/library/songs?limit=100&offset=";
 
         console.log("Retrieving all song IDs from user library...");
-        let result = await ParallelDataFetchers.get_all_user_song_IDs_from("User Library", url);
+        let result = await ParallelDataFetchers.get_all_song_IDs_from("User Library", url, request);
         return result;
     }
 
     /**
      * Returns array of genres for a song
      * @param {string} song_id - Catalog ID of song
+     * @param {Request} request - fetch request info
      * @returns {Promise<Genres>} array of Genres objects
      */
-    static async get_genres(song_id){
+    static async get_genres(song_id, request){
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
         console.log("Retrieving genres for: " + song_id);
         try{
-            const response = await InteractAPI.fetch_data(url);
+            const response = await InteractAPI.fetch_data(url, request);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -495,13 +550,14 @@ export class SongDataFetchers{
     /**
      * Returns array of subgenre names for a song
      * @param {string} song_id 
+     * @param {Request} request
      * @returns {string[]} array of subgenre names
      */
-    static async get_subgenres(song_id){
+    static async get_subgenres(song_id, request){
         let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
         console.log("Retrieving subgenres for: " + song_id);
         try{
-            const response = await InteractAPI.fetch_data(url);
+            const response = await InteractAPI.fetch_data(url, request);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -527,13 +583,14 @@ export class PlaylistDataFetchers{
 
     /**
      * Returns array of user's playlists - maximum size is 100 playlists
+     * @param {Request} request - fetch request info
      * @returns {Promise<LibraryPlaylists[]>} array of LibraryPlaylists objects
      */
-    static async get_user_playlists(){
+    static async get_playlists(request){
         const url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
         console.log("Retrieving playlists...")
         try{
-            const response = await InteractAPI.fetch_data(url);
+            const response = await InteractAPI.fetch_data(url, request);
 
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
@@ -547,14 +604,16 @@ export class PlaylistDataFetchers{
 
     /**
      * Returns array of all playlist IDs in user's library
+     * @param {Request} request - fetch request info
      * @returns {Promise<string[]>} array of LibraryPlaylists IDs
      */
-    static async get_all_user_playlist_IDs(){
+    static async get_all_playlist_IDs(request){
         let url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
         console.log("Retrieving user library playlist IDs...");
         let accumulated_playlist_IDs = [];
+
         try{
-            accumulated_playlist_IDs = await PlaylistDataFetchers.get_user_playlist_IDs(url, accumulated_playlist_IDs);
+            accumulated_playlist_IDs = await PlaylistDataFetchers.get_playlist_IDs(url, request, accumulated_playlist_IDs);
             return accumulated_playlist_IDs;
         }catch(error){
             console.error("Error fetching user library playlist IDs: ", error);
@@ -565,13 +624,14 @@ export class PlaylistDataFetchers{
     /**
      * Returns array of all playlist IDs in user's library page
      * @param {string} url - Apple API URL (used for pagination)
+     * @param {Request} request - fetch request info
      * @param {string[]} accumulated_playlist_IDs - array of playlist IDs
      * @returns {Promise<Set<string>>} accumulated_playlist_IDs 
      */
-    static async get_user_playlist_IDs(url, accumulated_playlist_IDs){
+    static async get_playlist_IDs(url, request, accumulated_playlist_IDs){
         try{
             while(true){
-                const response = await InteractAPI.fetch_data(url);
+                const response = await InteractAPI.fetch_data(url, request);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -622,11 +682,10 @@ export class PlaylistDataSenders{
      * @param {string[]} song_ids - array of song catalog IDs
      * @param {string} developerToken - Apple Music Developer Token
      * @param {string} userToken - Apple Music User Token
+     * @returns {Promise<boolean>} true if successful
      */
-    static async send_playlist(playlist_name, description, song_ids, developerToken, userToken){
+    static async send_playlist(request){
         const url = "https://api.music.apple.com/v1/me/library/playlists";
-        const body = PlaylistDataSenders.#create_body(playlist_name, description, song_ids);
-        const request = InteractAPI.send_data_request(developerToken, userToken, body);
 
         try{
             const response = await InteractAPI.fetch_data(url, request);
@@ -646,7 +705,7 @@ export class PlaylistDataSenders{
      * @param {string[]} song_ids - array of song catalog IDs
      * @returns {PlaylistCreationRequest} body
      */
-    static #create_body(playlist_name, description, song_ids){
+    static create_body(playlist_name, description, song_ids){
         return {
             attributes: {
                 "name": playlist_name,
@@ -718,52 +777,53 @@ export class ParallelDataFetchers{
      * Parallelizes API fetch process when URL uses offset pagination
      * @param {function} func - function to be parallelized
      * @param {string} collection - describes where resource is being pulled from
-     * @param {number} thread_count - number of threads to be used
-     * @param {number} listSize - size of list to be fetched/processed
      * @param {string} url - URL used in API fetch requesets
      * @param {number} offset - offset useed in fetch request URLs
+     * @param {Request} request - fetch request info
+     * @param {number} thread_count - number of threads to be used
+     * @param {number} listSize - size of list to be fetched/processed
      * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
      */
-    static async parallelize_using_offset(func, collection, url, offset, thread_count, list_size){
+    static async parallelize_using_offset(func, collection, url, offset, request, thread_count, list_size){
         let result = [];
         if(thread_count === 1){
-            result = await Promise.allSettled([func(collection, url, offset+100, 1, list_size, [])]);
+            result = await Promise.allSettled([func(collection, url, offset+100, request, 1, list_size, [])]);
         }
         else if(thread_count === 2){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, offset+100, 2, list_size, []),
-                    func(collection, url, offset+200, 2, list_size, [])
+                    func(collection, url, offset+100, request, 2, list_size, []),
+                    func(collection, url, offset+200, request, 2, list_size, [])
                 ]
             )
         }
         else if(thread_count === 3){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, offset+100, 3, list_size, []),
-                    func(collection, url, offset+200, 3, list_size, []),
-                    func(collection, url, offset+300, 3, list_size, [])
+                    func(collection, url, offset+100, request, 3, list_size, []),
+                    func(collection, url, offset+200, request, 3, list_size, []),
+                    func(collection, url, offset+300, request, 3, list_size, [])
                 ]
             )
         }
         else if(thread_count === 4){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, offset+100, 4, list_size, []),
-                    func(collection, url, offset+200, 4, list_size, []),
-                    func(collection, url, offset+300, 4, list_size, []),
-                    func(collection, url, offset+400, 4, list_size, [])
+                    func(collection, url, offset+100, request, 4, list_size, []),
+                    func(collection, url, offset+200, request, 4, list_size, []),
+                    func(collection, url, offset+300, request, 4, list_size, []),
+                    func(collection, url, offset+400, request, 4, list_size, [])
                 ]
             )
         }
         else if(thread_count === 5){
             result = await Promise.allSettled(
                 [  
-                    func(collection, url, offset+100, 5, list_size, []),
-                    func(collection, url, offset+200, 5, list_size, []),
-                    func(collection, url, offset+300, 5, list_size, []),
-                    func(collection, url, offset+400, 5, list_size, []),
-                    func(collection, url, offset+500, 5, list_size, [])
+                    func(collection, url, offset+100, request, 5, list_size, []),
+                    func(collection, url, offset+200, request, 5, list_size, []),
+                    func(collection, url, offset+300, request, 5, list_size, []),
+                    func(collection, url, offset+400, request, 5, list_size, []),
+                    func(collection, url, offset+500, request, 5, list_size, [])
                 ]
             )
         }
@@ -775,52 +835,53 @@ export class ParallelDataFetchers{
      * Parallelizes API fetch process when URL uses partition pagination
      * @param {function} func - function to be parallelized
      * @param {string} collection - describes where resource is being pulled from
-     * @param {string} url - URL used in API fetch requesets
+     * @param {string} url - URL used in API fetch requests
+     * @param {Request} request - fetch request info
      * @param {string[][]} partitions - array of partitions used to fetch from Apple API URL
      * @param {number} thread_count - number of threads to be used
      * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
      */
-    static async parallelize_using_partitions(func, collection, url, partitions, thread_count){
+    static async parallelize_using_partitions(func, collection, url, request, partitions, thread_count){
         let result = [];
 
         if(thread_count === 1){
-            result = await Promise.allSettled([func(collection, url, partitions, 0, thread_count)]);
+            result = await Promise.allSettled([func(collection, url, request, partitions, 0, thread_count)]);
         }
         else if(thread_count === 2){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, partitions, 0, thread_count),
-                    func(collection, url, partitions, 1, thread_count)
+                    func(collection, url, request, partitions, 0, thread_count),
+                    func(collection, url, request, partitions, 1, thread_count)
                 ]
             )
         }
         else if(thread_count === 3){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, partitions, 0, thread_count),
-                    func(collection, url, partitions, 1, thread_count),
-                    func(collection, url, partitions, 2, thread_count)
+                    func(collection, url, request, partitions, 0, thread_count),
+                    func(collection, url, request, partitions, 1, thread_count),
+                    func(collection, url, request, partitions, 2, thread_count)
                 ]
             )
         }
         else if(thread_count === 4){
             result = await Promise.allSettled(
                 [
-                    func(collection, url, partitions, 0, thread_count),
-                    func(collection, url, partitions, 1, thread_count),
-                    func(collection, url, partitions, 2, thread_count),
-                    func(collection, url, partitions, 3, thread_count)
+                    func(collection, url, request, partitions, 0, thread_count),
+                    func(collection, url, request, partitions, 1, thread_count),
+                    func(collection, url, request, partitions, 2, thread_count),
+                    func(collection, url, request, partitions, 3, thread_count)
                 ]
             )
         }
         else if(thread_count === 5){
             result = await Promise.allSettled(
                 [  
-                    func(collection, url, partitions, 0, thread_count),
-                    func(collection, url, partitions, 1, thread_count),
-                    func(collection, url, partitions, 2, thread_count),
-                    func(collection, url, partitions, 3, thread_count),
-                    func(collection, url, partitions, 4, thread_count)
+                    func(collection, url, request, partitions, 0, thread_count),
+                    func(collection, url, request, partitions, 1, thread_count),
+                    func(collection, url, request, partitions, 2, thread_count),
+                    func(collection, url, request, partitions, 3, thread_count),
+                    func(collection, url, request, partitions, 4, thread_count)
                 ]
             )
         }
@@ -832,12 +893,13 @@ export class ParallelDataFetchers{
      * Returns first page of song catalog IDs from either a library playlist or user's library
      * @param {string} collection - NOT USED, describes where resource is being pulled from
      * @param {string} url - Apple API URL
+     * @param {Request} request - fetch request info
      * @param {string} accumulated_song_ids - array of song catalog IDs
      * @returns {Promise<Set<string>, string>} [accumulated_song_ids, playlist_size]
      */
-    static async get_first_page_of(collection, url, accumulated_song_ids){
+    static async get_first_page_of(collection, url, request, accumulated_song_ids){
         try{
-            const response = await InteractAPI.fetch_data(url + '0');
+            const response = await InteractAPI.fetch_data(url + '0', request);
 
             if(!response.ok) {
                 if(response.status === 404){
@@ -863,21 +925,22 @@ export class ParallelDataFetchers{
      * Returns set of all song catalog IDs from either a library playlist or user's library
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
+     * @param {Request} request - fetch request info
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
-    static async get_all_user_song_IDs_from(collection, url){
+    static async get_all_song_IDs_from(collection, url, request){
         let offset = 0; // will parallelize to 5 fetches working at 100 offset differences (0,100,200,300,400)
         let accumulated_song_ids = [];
 
         try{
-            const first_page = await ParallelDataFetchers.get_first_page_of(collection, url + '0', []);
+            const first_page = await ParallelDataFetchers.get_first_page_of(collection, url + '0', request, []);
             const playlist_size = first_page[1];
 
             const thread_count_max = 5;
             const thread_count = ParallelDataFetchers.#thread_count_calculator(playlist_size, thread_count_max);
             
             let result = [];
-            result = await ParallelDataFetchers.parallelize_using_offset(ParallelDataFetchers.get_user_song_IDs_from, collection, url, offset, thread_count, playlist_size);
+            result = await ParallelDataFetchers.parallelize_using_offset(ParallelDataFetchers.get_song_IDs_from, collection, url, offset, request, thread_count, playlist_size);
     
             first_page[0].forEach(songID => accumulated_song_ids.push(songID));
             result.forEach(songIDs => accumulated_song_ids.push(...songIDs.value.flat()));
@@ -894,13 +957,16 @@ export class ParallelDataFetchers{
      * @param {string} collection - NOT USED, describes where resource is being pulled from
      * @param {string} url - Apple API URL (used for pagination)
      * @param {number} offset - Apple API URL offset
+     * @param {Request} request - fetch request info
+     * @param {number} thread_count - number of threads to be used
+     * @param {number} list_size - number of songs to be fetched
      * @param {string[]} accumulated_song_ids - array of song catalog IDs
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
-    static async get_user_song_IDs_from(collection, url, offset, thread_count, list_size, accumulated_song_ids){
+    static async get_song_IDs_from(collection, url, offset, request, thread_count, list_size, accumulated_song_ids){
         try{
             while(true){
-                const response = await InteractAPI.fetch_data(url + offset);
+                const response = await InteractAPI.fetch_data(url + offset, request);
 
                 if(!response.ok){
                     if (response.status === 504) {
@@ -942,11 +1008,12 @@ export class ParallelDataFetchers{
      * Returns set containing all songs given song catalog ID array
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
+     * @param {Request} request - fetch request info
      * @param {string[]} list - array of song catalog IDs
      * @param {number} list_size - number of songs to be fetched
      * @returns {Promise<Set<Song>>} set of Song objects
      */
-    static async get_all_user_songs_from(collection, url, list, list_size){
+    static async get_all_songs_from(collection, url, request, list, list_size){
         const max_thread_count = 5;
         const thread_count = ParallelDataFetchers.#thread_count_calculator(list_size, max_thread_count);
         const partitions = ParallelDataFetchers.#song_ids_partitioner(list);
@@ -954,7 +1021,7 @@ export class ParallelDataFetchers{
 
         try{
             let result = [];
-            result = await ParallelDataFetchers.parallelize_using_partitions(ParallelDataFetchers.get_user_songs_from, collection, url, partitions, thread_count);
+            result = await ParallelDataFetchers.parallelize_using_partitions(ParallelDataFetchers.get_songs_from, collection, url, request, partitions, thread_count);
             result.forEach(songs => accumulated_songs.push(...songs.value.flat()));
             return [... new Set(accumulated_songs)];
         }catch(error){
@@ -972,7 +1039,7 @@ export class ParallelDataFetchers{
      * @param {number} thread_count - number of threads to be used
      * @returns {Promise<Set<Song>>} accumulated_songs - array of song catalog IDs
      */
-    static async get_user_songs_from(collection, url, partitions, start_index, thread_count){
+    static async get_songs_from(collection, url, request, partitions, start_index, thread_count){
         let index = start_index;
         let songs = [];
         let count = 0;
@@ -981,7 +1048,7 @@ export class ParallelDataFetchers{
             for(let i = index; i < partitions.length; i += thread_count){
                 const ids = partitions[i].join(",");
 
-                const response = await InteractAPI.fetch_data(url + ids);
+                const response = await InteractAPI.fetch_data(url + ids, request);
 
                 if(!response.ok){
                     if (response.status === 504) {

@@ -23,8 +23,6 @@ class Playlist {
     getDescription() { return this.description; }
 }
 
-export {Playlist};
-
 // UserBackend, generates playlists, has all information on user
 class UserBackend {
     /**
@@ -242,8 +240,8 @@ export { Playlist, UserBackend };
     // console.log("AFTER 3: " + clientNum2 + "\n\n");
 
     // make a playlist (client side) test
-    let user = await UserBackend.create(userLink, 0);
-    user.createPlaylist("playlist1", ["Rock", "Pop"])
+    // let user = await UserBackend.create(userLink, 0);
+    // user.createPlaylist("playlist1", ["Rock", "Pop"])
 
 
 })();
