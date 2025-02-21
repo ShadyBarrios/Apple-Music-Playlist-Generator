@@ -53,7 +53,7 @@ import {Playlist} from './backend.js';
  * @property {string} attributes.name
  * @property {Object} relationships - Playlist relationships
  * @property {Object} relationships.tracks - Playlist tracks
- * @property {[{id: string, type: string}]} relationships.tracks.data - Playlist tracks data
+ * @property {Object[]} relationships.tracks.data - Playlist tracks data
  * @property {string} relationships.tracks.data.id - Song catalog ID
  * @property {string} relationships.tracks.data.type - Song type 
  */
@@ -79,7 +79,7 @@ import {Playlist} from './backend.js';
 export class Song {
     /**
      * @param {string} id - Catalog ID
-     * @param {string[]} genres - array of genre IDs
+     * @param {Genres[]} genres - array of genre IDs
      * @param {string[]} subgenres - array of subgenres names
      */
     constructor(id, genres, subgenres) {
@@ -115,6 +115,18 @@ export class UserData{
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
     }
+
+    get_songs() {
+        return this.songs;
+    }
+
+    get_genre_dictionary(){
+        return this.genre_dictionary;
+    }
+
+    get_subgenre_dictionary(){
+        return this.subgenre_dictionary;
+    }
 }
 
 /**
@@ -125,8 +137,6 @@ class Dictionary{
      * PROTECTED | [name] = id if exists
      */
     _dictionary;
-
-    mutex_dictionary = new Mutex();
 
     /**
      * Constructor to init dictionary
@@ -140,28 +150,27 @@ class Dictionary{
     }
 
     /**
-     * Asychronously create a GenreDictionary object
+     * Create a GenreDictionary object
      */
-    static async create(genres){
-        let dictionary = new Dictionary();
-        await dictionary.add(genres);
+    static create(genres){
+        let dictionary = new this();
+        dictionary.add(genres);
         return dictionary;
     }
 
     /**
      * Accessor function to get copy of the dictionary
-     * @returns {Promise<Record<string, number>>} dictionary
+     * @returns {Record<string, number>} dictionary
      */
-    async get(){
-        let copy = {};
-        await mutex_dictionary.runExclusive(async () => copy = {...this._dictionary});
+    get(){
+        let copy = Object.entries(this._dictionary);
         return copy;
     }
 
     /**
      * IMPLEMENTED BY CHILDREN | Adds genres to the dictionary if not already included
      */
-    async add(genres){
+    add(genres){
         throw new Error("add(genres) MUST BE IMPLEMENTED BY CHILDREN")
     }
 }
@@ -175,23 +184,21 @@ export class GenreDictionary extends Dictionary{
      * Adds genres to the dictionary if not already included (dictionary[name] = id)
      * @param {Genres[]} genres - array of Genres objects
      */
-    async add(genres){
+    add(genres){
         if(genres.length === 0) return;
 
-        await mutex_dictionary.runExclusive(async () => {
-            genres.map(genre => genre != "Music").forEach(genre => this.get()[genre.attributes.name] = genre.id);
-        });
+        genres.filter(genre => genre.attributes.name != "Music").forEach(genre => this._dictionary[genre.attributes.name] = genre.id);
     }
 
     /**
      * Returns genre ID from the dictionary given a genre name
      * @param {string} genre_name - looked up in genreDictionary
-     * @returns {Promise<string>} genre ID
+     * @returns {string} genre ID
      */
-    static async get_id(genre_name){
+    get_id(genre_name){
         let id = undefined;
 
-        await mutex_dictionary.runExclusive(async () => id = this._dictionary[genre_name]);
+        id = this._dictionary[genre_name];
 
         return id;
     }
@@ -206,23 +213,21 @@ export class SubgenreDictionary extends Dictionary{
      * Adds subgenres to the dictionary if not already included (dictionary[name] = 1 if exists)
      * @param {string[]} subgenres - array of subgenre names
      */
-    async add(subgenres){
+    add(subgenres){
         if(subgenres.length === 0) return;
 
-        await mutex_dictionary.runExclusive(async () => {
-            subgenres.map(subgenre => subgenre != "Music").subgenres.forEach(subgenre => this._dictionary[subgenre] = 1)
-        });
+        subgenres.filter(subgenre => subgenre != "Music").forEach(subgenre => this._dictionary[subgenre] = 1);
     }
 
     /**
      * Returns true if subgenre exists in the dictionary
      * @param {string} subgenre_name - looked up in subgenreDictionary
-     * @returns {Promise<boolean>} true if subgenre exists
+     * @returns {boolean} true if subgenre exists
      */
-    async exists(subgenre_name){
+    exists(subgenre_name){
         let exists = false;
 
-        await mutex_dictionary.runExclusive(async () => exists = this._dictionary[subgenre_name] != undefined);
+        exists = this._dictionary[subgenre_name] != undefined;
 
         return exists;
     }
@@ -231,27 +236,22 @@ export class SubgenreDictionary extends Dictionary{
      * Removes keys from SubgenreDictionary if present in GenreDictionary
      * @param {string[]} genres - GenreDictionary keys
      */
-    async clean(genres){
-        await mutex_dictionary.runExclusive(async () => {
-            let subgenres = Object.keys(this._dictionary);
-            let duplicateKeys = genres.filter(genre => subgenres.includes(genre));
+    clean(genres){
+        let subgenres = Object.keys(this._dictionary);
+        let duplicateKeys = genres.filter(genre => subgenres.includes(genre));
             
-            for(let i = 0; i < duplicateKeys.length; i++){
-                delete this._dictionary[duplicateKeys[i]];
-            }
-        });
+        for(let i = 0; i < duplicateKeys.length; i++){
+            delete this._dictionary[duplicateKeys[i]];
+        }
     }
 
     /**
      * Gets subgenres with main genre included in the name
      * @param {string} genre_name - genre name
-     * @returns {Promise<string[]>} array of subgenre names with genre_name included (ex: "Rock" -> "Rock & Roll")
+     * @returns {string[]} array of subgenre names with genre_name included (ex: "Rock" -> "Rock & Roll")
      */
-    async get_subgenres_of(genre_name){
-        let subgenres = [];
-        mutex_dictionary.runExclusive(async () => {
-            subgenres = this._dictionary.filter(subgenre => subgenre.includes(genre_name));
-        });
+    get_subgenres_of(genre_name){
+        let subgenres = Object.keys(this._dictionary).filter(subgenre => subgenre.includes(genre_name));
         return subgenres;
     }
 }
@@ -345,14 +345,16 @@ export class DataFetchers{
     static async get_all_user_data(developerToken, userToken){
         const request = InteractAPI.retrieve_data_request(developerToken, userToken);
 
-        const songs = SongDataFetchers.get_all_songs(request);
+        let songs = await SongDataFetchers.get_all_songs(request);
 
-        let genres = [... new Set(songs.map(song => song.genres).flat())];
-        let genre_dictionary = await GenreDictionary.create(genres)
+        let genres = Array.from(
+            new Map(songs.flatMap(song => song.genres).map(genre => [genre.id, genre])).values()
+        );
+        let genre_dictionary = GenreDictionary.create(genres)
 
         let subgenres = [... new Set(songs.map(song => song.subgenres).flat())];
-        let subgenre_dictionary = await SubgenreDictionary.create(subgenres);
-        subgenre_dictionary.clean(genres); // delete subgenres that are also genres
+        let subgenre_dictionary = SubgenreDictionary.create(subgenres);
+        subgenre_dictionary.clean(genres.map(genre => genre.attributes.name)); // delete subgenres that are also genres
 
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }
@@ -1063,12 +1065,16 @@ export class ParallelDataFetchers{
                 }
 
                 const data = await response.json();
-
+                
+                let genres = [];
                 for(let i = 0; i < data.data.length; i++){
-                    count++;
-                    await GenreDictionary.add(data.data[i].relationships.genres.data);
-                    await GenreDictionary.add(data.data[i].attributes.genreNames);
-                    songs.push(new Song(data.data[i].id, data.data[i].relationships.genres.data.map(genre => genre.id), data.data[i].attributes.genreNames));
+                    genres = data.data[i].relationships.genres.data.map(genre => ({
+                        id: genre.id,
+                        attributes: {
+                            name: genre.attributes.name
+                        }
+                    }));
+                    songs.push(new Song(data.data[i].id, genres, data.data[i].attributes.genreNames));
                 }
             }
 
