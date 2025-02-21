@@ -134,7 +134,7 @@ export class UserData{
  * */
 class Dictionary{
     /**
-     * PROTECTED | [name] = id if exists
+     * PROTECTED
      */
     _dictionary;
 
@@ -176,7 +176,7 @@ class Dictionary{
 }
 
 /**
- * Genre Dictionary
+ * Genre Dictionary | [name] = id
  * @extends Dictionary
  */
 export class GenreDictionary extends Dictionary{
@@ -205,10 +205,19 @@ export class GenreDictionary extends Dictionary{
 }
 
 /**
- * Subgenre Dictionary
+ * Subgenre Dictionary | [name] = frequency count
  * @extends Dictionary
  */
 export class SubgenreDictionary extends Dictionary{
+    /** 
+     * Returns copy of _dictionary while only containing "visible" entries
+     * @returns {Record<string, number>} dictionary
+     * */
+    get(){
+        let copy = Object.entries(this._dictionary).filter(subgenre => subgenre[1] > 0);
+        return copy;
+    }
+
     /**
      * Adds subgenres to the dictionary if not already included (dictionary[name] = 1 if exists)
      * @param {string[]} subgenres - array of subgenre names
@@ -216,7 +225,10 @@ export class SubgenreDictionary extends Dictionary{
     add(subgenres){
         if(subgenres.length === 0) return;
 
-        subgenres.filter(subgenre => subgenre != "Music").forEach(subgenre => this._dictionary[subgenre] = 1);
+        subgenres.filter(subgenre => subgenre != "Music").forEach(subgenre => {
+            if(this._dictionary[subgenre] == undefined) this._dictionary[subgenre] = 1;
+            else this._dictionary[subgenre]++;
+        });
     }
 
     /**
@@ -243,6 +255,27 @@ export class SubgenreDictionary extends Dictionary{
         for(let i = 0; i < duplicateKeys.length; i++){
             delete this._dictionary[duplicateKeys[i]];
         }
+    }
+
+    /**
+     * "Hides" entries that do no meet frequency threshold. (<0 is considered "hidden")
+     * @param {number} threshold - minimum frequency count
+     */
+    hide_below(threshold){
+        let subgenres = Object.keys(this._dictionary);
+        subgenres.forEach(subgenre => {
+            if(this._dictionary[subgenre] < threshold) this._dictionary[subgenre] *= -1;
+        });
+    }
+
+    /**
+     * Unhides all hidden entries
+     */
+    unhide_all(){
+        let subgenres = Object.keys(this._dictionary);
+        subgenres.forEach(subgenre => {
+            if(this._dictionary[subgenre] < 0) this._dictionary[subgenre] *= -1;
+        });
     }
 
     /**
@@ -352,8 +385,7 @@ export class DataFetchers{
         );
         let genre_dictionary = GenreDictionary.create(genres)
 
-        let subgenres = [... new Set(songs.map(song => song.subgenres).flat())];
-        let subgenre_dictionary = SubgenreDictionary.create(subgenres);
+        let subgenre_dictionary = SubgenreDictionary.create(songs.map(song => song.subgenres).flat());
         subgenre_dictionary.clean(genres.map(genre => genre.attributes.name)); // delete subgenres that are also genres
 
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
