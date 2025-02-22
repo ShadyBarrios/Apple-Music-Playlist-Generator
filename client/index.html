@@ -3,40 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Music Playlist Generator</title>
+  <title>Music Playlist Generator -start</title>
   <link rel="stylesheet" href="/styles.css" />
-  <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
-  <script>
-    // MusicKit setup and user authorization
-    // document.addEventListener("musickitloaded", async function() {
-    //   MusicKit.configure({
-    //     developerToken: "YOUR_DEVELOPER_TOKEN",
-    //     app: {
-    //       name: "Custom Playlist Generator",
-    //       build: "1.0.0"
-    //     }
-    //   });
-    //   console.log("MusicKit JS Loaded");
-    // });
-
-    // async function authenticateUser() {
-    //   try {
-    //     const music = MusicKit.getInstance();
-    //     const userToken = await music.authorize();
-    //     console.log("Music User Token: ", userToken);
-    //     document.getElementById("status").innerText = userToken;
-    //   } catch (error) {
-    //     console.error("Error authorizing user: ", error);
-    //   }
-    // }
-  </script>
+  <script src="/client.js" defer></script>
 </head>
 <body>
   <h1>Welcome to the Music Playlist Generator</h1>
-  <button id="login">Login</button>
-  <p id="loading_status"></p>
-  <button id="get_numbers">Get Numbers</button>
-  <p id="numbers"></p>
-  <script defer src="client.js"></script>
+  <button id="startButton">Start</button>
+  <script>
+    document.getElementById("startButton").addEventListener("click", function() {
+      window.location.href = "/home.html";
+    });
+  </script>
 </body>
 </html>
