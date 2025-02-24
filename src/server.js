@@ -18,6 +18,7 @@ const app = express();
 const port = 3000;
 
 let userToken = "";  // get user token from frontend
+let backendUser = null; // user-specific backend object
 
 // Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
@@ -44,8 +45,11 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);
   console.log('SERVER.JS: Received new user token: ', userToken);
 
-  await backend.createUser(userToken);
-  console.log("Backend initialized");
+  backendUser = await backend.createUser(userToken);
+  backend.clientUsers.push(backendUser);  // keep track of all users
+  backend.appleTokens.push(userToken);   // store user token
+  
+  console.log("Backend initialized. Total users:", backend.clientUsers.length);
 
   res.json({ message: 'User Token fetch successful' });
 });
@@ -54,22 +58,22 @@ app.post('/api-login', async (req, res) => {
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
 
-  if (!backend.genre_dictionary) {
+  if (!backendUser.genre_dictionary) {
     console.error("Error: backend.genre_dictionary is undefined or null.");
     return res.status(500).json({ error: "Genre dictionary not found on the server." });
   }
 
-  console.log(backend.genre_dictionary);
-  const allGenres = Object.keys(backend.genre_dictionary);
+  console.log(backendUser.genre_dictionary);
+  const allGenres = Object.keys(backendUser.genre_dictionary);
   res.json({ data: allGenres });
 });
 
 
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
-    songsLength: backend.songs.length,
-    genresLength: Object.keys(backend.genre_dictionary).length,
-    subgenresLength: Object.keys(backend.subgenre_dictionary).length,
+    songsLength: backendUser.songs.length,
+    genresLength: Object.keys(backendUser.genre_dictionary).length,
+    subgenresLength: Object.keys(backendUser.subgenre_dictionary).length,
   };
 
   res.json({ data: obj });
