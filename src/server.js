@@ -17,7 +17,7 @@ const developerToken = process.env.DEVELOPER_TOKEN;
 const app = express();
 const port = 3000;
 
-let userToken = "";  // currently set user token to env file bu eventually get user token from frontend
+let userToken = "";  // get user token from frontend
 
 // Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
@@ -34,19 +34,22 @@ app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
 app.post('/api-login', async (req, res) => {
-  userToken = req.body.token;
-  if (!userToken) {
+  const { token } = req.body;
+
+  if (!token) {
     return res.status(400).json({ error: 'User Token fetch failed' });
   }
 
+  userToken = token;  // store the token only once
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);
-  console.log('SERVER.JS: Using fetched user token: ', userToken);
+  console.log('SERVER.JS: Received new user token: ', userToken);
 
-  //backend = await BackendGenerator.create(userToken);
-  console.log("Backend init");
+  await backend.createUser(userToken);
+  console.log("Backend initialized");
 
   res.json({ message: 'User Token fetch successful' });
 });
+
 
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");

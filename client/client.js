@@ -1,7 +1,9 @@
 // Function to handle the login API call
+
+let userToken = "" //will be pulled with musicKit
 async function login_user() {
   try {
-    const response = await fetch('/api-login', {  // POST to /api/login
+    const response = await fetch('/api-login', {  // POST to /api-login
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,23 +44,23 @@ function update_numbers(data){
   document.getElementById("numbers").innerText = data;
 }
 
-async function send_user_token(user_token){
-  try{
-    const response = await fetch('/api-login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token: user_token }),
-    });
+// async function send_user_token(user_token){
+//   try{
+//     const response = await fetch('/api-login', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ token: user_token }),
+//     });
 
-    const data = await response.json();
+//     const data = await response.json();
 
-    console.log(data.message);
-  }catch(error){
-    console.error('Error sending user token:', error);
-  }
-}
+//     console.log(data.message);
+//   }catch(error){
+//     console.error('Error sending user token:', error);
+//   }
+// }
 
 async function display_user_numbers(){
   try{
@@ -103,19 +105,22 @@ async function get_dev_token(){
   }
 }
 
-// Adding event listener to login button
-// document.getElementById("login").addEventListener("click", () => {
-//   login_user();  // Call the loginUser function when the login button is clicked
-// });
-
 document.getElementById("get_numbers").addEventListener("click", async () => {
   await display_user_numbers();
 });
 
 // get user token and send to backend
 document.getElementById("login").addEventListener("click", async () => {
+
+  if (userToken) {
+    console.log("User already logged in with token:", userToken);
+    update_loading_status("Loaded");
+    return;
+  }
+
   update_loading_status("Loading...");
   console.time("login time");
+  
   const developer_token = await get_dev_token();
 
   try {
@@ -133,9 +138,26 @@ document.getElementById("login").addEventListener("click", async () => {
 
       // retrieve the user token
       //const userToken = process.env.USER_TOKEN; // for testing reasons
-      const userToken = music.musicUserToken; // to dynamically get user token
-      await send_user_token(userToken);
-      update_loading_status("Loaded");
+      
+      userToken = music.musicUserToken; // to dynamically get user token
+      //const success = await send_user_token(userToken);
+      if (userToken) {
+        console.log("User Token: ", userToken);
+
+        await fetch('/api-login', { //send userToken
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: userToken }),
+        });
+
+        update_loading_status("Loaded");
+      }
+
+      else {
+        console.error("Failed to send user token."); 
+      }
       console.timeEnd("login time");
   } catch (error) {
       console.error("Error authorizing with Apple Music:", error);
