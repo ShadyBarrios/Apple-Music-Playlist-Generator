@@ -38,29 +38,9 @@ function update_loading_status(status) {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
-
-
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
 }
-
-// async function send_user_token(user_token){
-//   try{
-//     const response = await fetch('/api-login', {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//       body: JSON.stringify({ token: user_token }),
-//     });
-
-//     const data = await response.json();
-
-//     console.log(data.message);
-//   }catch(error){
-//     console.error('Error sending user token:', error);
-//   }
-// }
 
 async function display_user_numbers(){
   try{
@@ -133,14 +113,13 @@ document.getElementById("login").addEventListener("click", async () => {
           },
       });
 
-      // Request user authorization
       await music.authorize();
 
       // retrieve the user token
       //const userToken = process.env.USER_TOKEN; // for testing reasons
       
       userToken = music.musicUserToken; // to dynamically get user token
-      //const success = await send_user_token(userToken);
+
       if (userToken) {
         console.log("User Token: ", userToken);
 

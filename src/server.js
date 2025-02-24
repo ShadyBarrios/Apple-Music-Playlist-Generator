@@ -58,16 +58,16 @@ app.post('/api-login', async (req, res) => {
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
 
-  if (!backendUser.genre_dictionary) {
-    console.error("Error: backend.genre_dictionary is undefined or null.");
+  if (!backendUser || !backendUser.genre_dictionary || !backendUser.genre_dictionary._dictionary) {
+    console.error("Error: genre dictionary is undefined.");
     return res.status(500).json({ error: "Genre dictionary not found on the server." });
   }
 
-  console.log(backendUser.genre_dictionary);
-  const allGenres = Object.keys(backendUser.genre_dictionary);
+  console.log(backendUser.genre_dictionary._dictionary); // Log only the actual dictionary
+
+  const allGenres = Object.keys(backendUser.genre_dictionary._dictionary); // Access _dictionary
   res.json({ data: allGenres });
 });
-
 
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
