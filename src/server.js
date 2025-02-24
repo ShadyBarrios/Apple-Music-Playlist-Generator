@@ -42,7 +42,7 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);
   console.log('SERVER.JS: Using fetched user token: ', userToken);
 
-  backend = await BackendGenerator.create(userToken);
+  backend = await Backend.createUser(userToken);
   console.log("Backend init");
 
   res.json({ message: 'User Token fetch successful' });
@@ -112,6 +112,11 @@ export class Backend {
       this.dev = developerToken;
   }
 
+  /**
+   * Adds new user to the backend
+   * @param {string} appleToken 
+   * @returns 
+   */
   async createUser(appleToken) {
     let user = null;
 
@@ -132,9 +137,13 @@ export class Backend {
       // make user and push to client and apple arrays
       user = new UserBackend(songs, genres, subgenres, clientToken);
 
-      if(!this.appleTokens.contains(appleToken))
+      if(!this.appleTokens.contains(appleToken)){
         this.clientUsers.push(user);
         this.appleTokens.push(appleToken);
+      }
+      else{
+        this.clientUsers[clientIndex] = user;
+      }
     });
 
     console.log("User Token: " + user.clientToken);
