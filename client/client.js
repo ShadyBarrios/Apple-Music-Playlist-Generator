@@ -1,4 +1,3 @@
-//client.js
 // Function to handle the login API call
 async function login_user() {
   try {
@@ -113,13 +112,6 @@ document.getElementById("get_numbers").addEventListener("click", async () => {
   await display_user_numbers();
 });
 
-//redirect index to home
-document.getElementById("startButton").addEventListener("click", function() {
-  window.location.href = "/home.html"; 
-});
-
-
-
 // get user token and send to backend
 document.getElementById("login").addEventListener("click", async () => {
   update_loading_status("Loading...");
@@ -139,8 +131,9 @@ document.getElementById("login").addEventListener("click", async () => {
       // Request user authorization
       await music.authorize();
 
-      // Retrieve the user token
-      const userToken = music.musicUserToken;
+      // retrieve the user token
+      //const userToken = process.env.USER_TOKEN; // for testing reasons
+      const userToken = music.musicUserToken; // to dynamically get user token
       await send_user_token(userToken);
       update_loading_status("Loaded");
       console.timeEnd("login time");
@@ -192,5 +185,3 @@ function displayGenres(genres) {
     buttonsContainer.appendChild(button);
   });
 }
-
-

@@ -17,7 +17,7 @@ const developerToken = process.env.DEVELOPER_TOKEN;
 const app = express();
 const port = 3000;
 
-let userToken = "";  // Get user token from frontend
+let userToken = "";  // currently set user token to env file bu eventually get user token from frontend
 
 // Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
@@ -42,7 +42,7 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);
   console.log('SERVER.JS: Using fetched user token: ', userToken);
 
-  backend = await BackendGenerator.create(userToken);
+  //backend = await BackendGenerator.create(userToken);
   console.log("Backend init");
 
   res.json({ message: 'User Token fetch successful' });
