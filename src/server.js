@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import {UserBackend} from './backend.js';
 import {Mutex} from 'async-mutex';
-import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders} from "./functions.js"
+import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders } from "./functions.js"
 
 
 
@@ -105,7 +105,6 @@ export class Backend {
    * @param {string} dev 
    * @returns {Backend} backend object
    */
-
   constructor() {
       this.clientUsers = [];
       this.appleTokens = [];
@@ -114,8 +113,15 @@ export class Backend {
   }
 
   async createUser(appleToken) {
+    let user = null;
+
+    await this.backendMutex.runExclusive(async () => {
       // this will be the current index of the usersArray
-      const clientToken = this.clientUsers.length;
+      let clientToken = this.clientUsers.length;
+      const clientExists = this.appleTokens.contains(appleToken);
+      const clientIndex = this.appleTokens.indexOf(appleToken);
+      if(clientExists) // if client exists, find its token
+        clientToken = this.clientUsers[clientIndex].clientToken;
 
       // get song data
       const data = await this.backendMutex.runExclusive(() => DataFetchers.get_all_user_data(this.dev, appleToken));
@@ -124,17 +130,23 @@ export class Backend {
       const subgenres = data.get_subgenre_dictionary();
 
       // make user and push to client and apple arrays
-      let user = new UserBackend(songs, genres, subgenres, clientToken);
-      this.clientUsers.push(user);
-      this.appleTokens.push(appleToken);
+      user = new UserBackend(songs, genres, subgenres, clientToken);
 
-      // return token
-      return user;
+      if(!this.appleTokens.contains(appleToken))
+        this.clientUsers.push(user);
+        this.appleTokens.push(appleToken);
+    });
+
+    console.log("User Token: " + user.clientToken);
+    console.log("User: " + user);
+    
+    // return token
+    return user;
   }
 
   async pushApplePlaylist(playlist, clientToken) {
       // will get a playlist from client side and then create it in user library
-      await this.backendMutex.runExclusive(() => DataSenders.create_user_playlist(playlist, this.dev, this.appleTokens[clientToken]));
+      await this.backendMutex.runExclusive(async () => DataSenders.create_user_playlist(playlist, this.dev, this.appleTokens[clientToken]));
   }
 }
 
