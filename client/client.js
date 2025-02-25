@@ -187,16 +187,17 @@ async function fetchSubGenres() {
 }
 
 function displayGenres(genres) {
-  const genresContainer = document.querySelector('.select-filters');  
+  const genresContainer = document.querySelector('.genre-buttons');
 
-  let buttonsContainer = document.querySelector('.genre-buttons');
-  if (!buttonsContainer) {
-    buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('genre-buttons');
-    genresContainer.appendChild(buttonsContainer);
+  // Create a wrapper for proper scrolling
+  let wrapper = document.querySelector('.genre-buttons-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.classList.add('genre-buttons-wrapper');
+    genresContainer.appendChild(wrapper);
   }
 
-  buttonsContainer.innerHTML = '';
+  wrapper.innerHTML = '';
 
   genres.forEach(genre => {
     const button = document.createElement('button');
@@ -204,21 +205,21 @@ function displayGenres(genres) {
     button.addEventListener('click', () => {
       console.log(`Selected Genre: ${genre}`);
     });
-    buttonsContainer.appendChild(button);
+    wrapper.appendChild(button);
   });
 }
 
 function displaySubGenres(subGenres) {
-  const subGenresContainer = document.querySelector('.select-filters');  
+  const subGenresContainer = document.querySelector('.subgenre-buttons');
 
-  let buttonsContainer = document.querySelector('.subgenre-buttons');
-  if (!buttonsContainer) {
-    buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('subgenre-buttons');
-    subGenresContainer.appendChild(subGenresContainer);
+  let wrapper = document.querySelector('.subgenre-buttons-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.classList.add('subgenre-buttons-wrapper');
+    subGenresContainer.appendChild(wrapper);
   }
 
-  buttonsContainer.innerHTML = '';
+  wrapper.innerHTML = '';
 
   subGenres.forEach(subGenre => {
     const button = document.createElement('button');
@@ -226,6 +227,7 @@ function displaySubGenres(subGenres) {
     button.addEventListener('click', () => {
       console.log(`Selected Sub-Genre: ${subGenre}`);
     });
-    buttonsContainer.appendChild(button);
+    wrapper.appendChild(button);
   });
 }
+
