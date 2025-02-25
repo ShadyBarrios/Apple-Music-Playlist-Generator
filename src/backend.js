@@ -28,7 +28,6 @@ class UserBackend {
      * @param {Set<Song>} songs 
      * @param {GenreDictionary} genre_dictionary
      * @param {SubgenreDictionary} subgenre_dictionary 
-     * @param {string} clientToken
      * @returns {UserBackend} backend object
      */
 
