@@ -112,6 +112,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
+app.post('/submit-selections', (req, res) => {
+  const { genres, subGenres } = req.body;
+
+  console.log("Received Genres:", genres);
+  console.log("Received Sub-Genres:", subGenres);
+
+  res.json({ message: "Selections received successfully!" });
+});
+
 // Export the app for testing
 export default app;
 

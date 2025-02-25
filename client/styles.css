@@ -165,53 +165,46 @@ video {
 
 /* genre buttons, sub-genre buttons containers */
 
-/* Ensure genre and sub-genre buttons wrap into max 3 rows and allow horizontal scrolling */
-
-/* Make sure the container extends to accommodate all buttons */
 .genre-buttons, .subgenre-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   padding: 10px;
-  max-height: calc(40px * 3 + 20px); /* 3 rows max */
-  overflow-x: auto; /* Enables horizontal scrolling */
-  overflow-y: hidden; /* Prevents vertical scrolling */
+  max-height: calc(40px * 3 + 20px);
+  overflow-x: auto;
+  overflow-y: hidden;
   scroll-behavior: smooth;
   border-radius: 8px;
   background-color: #f4f4f9;
   box-shadow: none;
   justify-content: flex-start;
   align-content: flex-start;
-  white-space: nowrap; /* Prevents extra spaces messing up alignment */
+  white-space: nowrap;
 }
 
-/* Ensure the inner container extends beyond the screen for horizontal scrolling */
 .genre-buttons-wrapper, .subgenre-buttons-wrapper {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start; /* Aligns items neatly */
-  gap: 10px; /* Ensures equal spacing between buttons */
-  max-width: 100%; /* Prevents weird wrapping */
-  min-width: max-content; /* Ensures overflow scrolling */
-  max-height: calc(40px * 3 + 20px); /* Allows 3 rows */
-  align-content: flex-start; /* Ensures wrapping behaves properly */
+  justify-content: flex-start;
+  gap: 10px; 
+  max-width: 100%;
+  min-width: max-content;
+  max-height: calc(40px * 3 + 20px);
+  align-content: flex-start;
 }
 
-
-/* Buttons should be evenly spaced and fixed size */
 .genre-buttons, .subgenre-buttons {
   display: flex;
-  overflow-x: auto; /* Enables horizontal scrolling */
+  overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   padding: 10px;
   background-color: #f4f4f9;
   border-radius: 8px;
   box-shadow: none;
-  white-space: nowrap; /* Prevents unnecessary wrapping */
+  white-space: nowrap; 
 }
 
-/* Ensures the wrapper extends as needed for scrolling */
 .genre-buttons-wrapper, .subgenre-buttons-wrapper {
   display: flex;
   flex-wrap: wrap;
@@ -221,10 +214,9 @@ video {
   align-content: flex-start; 
 }
 
-/* Consistent button size */
 .genre-buttons button, .subgenre-buttons button {
-  flex: 0 0 100px; /* Fixed width for uniform size */
-  height: 40px; /* Fixed height */
+  flex: 0 0 100px; 
+  height: 40px; 
   text-align: center;
   background-color: #fc3c44;
   color: #f4f4f9;
@@ -236,7 +228,6 @@ video {
   transition: background-color 0.3s ease;
 }
 
-/* Hover effect */
 .genre-buttons button:hover, .subgenre-buttons button:hover {
   background-color: #5a0505;
 }
