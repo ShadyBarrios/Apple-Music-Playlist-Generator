@@ -165,7 +165,7 @@ video {
 
 /* genre buttons, needs to cover sub-genre buttons as well */
 
-.genre-buttons {
+.genre-buttons, .subgenre-buttons {
   display: flex;
   flex-wrap: wrap; /* Allows buttons to wrap into rows */
   gap: 10px;
@@ -182,21 +182,21 @@ video {
 }
 
 /* Hide scrollbar for a cleaner look */
-.genre-buttons::-webkit-scrollbar {
+.genre-buttons::-webkit-scrollbar, .subgenre-buttons::-webkit-scrollbar {
   height: 8px;
 }
 
-.genre-buttons::-webkit-scrollbar-track {
+.genre-buttons::-webkit-scrollbar-track, .subgenre-buttons::-webkit-scrollbar-track {
   background: #f4f4f9;
 }
 
-.genre-buttons::-webkit-scrollbar-thumb {
+.genre-buttons::-webkit-scrollbar-thumb, .subgenre-buttons::-webkit-scrollbar-thumb {
   background: #fc3c44;
   border-radius: 4px;
 }
 
 /* Button styles */
-.genre-buttons button {
+.genre-buttons button, .subgenre-buttons button {
   flex: 0 0 100px; /* Fixed width for consistent sizing */
   height: 40px; /* Fixed height */
   white-space: nowrap; /* Prevents text wrapping */

@@ -34,6 +34,7 @@ function update_loading_status(status) {
   if (status === "Loaded") {
     document.getElementById("get_numbers").style.display = "block"; // show button
     fetchGenres();
+    fetchSubGenres();
   } else {
     document.getElementById("get_numbers").style.display = "none";
   }
@@ -164,14 +165,13 @@ async function fetchGenres() {
     console.error('Error fetching genres:', error);
   }
 }
-async function fetchSubGenres(genre) {
+async function fetchSubGenres() {
   try {
     const response = await fetch('/get-subgenres', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ genre }),
     });
 
     if (!response.ok) {
@@ -179,7 +179,7 @@ async function fetchSubGenres(genre) {
     }
 
     const data = await response.json();
-    console.log(`Fetched Sub-Genres for ${genre}:`, data);
+    console.log(`Fetched Sub-Genres:`, data);
     displaySubGenres(data.data);
   } catch (error) {
     console.error('Error fetching sub-genres:', error);
@@ -203,22 +203,22 @@ function displayGenres(genres) {
     button.innerText = genre;
     button.addEventListener('click', () => {
       console.log(`Selected Genre: ${genre}`);
-      fetchSubGenres(genre);
     });
     buttonsContainer.appendChild(button);
   });
 }
 
 function displaySubGenres(subGenres) {
-  const subGenresContainer = document.querySelector('.sub-genres');
-  subGenresContainer.innerHTML = '';
+  const subGenresContainer = document.querySelector('.select-filters');  
 
-  if (subGenres.length === 0) {
-    subGenresContainer.style.display = "none"; // Hide if no sub-genres
-    return;
+  let buttonsContainer = document.querySelector('.subgenre-buttons');
+  if (!buttonsContainer) {
+    buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('subgenre-buttons');
+    subGenresContainer.appendChild(subGenresContainer);
   }
 
-  subGenresContainer.style.display = "block"; // Show when populated
+  buttonsContainer.innerHTML = '';
 
   subGenres.forEach(subGenre => {
     const button = document.createElement('button');
@@ -226,6 +226,6 @@ function displaySubGenres(subGenres) {
     button.addEventListener('click', () => {
       console.log(`Selected Sub-Genre: ${subGenre}`);
     });
-    subGenresContainer.appendChild(button);
+    buttonsContainer.appendChild(button);
   });
 }

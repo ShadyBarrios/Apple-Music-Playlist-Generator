@@ -80,14 +80,14 @@ app.post('/get-backend-object-numbers', (req, res) => {
 });
 
 app.post('/get-subgenres', (req, res) => {
-  const { genre } = req.body;
-
+  console.log("Sub-genres endpoint hit!")
+  
   if (!backendUser || !backendUser.subgenre_dictionary || !backendUser.subgenre_dictionary._dictionary) {
     return res.status(500).json({ error: "Subgenre dictionary not found on the server." });
   }
 
-  const subgenres = backendUser.subgenre_dictionary._dictionary[genre] || [];
-
+  console.log(backendUser.subgenre_dictionary._dictionary);
+  const subgenres = Object.keys(backendUser.subgenre_dictionary._dictionary);
   res.json({ data: subgenres });
 });
 
