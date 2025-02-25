@@ -63,21 +63,34 @@ app.post('/get-genres', (req, res) => {
     return res.status(500).json({ error: "Genre dictionary not found on the server." });
   }
 
-  console.log(backendUser.genre_dictionary._dictionary); // Log only the actual dictionary
+  console.log(backendUser.genre_dictionary._dictionary);
 
-  const allGenres = Object.keys(backendUser.genre_dictionary._dictionary); // Access _dictionary
+  const allGenres = Object.keys(backendUser.genre_dictionary._dictionary);
   res.json({ data: allGenres });
 });
 
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
     songsLength: backendUser.songs.length,
-    genresLength: Object.keys(backendUser.genre_dictionary).length,
-    subgenresLength: Object.keys(backendUser.subgenre_dictionary).length,
+    genresLength: Object.keys(backendUser.genre_dictionary._dictionary).length,
+    subgenresLength: Object.keys(backendUser.subgenre_dictionary._dictionary).length,
   };
 
   res.json({ data: obj });
 });
+
+app.post('/get-subgenres', (req, res) => {
+  const { genre } = req.body;
+
+  if (!backendUser || !backendUser.subgenre_dictionary || !backendUser.subgenre_dictionary._dictionary) {
+    return res.status(500).json({ error: "Subgenre dictionary not found on the server." });
+  }
+
+  const subgenres = backendUser.subgenre_dictionary._dictionary[genre] || [];
+
+  res.json({ data: subgenres });
+});
+
 
 app.post('/get-dev-token', (req, res) => {
   res.json({ data: developerToken });

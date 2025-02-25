@@ -164,9 +164,30 @@ async function fetchGenres() {
     console.error('Error fetching genres:', error);
   }
 }
+async function fetchSubGenres(genre) {
+  try {
+    const response = await fetch('/get-subgenres', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ genre }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch sub-genres');
+    }
+
+    const data = await response.json();
+    console.log(`Fetched Sub-Genres for ${genre}:`, data);
+    displaySubGenres(data.data);
+  } catch (error) {
+    console.error('Error fetching sub-genres:', error);
+  }
+}
 
 function displayGenres(genres) {
-  const genresContainer = document.querySelector('.select-genres');  
+  const genresContainer = document.querySelector('.select-filters');  
 
   let buttonsContainer = document.querySelector('.genre-buttons');
   if (!buttonsContainer) {
@@ -182,7 +203,29 @@ function displayGenres(genres) {
     button.innerText = genre;
     button.addEventListener('click', () => {
       console.log(`Selected Genre: ${genre}`);
+      fetchSubGenres(genre);
     });
     buttonsContainer.appendChild(button);
+  });
+}
+
+function displaySubGenres(subGenres) {
+  const subGenresContainer = document.querySelector('.sub-genres');
+  subGenresContainer.innerHTML = '';
+
+  if (subGenres.length === 0) {
+    subGenresContainer.style.display = "none"; // Hide if no sub-genres
+    return;
+  }
+
+  subGenresContainer.style.display = "block"; // Show when populated
+
+  subGenres.forEach(subGenre => {
+    const button = document.createElement('button');
+    button.innerText = subGenre;
+    button.addEventListener('click', () => {
+      console.log(`Selected Sub-Genre: ${subGenre}`);
+    });
+    subGenresContainer.appendChild(button);
   });
 }

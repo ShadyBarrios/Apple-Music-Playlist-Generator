@@ -21,14 +21,12 @@ body {
   padding: 20px;
   background-color: #f4f4f9;
   border-radius: 8px;
-  text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Title Styles */
 h1 {
   color: #333;
-  text-align: center;
   margin-bottom: 20px;
   font-family: Georgia, 'Times New Roman', Times, serif;
 }
@@ -141,10 +139,15 @@ video {
 }
 
 
-.login, .select-genres {
+.login, .select-filters {
   width:100%;
   min-height: 100vh;
   position: relative;
+}
+
+.select-filters {
+  text-align: left;
+  margin-left: 20px; 
 }
 
 .login {
@@ -159,3 +162,57 @@ video {
 #loading_animate {
   max-width: 300px;
 }
+
+/* genre buttons, needs to cover sub-genre buttons as well */
+
+.genre-buttons {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to wrap into rows */
+  gap: 10px;
+  padding: 10px;
+  overflow-x: auto; /* Enables horizontal scrolling */
+  overflow-y: hidden; /* Prevents vertical scrolling */
+  scroll-behavior: smooth;
+  border-radius: 8px;
+  background-color: #f4f4f9;
+  box-shadow: none;
+  justify-content: flex-start; /* Aligns buttons to the left */
+  align-content: flex-start; /* Ensures wrapping behaves properly */
+  white-space: nowrap; /* Prevents extra spaces messing up alignment */
+}
+
+/* Hide scrollbar for a cleaner look */
+.genre-buttons::-webkit-scrollbar {
+  height: 8px;
+}
+
+.genre-buttons::-webkit-scrollbar-track {
+  background: #f4f4f9;
+}
+
+.genre-buttons::-webkit-scrollbar-thumb {
+  background: #fc3c44;
+  border-radius: 4px;
+}
+
+/* Button styles */
+.genre-buttons button {
+  flex: 0 0 100px; /* Fixed width for consistent sizing */
+  height: 40px; /* Fixed height */
+  white-space: nowrap; /* Prevents text wrapping */
+  text-align: center;
+  background-color: #fc3c44;
+  color: #f4f4f9;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover effect */
+.genre-buttons button:hover {
+  background-color: #5a0505;
+}
+
