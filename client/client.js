@@ -1,8 +1,9 @@
-//client.js
 // Function to handle the login API call
+
+let userToken = "" //will be pulled with musicKit
 async function login_user() {
   try {
-    const response = await fetch('/api-login', {  // POST to /api/login
+    const response = await fetch('/api-login', {  // POST to /api-login
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -37,28 +38,8 @@ function update_loading_status(status) {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
-
-
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
-}
-
-async function send_user_token(user_token){
-  try{
-    const response = await fetch('/api-login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token: user_token }),
-    });
-
-    const data = await response.json();
-
-    console.log(data.message);
-  }catch(error){
-    console.error('Error sending user token:', error);
-  }
 }
 
 async function display_user_numbers(){
@@ -104,26 +85,22 @@ async function get_dev_token(){
   }
 }
 
-// Adding event listener to login button
-// document.getElementById("login").addEventListener("click", () => {
-//   login_user();  // Call the loginUser function when the login button is clicked
-// });
-
 document.getElementById("get_numbers").addEventListener("click", async () => {
   await display_user_numbers();
 });
 
-//redirect index to home
-document.getElementById("startButton").addEventListener("click", function() {
-  window.location.href = "/home.html"; 
-});
-
-
-
 // get user token and send to backend
 document.getElementById("login").addEventListener("click", async () => {
+
+  if (userToken) {
+    console.log("User already logged in with token:", userToken);
+    update_loading_status("Loaded");
+    return;
+  }
+
   update_loading_status("Loading...");
   console.time("login time");
+  
   const developer_token = await get_dev_token();
 
   try {
@@ -136,13 +113,30 @@ document.getElementById("login").addEventListener("click", async () => {
           },
       });
 
-      // Request user authorization
       await music.authorize();
 
-      // Retrieve the user token
-      const userToken = music.musicUserToken;
-      await send_user_token(userToken);
-      update_loading_status("Loaded");
+      // retrieve the user token
+      //const userToken = process.env.USER_TOKEN; // for testing reasons
+      
+      userToken = music.musicUserToken; // to dynamically get user token
+
+      if (userToken) {
+        console.log("User Token: ", userToken);
+
+        await fetch('/api-login', { //send userToken
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: userToken }),
+        });
+
+        update_loading_status("Loaded");
+      }
+
+      else {
+        console.error("Failed to send user token."); 
+      }
       console.timeEnd("login time");
   } catch (error) {
       console.error("Error authorizing with Apple Music:", error);
@@ -170,9 +164,30 @@ async function fetchGenres() {
     console.error('Error fetching genres:', error);
   }
 }
+async function fetchSubGenres(genre) {
+  try {
+    const response = await fetch('/get-subgenres', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ genre }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch sub-genres');
+    }
+
+    const data = await response.json();
+    console.log(`Fetched Sub-Genres for ${genre}:`, data);
+    displaySubGenres(data.data);
+  } catch (error) {
+    console.error('Error fetching sub-genres:', error);
+  }
+}
 
 function displayGenres(genres) {
-  const genresContainer = document.querySelector('.select-genres');  
+  const genresContainer = document.querySelector('.select-filters');  
 
   let buttonsContainer = document.querySelector('.genre-buttons');
   if (!buttonsContainer) {
@@ -188,9 +203,29 @@ function displayGenres(genres) {
     button.innerText = genre;
     button.addEventListener('click', () => {
       console.log(`Selected Genre: ${genre}`);
+      fetchSubGenres(genre);
     });
     buttonsContainer.appendChild(button);
   });
 }
 
+function displaySubGenres(subGenres) {
+  const subGenresContainer = document.querySelector('.sub-genres');
+  subGenresContainer.innerHTML = '';
 
+  if (subGenres.length === 0) {
+    subGenresContainer.style.display = "none"; // Hide if no sub-genres
+    return;
+  }
+
+  subGenresContainer.style.display = "block"; // Show when populated
+
+  subGenres.forEach(subGenre => {
+    const button = document.createElement('button');
+    button.innerText = subGenre;
+    button.addEventListener('click', () => {
+      console.log(`Selected Sub-Genre: ${subGenre}`);
+    });
+    subGenresContainer.appendChild(button);
+  });
+}

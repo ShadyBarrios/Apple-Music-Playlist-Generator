@@ -17,7 +17,8 @@ const developerToken = process.env.DEVELOPER_TOKEN;
 const app = express();
 const port = 3000;
 
-let userToken = "";  // Get user token from frontend
+let userToken = "";  // get user token from frontend
+let backendUser = null; // user-specific backend object
 
 // Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
@@ -34,43 +35,63 @@ app.use(express.json());
 
 // Endpoint to handle the login API (using the developerToken from .env file)
 app.post('/api-login', async (req, res) => {
-  userToken = req.body.token;
-  if (!userToken) {
+  const { token } = req.body;
+
+  if (!token) {
     return res.status(400).json({ error: 'User Token fetch failed' });
   }
 
+  userToken = token;  // store the token only once
   console.log('SERVER.JS: Using developer token from .env: ', developerToken);
-  console.log('SERVER.JS: Using fetched user token: ', userToken);
+  console.log('SERVER.JS: Received new user token: ', userToken);
 
-  backend = await Backend.createUser(userToken);
-  console.log("Backend init");
+  backendUser = await backend.createUser(userToken);
+  backend.clientUsers.push(backendUser);  // keep track of all users
+  backend.appleTokens.push(userToken);   // store user token
+  
+  console.log("Backend initialized. Total users:", backend.clientUsers.length);
+
 
   res.json({ message: 'User Token fetch successful' });
 });
 
+
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
 
-  if (!backend.genre_dictionary) {
-    console.error("Error: backend.genre_dictionary is undefined or null.");
+  if (!backendUser || !backendUser.genre_dictionary || !backendUser.genre_dictionary._dictionary) {
+    console.error("Error: genre dictionary is undefined.");
     return res.status(500).json({ error: "Genre dictionary not found on the server." });
   }
 
-  console.log(backend.genre_dictionary);
-  const allGenres = Object.keys(backend.genre_dictionary);
+  console.log(backendUser.genre_dictionary._dictionary);
+
+  const allGenres = Object.keys(backendUser.genre_dictionary._dictionary);
   res.json({ data: allGenres });
 });
 
-
 app.post('/get-backend-object-numbers', (req, res) => {
   const obj = {
-    songsLength: backend.songs.length,
-    genresLength: Object.keys(backend.genre_dictionary).length,
-    subgenresLength: Object.keys(backend.subgenre_dictionary).length,
+    songsLength: backendUser.songs.length,
+    genresLength: Object.keys(backendUser.genre_dictionary._dictionary).length,
+    subgenresLength: Object.keys(backendUser.subgenre_dictionary._dictionary).length,
   };
 
   res.json({ data: obj });
 });
+
+app.post('/get-subgenres', (req, res) => {
+  const { genre } = req.body;
+
+  if (!backendUser || !backendUser.subgenre_dictionary || !backendUser.subgenre_dictionary._dictionary) {
+    return res.status(500).json({ error: "Subgenre dictionary not found on the server." });
+  }
+
+  const subgenres = backendUser.subgenre_dictionary._dictionary[genre] || [];
+
+  res.json({ data: subgenres });
+});
+
 
 app.post('/get-dev-token', (req, res) => {
   res.json({ data: developerToken });
