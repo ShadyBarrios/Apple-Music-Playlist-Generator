@@ -189,7 +189,6 @@ async function fetchSubGenres() {
 function displayGenres(genres) {
   const genresContainer = document.querySelector('.genre-buttons');
 
-  // Create a wrapper for proper scrolling
   let wrapper = document.querySelector('.genre-buttons-wrapper');
   if (!wrapper) {
     wrapper = document.createElement('div');
@@ -197,7 +196,7 @@ function displayGenres(genres) {
     genresContainer.appendChild(wrapper);
   }
 
-  wrapper.innerHTML = '';
+  wrapper.innerHTML = ''; // Clear previous buttons
 
   genres.forEach(genre => {
     const button = document.createElement('button');
@@ -219,7 +218,7 @@ function displaySubGenres(subGenres) {
     subGenresContainer.appendChild(wrapper);
   }
 
-  wrapper.innerHTML = '';
+  wrapper.innerHTML = ''; // Clear previous buttons
 
   subGenres.forEach(subGenre => {
     const button = document.createElement('button');
@@ -230,4 +229,3 @@ function displaySubGenres(subGenres) {
     wrapper.appendChild(button);
   });
 }
-

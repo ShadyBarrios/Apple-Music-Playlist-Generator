@@ -189,35 +189,54 @@ video {
 .genre-buttons-wrapper, .subgenre-buttons-wrapper {
   display: flex;
   flex-wrap: wrap;
-  min-width: max-content; /* Ensures it extends to fit all buttons */
+  justify-content: flex-start; /* Aligns items neatly */
+  gap: 10px; /* Ensures equal spacing between buttons */
+  max-width: 100%; /* Prevents weird wrapping */
+  min-width: max-content; /* Ensures overflow scrolling */
+  max-height: calc(40px * 3 + 20px); /* Allows 3 rows */
+  align-content: flex-start; /* Ensures wrapping behaves properly */
 }
 
+
 /* Buttons should be evenly spaced and fixed size */
+.genre-buttons, .subgenre-buttons {
+  display: flex;
+  overflow-x: auto; /* Enables horizontal scrolling */
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 10px;
+  background-color: #f4f4f9;
+  border-radius: 8px;
+  box-shadow: none;
+  white-space: nowrap; /* Prevents unnecessary wrapping */
+}
+
+/* Ensures the wrapper extends as needed for scrolling */
+.genre-buttons-wrapper, .subgenre-buttons-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; 
+  min-width: max-content; 
+  max-height: calc(40px * 3 + 20px); 
+  align-content: flex-start; 
+}
+
+/* Consistent button size */
 .genre-buttons button, .subgenre-buttons button {
-  flex: 0 0 100px; /* Fixed width for consistent sizing */
+  flex: 0 0 100px; /* Fixed width for uniform size */
   height: 40px; /* Fixed height */
-  white-space: nowrap; /* Prevents text wrapping */
   text-align: center;
   background-color: #fc3c44;
   color: #f4f4f9;
   border: none;
-  padding: 10px 20px;
+  padding: 10px;
   font-size: 14px;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-/* Hide scrollbar for a cleaner look */
-.genre-buttons::-webkit-scrollbar, .subgenre-buttons::-webkit-scrollbar {
-  height: 8px;
-}
-
-.genre-buttons::-webkit-scrollbar-track, .subgenre-buttons::-webkit-scrollbar-track {
-  background: #f4f4f9;
-}
-
-.genre-buttons::-webkit-scrollbar-thumb, .subgenre-buttons::-webkit-scrollbar-thumb {
-  background: #fc3c44;
-  border-radius: 4px;
+/* Hover effect */
+.genre-buttons button:hover, .subgenre-buttons button:hover {
+  background-color: #5a0505;
 }
