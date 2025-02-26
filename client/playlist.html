@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Generated Playlist</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Your Generated Playlist</h1>
+  </header>
+  <main>
+    <!-- Container where the generated playlist will be displayed -->
+    <div id="playlist-container">
+      <!-- Playlist details will appear here -->
+    </div>
+    <!-- Button to trigger playlist generation -->
+    <button id="generate-playlist">Generate Playlist</button>
+  </main>
+  
+  <!-- Include client.js for shared functionality -->
+  <script src="/client.js"></script>
+  
+  <script>
+    // Function to call the server endpoint to create a user playlist.
+    // It sends a playlist name and filter array (which should match your backend createPlaylist signature).
+    async function createUserPlaylist(playlistName, filters) {
+      try {
+        const response = await fetch('/create-playlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playlistName, filters })
+        });
+        if (!response.ok) {
+          throw new Error('Failed to create playlist');
+        }
+        // Expect the server to return a playlist object with properties: name, description, and songs array.
+        const playlist = await response.json();
+        return playlist;
+      } catch (error) {
+        console.error('Error creating playlist:', error);
+      }
+    }
+
+    // Function to display the playlist on the page.
+    // It assumes that the playlist object has a name, description, and a songs array.
+    function displayPlaylist(playlist) {
+      const container = document.getElementById('playlist-container');
+      container.innerHTML = ''; // Clear any existing content
+      
+      if (!playlist) {
+        container.textContent = 'No playlist available.';
+        return;
+      }
+      
+      // Create and append a title element.
+      const titleEl = document.createElement('h2');
+      titleEl.textContent = playlist.name;
+      container.appendChild(titleEl);
+      
+      // Create and append a description paragraph.
+      const descEl = document.createElement('p');
+      descEl.textContent = playlist.description;
+      container.appendChild(descEl);
+      
+      // Create a list to display each song.
+      const ul = document.createElement('ul');
+      playlist.songs.forEach(song => {
+        const li = document.createElement('li');
+        // Display song details. Here we use the song id; modify as needed if you have additional info.
+        li.textContent = song.id;
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+
+    // Event handler for the Generate Playlist button.
+    document.getElementById('generate-playlist').addEventListener('click', async () => {
+      // For demonstration, we’re using hardcoded values.
+      // Replace these with dynamic values (for example, from user filter selections) as needed.
+      const playlistName = 'My Custom Playlist';
+      const filters = ['Rock', 'Indie'];
+      
+      const playlist = await createUserPlaylist(playlistName, filters);
+      displayPlaylist(playlist);
+    });
+
+    // Optionally, you can auto-trigger playlist generation on page load:
+    // (async () => {
+    //   const playlist = await createUserPlaylist('Auto Playlist', ['Rock', 'Indie']);
+    //   displayPlaylist(playlist);
+    // })();
+  </script>
+</body>
+</html>
