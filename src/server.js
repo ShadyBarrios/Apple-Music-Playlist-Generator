@@ -121,6 +121,27 @@ app.post('/submit-selections', (req, res) => {
   res.json({ message: "Selections received successfully!" });
 });
 
+// In server.js
+app.post('/create-playlist', async (req, res) => {
+  const { playlistName, filters } = req.body;
+  if (!backendUser) {
+    return res.status(400).json({ error: 'User not initialized' });
+  }
+  const playlist = backendUser.createPlaylist(playlistName, filters);
+  if (!playlist || playlist.length === 0) {
+    return res.status(500).json({ error: 'Failed to create playlist' });
+  }
+  // Then push to Apple Music
+  try {
+    await backend.pushApplePlaylist(playlist, backendUser.clientToken);
+    console.log("Pushing playlist to user")
+  } catch (error) {
+    console.error("Error pushing playlist:", error);
+    return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
+  }
+  res.json(playlist);
+});
+
 // Export the app for testing
 export default app;
 
