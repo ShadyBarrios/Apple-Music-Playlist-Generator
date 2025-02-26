@@ -112,17 +112,53 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
+let selectedGenres = [];
+let selectedSubGenres = [];
+
 app.post('/submit-selections', (req, res) => {
   const { genres, subGenres } = req.body;
 
-  console.log("Received Genres:", genres);
-  console.log("Received Sub-Genres:", subGenres);
+  if (!genres || !subGenres) {
+    return res.status(400).json({ error: "Missing genre selections" });
+  }
+
+  selectedGenres = genres;
+  selectedSubGenres = subGenres;
+
+  console.log("Stored Genres:", selectedGenres);
+  console.log("Stored Sub-Genres:", selectedSubGenres);
 
   res.json({ message: "Selections received successfully!" });
 });
 
+app.post('/generate-playlist', async (req, res) => {
+  if (!backendUser) {
+    return res.status(400).json({ error: 'User not initialized' });
+  }
+
+  try {
+    // Combine selected genres and sub-genres into one array
+    const filters = [...selectedGenres, ...selectedSubGenres];
+
+    console.log("Generating playlist with filters:", filters);
+
+    // Generate the playlist
+    const playlist = backendUser.createPlaylist("Guffle's Playlist", filters);
+    console.log("Final Playlist: ", playlist)
+    if (!playlist || playlist.length === 0) {
+      return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
+    }
+
+    res.json({ playlist });
+  } catch (error) {
+    console.error("Error generating playlist:", error);
+    res.status(500).json({ error: 'Server error while generating playlist' });
+  }
+});
+
+
 // In server.js
-app.post('/create-playlist', async (req, res) => {
+app.post('/send-playlist', async (req, res) => {
   const { playlistName, filters } = req.body;
   if (!backendUser) {
     return res.status(400).json({ error: 'User not initialized' });
