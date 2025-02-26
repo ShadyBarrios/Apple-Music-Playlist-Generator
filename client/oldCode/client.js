@@ -1,4 +1,6 @@
 // Function to handle the login API call
+
+// might be obselete.
 let userToken = "" //will be pulled with musicKit
 async function login_user() {
   try {
