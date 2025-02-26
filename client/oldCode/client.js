@@ -1,5 +1,6 @@
 // Function to handle the login API call
 
+// might be obselete.
 let userToken = "" //will be pulled with musicKit
 async function login_user() {
   try {
@@ -21,6 +22,48 @@ async function login_user() {
   }
 }
 
+document.getElementById("login").addEventListener("click", async () => {
+  update_loading_status("Loading...");
+  
+  const developer_token = await get_dev_token();
+
+  try {
+    // Initialize MusicKit with your developer token
+    const music = await MusicKit.configure({
+        developerToken: developer_token,
+        app: {
+            name: "Custom Playlist Generator",
+            build: "1.0.0",
+        },
+    });
+
+    await music.authorize();
+
+    userToken = music.musicUserToken;
+
+    if (userToken) {
+      console.log("User Token: ", userToken);
+
+      await fetch('/api-login', { // Send userToken
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: userToken }),
+      });
+
+      update_loading_status("Loaded");
+      setTimeout(() => {
+        window.location.href = "filters.html"; // Redirect to filters page
+      }, 500); // Delay redirect to allow for status update
+    } else {
+      console.error("Failed to send user token.");
+    }
+  } catch (error) {
+    console.error("Error authorizing with Apple Music:", error);
+  }
+});
+
 function update_loading_status(status) {
   document.getElementById("loading_status").innerText = status;
   const loadingAnimate = document.getElementById("loading_animate");
@@ -32,12 +75,14 @@ function update_loading_status(status) {
   }
 
   if (status === "Loaded") {
-    document.getElementById("get_numbers").style.display = "block"; // show button
+    document.getElementById("get_numbers").style.display = "block"; // Show button on the next page
     fetchGenres();
+    fetchSubGenres();
   } else {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
+
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
 }
@@ -164,14 +209,13 @@ async function fetchGenres() {
     console.error('Error fetching genres:', error);
   }
 }
-async function fetchSubGenres(genre) {
+async function fetchSubGenres() {
   try {
     const response = await fetch('/get-subgenres', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ genre }),
     });
 
     if (!response.ok) {
@@ -179,53 +223,130 @@ async function fetchSubGenres(genre) {
     }
 
     const data = await response.json();
-    console.log(`Fetched Sub-Genres for ${genre}:`, data);
+    console.log(`Fetched Sub-Genres:`, data);
     displaySubGenres(data.data);
   } catch (error) {
     console.error('Error fetching sub-genres:', error);
   }
 }
 
-function displayGenres(genres) {
-  const genresContainer = document.querySelector('.select-filters');  
+let selectedGenres = new Set();
+let selectedSubGenres = new Set();
 
-  let buttonsContainer = document.querySelector('.genre-buttons');
-  if (!buttonsContainer) {
-    buttonsContainer = document.createElement('div');
-    buttonsContainer.classList.add('genre-buttons');
-    genresContainer.appendChild(buttonsContainer);
+function displayGenres(genres) {
+  const genresContainer = document.querySelector('.genre-buttons');
+
+  let wrapper = document.querySelector('.genre-buttons-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.classList.add('genre-buttons-wrapper');
+    genresContainer.appendChild(wrapper);
   }
 
-  buttonsContainer.innerHTML = '';
+  wrapper.innerHTML = ''; // Clear previous buttons
 
   genres.forEach(genre => {
     const button = document.createElement('button');
     button.innerText = genre;
-    button.addEventListener('click', () => {
-      console.log(`Selected Genre: ${genre}`);
-      fetchSubGenres(genre);
-    });
-    buttonsContainer.appendChild(button);
+    button.classList.toggle("selected", selectedGenres.has(genre));
+
+    button.addEventListener('click', () => handleGenreClick(genre, button));
+
+    wrapper.appendChild(button);
   });
 }
 
 function displaySubGenres(subGenres) {
-  const subGenresContainer = document.querySelector('.sub-genres');
-  subGenresContainer.innerHTML = '';
+  const subGenresContainer = document.querySelector('.subgenre-buttons');
 
-  if (subGenres.length === 0) {
-    subGenresContainer.style.display = "none"; // Hide if no sub-genres
-    return;
+  let wrapper = document.querySelector('.subgenre-buttons-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.classList.add('subgenre-buttons-wrapper');
+    subGenresContainer.appendChild(wrapper);
   }
 
-  subGenresContainer.style.display = "block"; // Show when populated
+  wrapper.innerHTML = ''; // Clear previous buttons
 
   subGenres.forEach(subGenre => {
     const button = document.createElement('button');
     button.innerText = subGenre;
-    button.addEventListener('click', () => {
-      console.log(`Selected Sub-Genre: ${subGenre}`);
-    });
-    subGenresContainer.appendChild(button);
+    button.classList.toggle("selected", selectedSubGenres.has(subGenre));
+
+    button.addEventListener('click', () => handleSubGenreClick(subGenre, button));
+
+    wrapper.appendChild(button);
   });
 }
+
+function handleGenreClick(genre, button) {
+  if (selectedGenres.has(genre)) {
+    selectedGenres.delete(genre); // Deselect on second click
+    button.classList.remove("selected");
+    console.log(`Deselected Genre: ${genre}`);
+  } else {
+    selectedGenres.add(genre); // Select on first click
+    button.classList.add("selected");
+    console.log(`Selected Genre: ${genre}`);
+  }
+}
+
+function handleSubGenreClick(subGenre, button) {
+  if (selectedSubGenres.has(subGenre)) {
+    selectedSubGenres.delete(subGenre);
+    button.classList.remove("selected");
+    console.log(`Deselected Sub-Genre: ${subGenre}`);
+  } else {
+    selectedSubGenres.add(subGenre);
+    button.classList.add("selected");
+    console.log(`Selected Sub-Genre: ${subGenre}`);
+  }
+}
+
+// Function to submit selections to the server
+async function submitSelections() {
+  const selectedData = {
+    genres: Array.from(selectedGenres),
+    subGenres: Array.from(selectedSubGenres),
+  };
+
+  console.log("Submitting selections:", selectedData);
+
+  try {
+    const response = await fetch('/submit-selections', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(selectedData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to submit selections');
+    }
+
+    const data = await response.json();
+    console.log("Submission Response:", data.message);
+  } catch (error) {
+    console.error("Error submitting selections:", error);
+  }
+}
+
+// Create and append the Submit button
+function addSubmitButton() {
+  const container = document.querySelector('.submit-container');
+
+  let submitButton = document.getElementById("submit-button");
+  if (!submitButton) {
+    submitButton = document.createElement("button");
+    submitButton.id = "submit-button";
+    submitButton.innerText = "Submit";
+    submitButton.addEventListener("click", submitSelections);
+    container.appendChild(submitButton);
+  }
+}
+
+// Call addSubmitButton on load
+document.addEventListener("DOMContentLoaded", addSubmitButton);
+
+

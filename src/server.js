@@ -80,14 +80,14 @@ app.post('/get-backend-object-numbers', (req, res) => {
 });
 
 app.post('/get-subgenres', (req, res) => {
-  const { genre } = req.body;
-
+  console.log("Sub-genres endpoint hit!")
+  
   if (!backendUser || !backendUser.subgenre_dictionary || !backendUser.subgenre_dictionary._dictionary) {
     return res.status(500).json({ error: "Subgenre dictionary not found on the server." });
   }
 
-  const subgenres = backendUser.subgenre_dictionary._dictionary[genre] || [];
-
+  console.log(backendUser.subgenre_dictionary._dictionary);
+  const subgenres = Object.keys(backendUser.subgenre_dictionary._dictionary);
   res.json({ data: subgenres });
 });
 
@@ -111,6 +111,72 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     console.log(`Server listening on port ${port}`);
   });
 }
+
+let selectedGenres = [];
+let selectedSubGenres = [];
+
+app.post('/submit-selections', (req, res) => {
+  const { genres, subGenres } = req.body;
+
+  if (!genres || !subGenres) {
+    return res.status(400).json({ error: "Missing genre selections" });
+  }
+
+  selectedGenres = genres;
+  selectedSubGenres = subGenres;
+
+  console.log("Stored Genres:", selectedGenres);
+  console.log("Stored Sub-Genres:", selectedSubGenres);
+
+  res.json({ message: "Selections received successfully!" });
+});
+
+app.post('/generate-playlist', async (req, res) => {
+  if (!backendUser) {
+    return res.status(400).json({ error: 'User not initialized' });
+  }
+
+  try {
+    // Combine selected genres and sub-genres into one array
+    const filters = [...selectedGenres, ...selectedSubGenres];
+
+    console.log("Generating playlist with filters:", filters);
+
+    // Generate the playlist
+    const playlist = backendUser.createPlaylist("Guffle's Playlist", filters);
+    console.log("Final Playlist: ", playlist)
+    if (!playlist || playlist.length === 0) {
+      return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
+    }
+
+    res.json({ playlist });
+  } catch (error) {
+    console.error("Error generating playlist:", error);
+    res.status(500).json({ error: 'Server error while generating playlist' });
+  }
+});
+
+
+// In server.js
+app.post('/send-playlist', async (req, res) => {
+  const { playlistName, filters } = req.body;
+  if (!backendUser) {
+    return res.status(400).json({ error: 'User not initialized' });
+  }
+  const playlist = backendUser.createPlaylist(playlistName, filters);
+  if (!playlist || playlist.length === 0) {
+    return res.status(500).json({ error: 'Failed to create playlist' });
+  }
+  // Then push to Apple Music
+  try {
+    await backend.pushApplePlaylist(playlist, backendUser.clientToken);
+    console.log("Pushing playlist to user")
+  } catch (error) {
+    console.error("Error pushing playlist:", error);
+    return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
+  }
+  res.json(playlist);
+});
 
 // Export the app for testing
 export default app;

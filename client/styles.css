@@ -163,56 +163,71 @@ video {
   max-width: 300px;
 }
 
-/* genre buttons, needs to cover sub-genre buttons as well */
+/* genre buttons, sub-genre buttons containers */
 
-.genre-buttons {
+.genre-buttons, .subgenre-buttons {
   display: flex;
-  flex-wrap: wrap; /* Allows buttons to wrap into rows */
+  flex-wrap: wrap;
   gap: 10px;
   padding: 10px;
-  overflow-x: auto; /* Enables horizontal scrolling */
-  overflow-y: hidden; /* Prevents vertical scrolling */
+  max-height: calc(40px * 3 + 20px);
+  overflow-x: auto;
+  overflow-y: hidden;
   scroll-behavior: smooth;
   border-radius: 8px;
   background-color: #f4f4f9;
   box-shadow: none;
-  justify-content: flex-start; /* Aligns buttons to the left */
-  align-content: flex-start; /* Ensures wrapping behaves properly */
-  white-space: nowrap; /* Prevents extra spaces messing up alignment */
+  justify-content: flex-start;
+  align-content: flex-start;
+  white-space: nowrap;
 }
 
-/* Hide scrollbar for a cleaner look */
-.genre-buttons::-webkit-scrollbar {
-  height: 8px;
+.genre-buttons-wrapper, .subgenre-buttons-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 10px; 
+  max-width: 100%;
+  min-width: max-content;
+  max-height: calc(40px * 3 + 20px);
+  align-content: flex-start;
 }
 
-.genre-buttons::-webkit-scrollbar-track {
-  background: #f4f4f9;
+.genre-buttons, .subgenre-buttons {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 10px;
+  background-color: #f4f4f9;
+  border-radius: 8px;
+  box-shadow: none;
+  white-space: nowrap; 
 }
 
-.genre-buttons::-webkit-scrollbar-thumb {
-  background: #fc3c44;
-  border-radius: 4px;
+.genre-buttons-wrapper, .subgenre-buttons-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; 
+  min-width: max-content; 
+  max-height: calc(40px * 3 + 20px); 
+  align-content: flex-start; 
 }
 
-/* Button styles */
-.genre-buttons button {
-  flex: 0 0 100px; /* Fixed width for consistent sizing */
-  height: 40px; /* Fixed height */
-  white-space: nowrap; /* Prevents text wrapping */
+.genre-buttons button, .subgenre-buttons button {
+  flex: 0 0 100px; 
+  height: 40px; 
   text-align: center;
   background-color: #fc3c44;
   color: #f4f4f9;
   border: none;
-  padding: 10px 20px;
+  padding: 10px;
   font-size: 14px;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-/* Hover effect */
-.genre-buttons button:hover {
+.genre-buttons button:hover, .subgenre-buttons button:hover {
   background-color: #5a0505;
 }
-

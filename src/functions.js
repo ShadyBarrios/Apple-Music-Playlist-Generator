@@ -79,17 +79,21 @@ import {Playlist} from './backend.js';
 export class Song {
     /**
      * @param {string} id - Catalog ID
+     * @param {string} name - Song name
+     * @param {string} artist - Artist name
      * @param {Genres[]} genres - array of genre IDs
      * @param {string[]} subgenres - array of subgenres names
      */
-    constructor(id, genres, subgenres) {
+    constructor(id, name, artist, genres, subgenres) {
         // check that we have good vars (note that isLiked is bool, so we use typeof)
-        if (!id || !genres || !subgenres) {
+        if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
         }
 
         this.id = id;
+        this.name = name;
+        this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
       }
@@ -1106,7 +1110,7 @@ export class ParallelDataFetchers{
                             name: genre.attributes.name
                         }
                     }));
-                    songs.push(new Song(data.data[i].id, genres, data.data[i].attributes.genreNames));
+                    songs.push(new Song(data.data[i].id, data.data[i].attributes.name, data.data[i].attributes.artistName, genres, data.data[i].attributes.genreNames));
                 }
             }
 
