@@ -20,6 +20,48 @@ async function login_user() {
   }
 }
 
+document.getElementById("login").addEventListener("click", async () => {
+  update_loading_status("Loading...");
+  
+  const developer_token = await get_dev_token();
+
+  try {
+    // Initialize MusicKit with your developer token
+    const music = await MusicKit.configure({
+        developerToken: developer_token,
+        app: {
+            name: "Custom Playlist Generator",
+            build: "1.0.0",
+        },
+    });
+
+    await music.authorize();
+
+    userToken = music.musicUserToken;
+
+    if (userToken) {
+      console.log("User Token: ", userToken);
+
+      await fetch('/api-login', { // Send userToken
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: userToken }),
+      });
+
+      update_loading_status("Loaded");
+      setTimeout(() => {
+        window.location.href = "filters.html"; // Redirect to filters page
+      }, 500); // Delay redirect to allow for status update
+    } else {
+      console.error("Failed to send user token.");
+    }
+  } catch (error) {
+    console.error("Error authorizing with Apple Music:", error);
+  }
+});
+
 function update_loading_status(status) {
   document.getElementById("loading_status").innerText = status;
   const loadingAnimate = document.getElementById("loading_animate");
@@ -31,13 +73,14 @@ function update_loading_status(status) {
   }
 
   if (status === "Loaded") {
-    document.getElementById("get_numbers").style.display = "block"; // show button
+    document.getElementById("get_numbers").style.display = "block"; // Show button on the next page
     fetchGenres();
     fetchSubGenres();
   } else {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
+
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
 }

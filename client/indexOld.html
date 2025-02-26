@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Playlist Generator</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+  <script>
+    // MusicKit setup and user authorization
+    // document.addEventListener("musickitloaded", async function() {
+    //   MusicKit.configure({
+    //     developerToken: "YOUR_DEVELOPER_TOKEN",
+    //     app: {
+    //       name: "Custom Playlist Generator",
+    //       build: "1.0.0"
+    //     }
+    //   });
+    //   console.log("MusicKit JS Loaded");
+    // });
+
+    // async function authenticateUser() {
+    //   try {
+    //     const music = MusicKit.getInstance();
+    //     const userToken = await music.authorize();
+    //     console.log("Music User Token: ", userToken);
+    //     document.getElementById("status").innerText = userToken;
+    //   } catch (error) {
+    //     console.error("Error authorizing user: ", error);
+    //   }
+    // }
+  </script>
+</head>
+<body>
+  <div class ="login">
+    <h1>Welcome to the Music Playlist Generator</h1>
+    <button id="login">Login</button>
+    <video id="loading_animate" autoplay loop muted playsinline style="display: none;">
+      <source src="/images/output.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <p id="loading_status"></p>
+    
+    <button id="get_numbers" style="display: none;">Get Numbers</button>
+    <p id="numbers"></p>
+  </div>
+
+  <div class="select-filters">
+    <h1>Genres</h1>
+    <div class="genre-buttons">
+      <!-- Genre buttons will be added here -->
+    </div>
+    <h1>Sub-Genres</h1>
+    <div class="subgenre-buttons">
+      <!-- sub-Genre buttons will be added here -->
+    </div>
+    
+    <div class="submit-container"></div>
+
+    </div>
+  </div>
+
+
+  <script defer src="/client.js"></script>
+</body>
+</html>
