@@ -66,10 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedGenres.has(genre)) {
       selectedGenres.delete(genre);
       button.classList.remove("selected");
+      button.style.backgroundColor = "fc3c44"; // reset color to default
       console.log(`Deselected Genre: ${genre}`);
     } else {
       selectedGenres.add(genre);
       button.classList.add("selected");
+      button.style.backgroundColor = "#8B0000"; // set selected button to darker color
       console.log(`Selected Genre: ${genre}`);
     }
   }
@@ -78,10 +80,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedSubGenres.has(subGenre)) {
       selectedSubGenres.delete(subGenre);
       button.classList.remove("selected");
+      button.style.backgroundColor = "fc3c44"; // reset color to default
       console.log(`Deselected Genre: ${subGenre}`);
     } else {
       selectedSubGenres.add(subGenre);
       button.classList.add("selected");
+      button.style.backgroundColor = "#8B0000"; // set selected button to darker color
       console.log(`Selected Genre: ${subGenre}`);
     }
   }
