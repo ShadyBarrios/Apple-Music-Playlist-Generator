@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedGenres.has(genre)) {
       selectedGenres.delete(genre);
       button.classList.remove("selected");
-      button.style.backgroundColor = "fc3c44"; // reset color to default
+      button.style.backgroundColor = "#fc3c44"; // reset color to default
       console.log(`Deselected Genre: ${genre}`);
     } else {
       selectedGenres.add(genre);
