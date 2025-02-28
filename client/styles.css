@@ -2,20 +2,20 @@
 /* Navbar styling */
 nav {
   display: flex;
-  justify-content: space-between;  /* Align logo and links at the ends */
-  align-items: center;  /* Vertically center content */
-  padding: 10px 20px;  /* Adjust padding for spacing */
-  width: 100%;  /* Make the navbar span the entire width */
-  background-color: #ffffff;  /* Set background color (can match your page color) */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Add drop shadow for separation */
-  position: fixed;  /* Fix the navbar at the top of the page */
+  justify-content: space-between;  
+  align-items: center;  
+  padding: 10px 20px;  
+  width: 100%;  
+  background-color: #f4f4f9;  
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* add drop shadow for separation */
+  position: fixed; 
   top: 0;
   left: 0;
-  z-index: 1000;  /* Ensure navbar stays on top of other content */
+  z-index: 1000;  
 }
 
 .navbar .logo {
-  height: 50px; /* Adjust the size of the logo */
+  height: 50px;
   width: auto;
 }
 
@@ -104,20 +104,17 @@ input[type="text"]:focus {
   outline: none;
 }
 
-/* Paragraph Styles */
 p {
   font-size: 16px;
   color: #555;
   margin: 5px 0;
 }
 
-/* Styling for the Status Text */
 #status {
   font-weight: bold;
   color: #fc3c44;
 }
 
-/* Styling for output sections */
 #playlists,
 #recently_played,
 #genre_dictionary,
@@ -134,7 +131,6 @@ p {
   margin-top: 5px;
 }
 
-/* Button container for styling alignment */
 button {
   display: block;
   width: 100%;
@@ -142,7 +138,6 @@ button {
   margin: 10px auto;
 }
 
-/*video has no outline/drop shadow */
 video {
   box-shadow: none !important;
   border: none !important;
@@ -152,7 +147,6 @@ video {
   mix-blend-mode: normal;
 }
 
-/* Centered loading screen */
 .loading-screen {
   text-align: center;
   margin-top: 20vh;
