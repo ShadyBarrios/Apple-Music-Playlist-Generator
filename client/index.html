@@ -1,25 +1,28 @@
-<!-- home page with loading screen popping up -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Music Playlist Generator - Login</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Video</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        video {
+            max-width: 90%;
+            max-height: 90%;
+        }
+    </style>
 </head>
 <body>
-  <div class="login">
-    <h1>Welcome to the Music Playlist Generator</h1>
-    <button id="login">Login</button>
-    <video id="loading_animate" autoplay loop muted playsinline style="display: none;">
-      <source src="/images/output.mp4" type="video/mp4">
-      Your browser does not support the video tag.
+    <video autoplay muted onended="setTimeout(function(){ window.location.href='login.html'; }, 1500)">
+        <source src="/images/guffle home.mp4" type="video/mp4">
+        Your browser does not support the video tag.
     </video>
-    <p id="loading_status"></p>
-  </div>
-
-  <script defer src="/login.js"></script>
 </body>
 </html>
