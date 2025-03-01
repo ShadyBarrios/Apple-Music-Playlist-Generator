@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Playlist Page Loaded");
-  update_loading_status("Loading...");
   await fetchPlaylist();
 });
 
@@ -16,11 +15,10 @@ async function fetchPlaylist() {
     const data = await response.json();
     console.log("Generated Playlist:", data);
 
-    update_loading_status("Loaded");
+    // Display the playlist
     displayPlaylist(data.playlist);
   } catch (error) {
     console.error("Error generating playlist:", error);
-    update_loading_status("Error loading playlist");
   }
 }
 
@@ -28,6 +26,11 @@ function displayPlaylist(playlist) {
   const container = document.querySelector('.playlist-container');
   container.innerHTML = ''; // Clear previous content
 
+  // Display playlist name in the header
+  const playlistTitle = document.getElementById('playlistTitle');
+  playlistTitle.textContent = `Your Generated Playlist: ${playlist.name}`;
+
+  // Display each song in the playlist
   playlist.songs.forEach(song => {
     const songElement = document.createElement('p');
     
@@ -41,12 +44,4 @@ function displayPlaylist(playlist) {
 
     container.appendChild(songElement);
   });
-}
-
-function update_loading_status(status) {
-  const statusElement = document.getElementById("loading_status");
-  const loadingAnimate = document.getElementById("loading_animate");
-
-  if (statusElement) statusElement.innerText = status;
-  if (loadingAnimate) loadingAnimate.style.display = status === "Loading..." ? "block" : "none";
 }

@@ -1,5 +1,5 @@
 /*styles.css*/
-/* Navbar styling */
+
 nav {
   display: flex;
   justify-content: space-between;  
@@ -49,7 +49,7 @@ body {
   min-height: 100vh;
 }
 
-/* Container for buttons and information */
+/* container for buttons and information */
 .container {
   width: 80%;
   max-width: 900px;
@@ -197,67 +197,77 @@ video {
 
 .genre-buttons, .subgenre-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
-  max-height: calc(40px * 3 + 20px);
-  overflow-x: auto;
-  overflow-y: hidden;
+  flex-direction: column; /* Stack buttons vertically */
+  gap: 8px;
+  padding: 8px;
+  max-height: 250px; /* adjust this to control how many buttons are visible at once */
+  overflow-y: scroll;
+  overflow-x: hidden;
   scroll-behavior: smooth;
   border-radius: 8px;
   background-color: #f4f4f9;
   box-shadow: none;
   justify-content: flex-start;
-  align-content: flex-start;
-  white-space: nowrap;
+  width: 37%; /* Container only as wide as needed */
 }
 
 .genre-buttons-wrapper, .subgenre-buttons-wrapper {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   justify-content: flex-start;
-  gap: 10px; 
-  max-width: 100%;
-  min-width: max-content;
-  max-height: calc(40px * 3 + 20px);
-  align-content: flex-start;
-}
-
-.genre-buttons, .subgenre-buttons {
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-behavior: smooth;
-  padding: 10px;
-  background-color: #f4f4f9;
-  border-radius: 8px;
-  box-shadow: none;
-  white-space: nowrap; 
-}
-
-.genre-buttons-wrapper, .subgenre-buttons-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px; 
-  min-width: max-content; 
-  max-height: calc(40px * 3 + 20px); 
-  align-content: flex-start; 
+  gap: 8px; 
+  width: 100%;
+  align-items: flex-start;
 }
 
 .genre-buttons button, .subgenre-buttons button {
-  flex: 0 0 100px; 
-  height: 40px; 
-  text-align: center;
-  background-color: #fc3c44;
-  color: #f4f4f9;
-  border: none;
-  padding: 10px;
+  padding: 8px 12px;
   font-size: 14px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  border-radius: 6px;
+  white-space: nowrap;
+  width: 100%; /* Full width buttons */
+  text-align: center;
 }
 
-.genre-buttons button:hover, .subgenre-buttons button:hover {
-  background-color: #5a0505;
+/* Custom scrollbar styling */
+.genre-buttons::-webkit-scrollbar, 
+.subgenre-buttons::-webkit-scrollbar {
+  width: 8px; /* make scrollbar visible */
 }
+
+.genre-buttons::-webkit-scrollbar-thumb, 
+.subgenre-buttons::-webkit-scrollbar-thumb {
+  background-color: #888; /* Scrollbar color */
+  border-radius: 4px;
+}
+
+.genre-buttons::-webkit-scrollbar-track, 
+.subgenre-buttons::-webkit-scrollbar-track {
+  background: #ddd; /* Track color */
+}
+
+.selected-filters-container {
+  position: absolute;
+  right: 200px;
+  top: 20px;
+  width: 200px;
+  padding: 0px 10px;
+  border: 2px solid #8B0000;
+  background-color: #f4f4f9;
+  border-radius: 8px;
+}
+
+.selected-filters-list {
+  list-style: none;
+  padding: 0;
+}
+
+.selected-filters-list li {
+  background-color: #8B0000;
+  color: white;
+  padding: 5px;
+  margin: 5px 0;
+  border-radius: 5px;
+  text-align: center;
+}
+
