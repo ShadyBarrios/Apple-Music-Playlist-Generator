@@ -112,43 +112,47 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
+// Store the selections and playlistName globally or in a session
 let selectedGenres = [];
 let selectedSubGenres = [];
+let playlistName = "";
 
 app.post('/submit-selections', (req, res) => {
-  const { genres, subGenres } = req.body;
+  const { genres, subGenres, name } = req.body;
 
-  if (!genres || !subGenres) {
+  if (!genres || !subGenres || genres.length === 0 || subGenres.length === 0) {
     return res.status(400).json({ error: "Missing genre selections" });
   }
 
   selectedGenres = genres;
   selectedSubGenres = subGenres;
+  playlistName = name;
 
   console.log("Stored Genres:", selectedGenres);
   console.log("Stored Sub-Genres:", selectedSubGenres);
+  console.log("Stored Playlist Name:", playlistName);
 
   res.json({ message: "Selections received successfully!" });
 });
 
+// Endpoint for generating the playlist
 app.post('/generate-playlist', async (req, res) => {
   if (!backendUser) {
     return res.status(400).json({ error: 'User not initialized' });
   }
 
   try {
-    // Combine selected genres and sub-genres into one array
     const filters = [...selectedGenres, ...selectedSubGenres];
 
     console.log("Generating playlist with filters:", filters);
 
-    // Generate the playlist
-    const playlist = backendUser.createPlaylist("Guffle's Playlist", filters);
-    console.log("Final Playlist: ", playlist)
+    // Generate the playlist using the provided name and filters
+    const playlist = backendUser.createPlaylist(playlistName, filters);
+    console.log("Playlist: ", playlist);
+
     if (!playlist || playlist.length === 0) {
       return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
     }
-
     res.json({ playlist });
   } catch (error) {
     console.error("Error generating playlist:", error);
@@ -156,8 +160,6 @@ app.post('/generate-playlist', async (req, res) => {
   }
 });
 
-
-// In server.js
 app.post('/send-playlist', async (req, res) => {
   const { playlistName, filters } = req.body;
   if (!backendUser) {
