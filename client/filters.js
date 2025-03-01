@@ -62,33 +62,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function updateSelectedFilters() {
+    const selectedFiltersList = document.querySelector(".selected-filters-list");
+    if (!selectedFiltersList) return;
+  
+    selectedFiltersList.innerHTML = ""; // Clear current selections
+  
+    // Add selected genres
+    selectedGenres.forEach(genre => {
+      const listItem = document.createElement("li");
+      listItem.innerText = genre;
+      selectedFiltersList.appendChild(listItem);
+    });
+  
+    // Add selected sub-genres
+    selectedSubGenres.forEach(subGenre => {
+      const listItem = document.createElement("li");
+      listItem.innerText = subGenre;
+      selectedFiltersList.appendChild(listItem);
+    });
+  }
+  
   function handleGenreClick(genre, button) {
     if (selectedGenres.has(genre)) {
       selectedGenres.delete(genre);
       button.classList.remove("selected");
-      button.style.backgroundColor = "#fc3c44"; // reset color to default
-      console.log(`Deselected Genre: ${genre}`);
+      button.style.backgroundColor = "#fc3c44"; // Reset color
     } else {
       selectedGenres.add(genre);
       button.classList.add("selected");
-      button.style.backgroundColor = "#8B0000"; // set selected button to darker color
-      console.log(`Selected Genre: ${genre}`);
+      button.style.backgroundColor = "#8B0000"; // Highlight selection
     }
+    updateSelectedFilters();
   }
-
+  
   function handleSubGenreClick(subGenre, button) {
     if (selectedSubGenres.has(subGenre)) {
       selectedSubGenres.delete(subGenre);
       button.classList.remove("selected");
-      button.style.backgroundColor = "#fc3c44"; // reset color to default
-      console.log(`Deselected Genre: ${subGenre}`);
+      button.style.backgroundColor = "#fc3c44"; // Reset color
     } else {
       selectedSubGenres.add(subGenre);
       button.classList.add("selected");
-      button.style.backgroundColor = "#8B0000"; // set selected button to darker color
-      console.log(`Selected Genre: ${subGenre}`);
+      button.style.backgroundColor = "#8B0000"; // Highlight selection
     }
+    updateSelectedFilters();
   }
+  
 
   async function submitSelections() {
     const selectedData = { genres: Array.from(selectedGenres), subGenres: Array.from(selectedSubGenres) };
