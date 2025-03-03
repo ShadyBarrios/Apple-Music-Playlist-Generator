@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       subGenres: Array.from(selectedSubGenres),
     };
   
-    if (selectedData.genres.length === 0 && selectedData.subGenres.length === 0) {
+    if (selectedData.length === 0) {
       alert("Please select at least one filter to generate a playlist.");
       return;
     }
