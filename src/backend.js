@@ -39,7 +39,7 @@ class UserBackend {
         }
 
         this.generatedPlaylists = [];
-        this.songs = songs;
+        this.songs = Array.from(songs);
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
         this.clientToken = clientToken;

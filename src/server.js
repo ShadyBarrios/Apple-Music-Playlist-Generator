@@ -46,6 +46,7 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Received new user token: ', userToken);
 
   backendUser = await backend.createUser(userToken);
+  console.log("backend User size: " + getObjectSize(backendUser));
   backend.clientUsers.push(backendUser);  // keep track of all users
   backend.appleTokens.push(userToken);   // store user token
   
@@ -54,6 +55,9 @@ app.post('/api-login', async (req, res) => {
   res.json({ message: 'User Token fetch successful' });
 });
 
+function getObjectSize(obj) {
+  return new TextEncoder().encode(JSON.stringify(obj)).length;
+}
 
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
