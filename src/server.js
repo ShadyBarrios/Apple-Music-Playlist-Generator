@@ -6,8 +6,6 @@ import {UserBackend} from './backend.js';
 import {Mutex} from 'async-mutex';
 import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders} from "./functions.js"
 
-
-
 // Create .env in root folder with the following:
 const isInSrc = process.cwd().endsWith('\\src');
 const envPath = isInSrc ? path.resolve(process.cwd(), '../.env') : path.resolve(process.cwd(), '.env');

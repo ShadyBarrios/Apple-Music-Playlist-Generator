@@ -1,3 +1,5 @@
+import {UserBackend} from '../src/backend.js';
+
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Playlist Page Loaded");
   await fetchPlaylist();
