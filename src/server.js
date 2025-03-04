@@ -45,8 +45,6 @@ app.post('/api-login', async (req, res) => {
 
   backendUser = await backend.createUser(userToken);
   console.log("backend User size: " + getObjectSize(backendUser));
-  backend.clientUsers.push(backendUser);  // keep track of all users
-  backend.appleTokens.push(userToken);   // store user token
   
   console.log("Backend initialized. Total users:", backend.clientUsers.length);
 
@@ -203,23 +201,47 @@ export class Backend {
       this.dev = developerToken;
   }
 
-  async createUser(appleToken) {
+   /**
+   * Adds new user to the backend
+   * @param {string} appleToken 
+   * @returns 
+   */
+   async createUser(appleToken) {
+    let user = null;
+
+    await this.backendMutex.runExclusive(async () => {
       // this will be the current index of the usersArray
-      const clientToken = this.clientUsers.length;
+      let clientToken = this.clientUsers.length;
+      const clientExists = this.appleTokens.includes(appleToken);
+      const clientIndex = this.appleTokens.indexOf(appleToken);
+      console.log(clientExists);
+      if(clientExists) // if client exists, find its token
+        clientToken = this.clientUsers[clientIndex].clientToken;
 
       // get song data
-      const data = await this.backendMutex.runExclusive(() => DataFetchers.get_all_user_data(this.dev, appleToken));
+      const data = await DataFetchers.get_all_user_data(this.dev, appleToken);
       const songs = data.get_songs();
+    
       const genres = data.get_genre_dictionary();
       const subgenres = data.get_subgenre_dictionary();
 
       // make user and push to client and apple arrays
-      let user = new UserBackend(songs, genres, subgenres, clientToken);
-      this.clientUsers.push(user);
-      this.appleTokens.push(appleToken);
+      user = new UserBackend(songs, genres, subgenres, clientToken);
 
-      // return token
-      return user;
+      if(clientExists){
+        this.clientUsers[clientIndex] = user;
+      }
+      else{
+        this.clientUsers.push(user);
+        this.appleTokens.push(appleToken);
+      }
+    });
+
+    console.log("User Token: " + user.clientToken);
+    console.log("User: " + user);
+    
+    // return token
+    return user;
   }
 
   async pushApplePlaylist(playlist, clientToken) {
