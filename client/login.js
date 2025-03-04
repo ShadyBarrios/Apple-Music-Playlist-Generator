@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
             update_loading_status("Loaded");
             
             setTimeout(() => {
-            //window.location.href = "filters.html";
+            window.location.href = "filters.html";
           }, 500);
           } else {
             console.error("API Login failed with status:", response.status);
