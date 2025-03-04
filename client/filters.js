@@ -120,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
   
-    // Ask user for the playlist name
+    // ask user for the playlist name
     let playlistName = window.prompt("Please enter a name for your playlist:");
   
     if (!playlistName) {
@@ -128,43 +128,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     console.log("Submitting selections:", selectedData, playlistName);
+
+
+    // calling via endpoint
+    // try {
+    //   const response = await fetch('/submit-selections', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ 
+    //       genres: selectedData.genres,
+    //       subGenres: selectedData.subGenres,
+    //       name: playlistName
+    //     }),
+    //   });
   
-    try {
-      const response = await fetch('/submit-selections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          genres: selectedData.genres,
-          subGenres: selectedData.subGenres,
-          name: playlistName
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Failed to submit selections');
+    //   if (!response.ok) throw new Error('Failed to submit selections');
       
-      const data = await response.json();
-      console.log("Server Confrimation:", data.message);
+    //   const data = await response.json();
+    //   console.log("Server Confrimation:", data.message);
   
-      // Now trigger the playlist generation
-      const playlistResponse = await fetch('/generate-playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playlistName: playlistName,
-          filters: selectedData, // Send the filters for the playlist generation
-        }),
-      });
+    //   // Now trigger the playlist generation
+    //   const playlistResponse = await fetch('/generate-playlist', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       playlistName: playlistName,
+    //       filters: selectedData, // Send the filters for the playlist generation
+    //     }),
+    //   });
   
-      if (!playlistResponse.ok) throw new Error('Failed to generate playlist');
-      const playlistData = await playlistResponse.json();
-      console.log("Playlist generated:", playlistData.playlist);
+    //   if (!playlistResponse.ok) throw new Error('Failed to generate playlist');
+    //   const playlistData = await playlistResponse.json();
+    //   console.log("Playlist generated:", playlistData.playlist);
       
-      // Redirect or handle the playlist data as needed
-      window.location.href = "playlist.html"; // Redirect to playlist page after generation
+    //   // Redirect or handle the playlist data as needed
+       //window.location.href = "playlist.html"; // redirect to playlist page after generation
   
-    } catch (error) {
-      console.error("Error submitting selections or generating playlist:", error);
-    }
+    // } catch (error) {
+    //   console.error("Error submitting selections or generating playlist:", error);
+    // }
   }
   
   function addSubmitButton() {

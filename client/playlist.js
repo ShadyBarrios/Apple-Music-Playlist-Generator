@@ -1,11 +1,10 @@
-// import {UserBackend} from '../src/backend.js';
-
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Playlist Page Loaded");
   await fetchPlaylist();
 });
 
 async function fetchPlaylist() {
+  
   try {
     const response = await fetch('/generate-playlist', { 
       method: 'POST',
