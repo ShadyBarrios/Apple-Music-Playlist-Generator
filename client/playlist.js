@@ -38,6 +38,7 @@ async function fetchPlaylist() {
     }
 
     playlistNameElement.textContent = data.playlist.name;
+    storedSongs = data.playlist.songs;//full song data
     displayPlaylist(data.playlist);
   } catch (error) {
     console.error("Error generating playlist:", error);
@@ -93,11 +94,11 @@ async function savePlaylist() {
       return { name: name.trim(), artist: artist.trim() };
     });
     
-    console.log("🛠 Sending data to /send-playlist:", JSON.stringify({ playlistName, songs }, null, 2));
+    console.log("🛠 Sending data to /send-playlist:", JSON.stringify({ name: playlistName, songs: storedSongs }, null, 2));
     const response = await fetch('/send-playlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playlistName, songs })
+      body: JSON.stringify({ name: playlistName, songs: storedSongs})
     });
 
     if (!response.ok) throw new Error("Failed to save playlist");
