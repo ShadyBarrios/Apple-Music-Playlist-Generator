@@ -434,8 +434,8 @@ export class DataSenders{
     static async create_user_playlist(playlist, developerToken, userToken){
         const songs = playlist.songs;
         const song_ids = songs.map(song => song.id);
-        const playlist_name = playlist.getName();
-        const description = playlist.getDescription();
+        const playlist_name = playlist.name;
+        const description = playlist.description;
 
         const body = PlaylistDataSenders.create_body(playlist_name, description, song_ids);
         const request = InteractAPI.send_data_request(developerToken, userToken, body);
@@ -725,9 +725,12 @@ export class PlaylistDataSenders{
     static async send_playlist(request){
         const url = "https://api.music.apple.com/v1/me/library/playlists";
 
+        console.log("Sending request to Apple Music API:", JSON.stringify(request, null, 2));
         try{
             const response = await InteractAPI.fetch_data(url, request);
 
+            const responseBody = await response.json();
+        console.log("Apple Music API Response:", responseBody)
             if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
 
             return true;

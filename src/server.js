@@ -93,7 +93,7 @@ app.post('/get-dev-token', (req, res) => {
 
 app.get('*', (req, res) => {
 
-  //res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
+  res.sendFile(path.join(__dirname, '../client', '../client/index.html'));
 
 // (personal path issues, probably from mac machine)
   res.sendFile(path.join(__dirname, '../client/index.html')); //appending index.html only not the extra ../client
@@ -155,33 +155,25 @@ app.post('/generate-playlist', async (req, res) => {
 });
 
 app.post('/send-playlist', async (req, res) => {
-  const { playlistName, songs } = req.body;
+  const { playlistName, songs } = req.body;  
+
   if (!backendUser) {
     return res.status(400).json({ error: 'User not initialized' });
   }
 
   if (!songs || songs.length === 0) {
-    return res.status(400).json({ error: 'No songs provided for playlist' });
+    return res.status(400).json({ error: 'No songs provided' });
   }
 
-  console.log(`Saving playlist: ${playlistName} with ${songs.length} songs`);
+  const playlist = { name: playlistName, songs };
 
   try {
-    // Create the playlist object
-    const playlist = backendUser.createPlaylist(playlistName, songs.map(song => song.name));
-    
-    if (!playlist || playlist.length === 0) {
-      return res.status(500).json({ error: 'Failed to create playlist' });
-    }
-
-    // Push to Apple Music
     await backend.pushApplePlaylist(playlist, backendUser.clientToken);
-    console.log("Playlist successfully pushed to Apple Music!");
-
-    res.json({ message: 'Playlist saved successfully to Apple Music!' });
+    console.log("✅ Playlist successfully pushed to Apple Music");
+    res.json({ message: "Playlist saved successfully!" });
   } catch (error) {
-    console.error("Error saving playlist:", error);
-    res.status(500).json({ error: 'Failed to save playlist' });
+    console.error("❌ Error pushing playlist:", error);
+    return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
   }
 });
 

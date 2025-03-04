@@ -2,8 +2,15 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Playlist Page Loaded");
+
   await fetchPlaylist();
-  document.getElementById("savePlaylistBtn").addEventListener("click", savePlaylist);
+
+  const saveBtn = document.getElementById("savePlaylistBtn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", savePlaylist);
+  } else {
+    console.error("Error: savePlaylistBtn not found in DOM");
+  }
 });
 
 async function fetchPlaylist() {
@@ -16,19 +23,27 @@ async function fetchPlaylist() {
     if (!response.ok) throw new Error('Failed to generate playlist');
 
     const data = await response.json();
-    console.log("Generated Playlist:", data); // Debugging
+    console.log("Generated Playlist Data:", data); // Debugging
 
-    if (!data || !data.playlist || data.playlist.length === 0) {
-      console.error("Error: Empty or invalid playlist received");
-      alert("No songs found in the playlist.");
+    if (!data || !data.playlist || !data.playlist.name) {
+      console.error("Error: Playlist name is missing in response");
+      alert("Error: Playlist title is missing from response.");
       return;
     }
 
+    const playlistNameElement = document.getElementById("playlistName");
+    if (!playlistNameElement) {
+      console.error("Error: playlistName element is missing in the DOM");
+      return;
+    }
+
+    playlistNameElement.textContent = data.playlist.name;
     displayPlaylist(data.playlist);
   } catch (error) {
     console.error("Error generating playlist:", error);
   }
 }
+
 
 
 function displayPlaylist(playlist) {
@@ -57,7 +72,14 @@ function displayPlaylist(playlist) {
 
 async function savePlaylist() {
   try {
-    const playlistName = document.getElementById("playlistName").textContent;
+    const playlistNameElement = document.getElementById('playlistTitle');
+    if (!playlistNameElement) {
+      console.error("Error: playlistName element not found in DOM");
+      alert("Error: Playlist title is missing.");
+      return;
+    }
+
+    const playlistName = playlistNameElement.textContent;
     const songElements = document.querySelectorAll(".playlist-container p");
     
     if (songElements.length === 0) {
@@ -70,7 +92,8 @@ async function savePlaylist() {
       const [name, artist] = songText.split(" by ");
       return { name: name.trim(), artist: artist.trim() };
     });
-
+    
+    console.log("🛠 Sending data to /send-playlist:", JSON.stringify({ playlistName, songs }, null, 2));
     const response = await fetch('/send-playlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
