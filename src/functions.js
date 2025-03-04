@@ -1,6 +1,6 @@
 // Pull tokens from .env
 import {Mutex} from 'async-mutex';
-import {Playlist} from './backend.js';
+import {Playlist} from '../client/user.js';
 
 /*
 /////////////////////

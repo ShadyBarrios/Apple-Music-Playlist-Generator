@@ -1,3 +1,5 @@
+import { UserBackend } from "./user.js";
+
 // indexedDB.js
 export function storeUserBackend(userBackend) {
     return new Promise((resolve, reject) => {
@@ -15,6 +17,7 @@ export function storeUserBackend(userBackend) {
             const transaction = db.transaction("userBackend", "readwrite");
             const store = transaction.objectStore("userBackend");
             userBackend.id = 1; // Ensure an ID exists
+            
             store.put(userBackend);
             transaction.oncomplete = () => resolve();
             transaction.onerror = () => reject(transaction.error);
@@ -34,9 +37,10 @@ export function getUserBackend() {
             const db = event.target.result;
             const transaction = db.transaction("userBackend", "readonly");
             const store = transaction.objectStore("userBackend");
-            const getRequest = store.get(1);
-            
+            let getRequest = store.get(1);
+    
             getRequest.onsuccess = function () {
+                getRequest.result.backendUser = UserBackend.fromJSON(getRequest.result.backendUser);
                 resolve(getRequest.result || null);
             };
             getRequest.onerror = function () {
