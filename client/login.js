@@ -1,3 +1,5 @@
+import * as indexedDBHelper from './indexedDB.js';
+
 // Ensure the script runs only when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
   let userToken = ""; // Will be pulled with MusicKit
@@ -60,18 +62,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (userToken) {
           console.log("User Token:", userToken);
-          await fetch('/api-login', {
+          const response = await fetch('/api-login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token: userToken }),
           });
 
-          update_loading_status("Loaded");
-          setTimeout(() => {
-            window.location.href = "filters.html";
+          if (response.ok) {
+            const responseData = await response.json();
+            console.log("API Login Response:", responseData);
+            update_loading_status("Loaded");
+            
+            setTimeout(() => {
+            //window.location.href = "filters.html";
           }, 500);
+          } else {
+            console.error("API Login failed with status:", response.status);
+          }
         } else {
-          console.error("Failed to send user token.");
+          console.error("Failed to login");
         }
       } catch (error) {
         console.error("Error authorizing with Apple Music:", error);
