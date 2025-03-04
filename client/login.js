@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (response.ok) {
             const responseData = await response.json();
             console.log("API Login Response:", responseData);
-            await storeUserBackend(responseData); // Store user backend object in IndexedDB
+            await storeUserBackend(responseData); // store user backend object in IndexedDB
             update_loading_status("Loaded");
             
             setTimeout(() => {
