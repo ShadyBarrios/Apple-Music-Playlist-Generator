@@ -1,6 +1,3 @@
-// get functions from function.js
-import { backend } from "./server.js"
-
 // Playlist, a collection of songs
 class Playlist {
     constructor(songs, name, description, filters) {
@@ -30,7 +27,6 @@ class UserBackend {
      * @param {SubgenreDictionary} subgenre_dictionary 
      * @returns {UserBackend} backend object
      */
-
     constructor(songs, genre_dictionary, subgenre_dictionary, clientToken) {
         // check that we have good vars
         if (!songs) {
@@ -43,7 +39,11 @@ class UserBackend {
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
         this.clientToken = clientToken;
-        console.log("OBJECT: " + this.clientToken);
+        console.log("CLIENT: " + this.clientToken);
+    }
+
+    static fromJSON(json){
+        return new UserBackend(json.songs, json.genre_dictionary, json.subgenre_dictionary, json.clientToken);
     }
 
     createPlaylist(playListName, filters) {

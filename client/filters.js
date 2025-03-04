@@ -1,4 +1,5 @@
 import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+import { UserBackend } from "./user.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   let selectedGenres = new Set();
@@ -9,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       userBackend = await getUserBackend();
       console.log("User backend initialized: ", userBackend);
+      console.log("Is instance of UserBackend:", userBackend.backendUser instanceof UserBackend);
     } catch (error) {
       console.error("Error initializing user backend:", error);
     }

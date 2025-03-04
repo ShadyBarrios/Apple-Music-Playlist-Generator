@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import {UserBackend} from './backend.js';
+import {UserBackend} from '../client/user.js';
 import {Mutex} from 'async-mutex';
 import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders} from "./functions.js"
 
