@@ -3,6 +3,7 @@ import {UserBackend} from '../src/backend.js';
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Playlist Page Loaded");
   await fetchPlaylist();
+  document.getElementById("savePlaylistBtn").addEventListener("click", savePlaylist);
 });
 
 async function fetchPlaylist() {
@@ -46,4 +47,35 @@ function displayPlaylist(playlist) {
 
     container.appendChild(songElement);
   });
+}
+
+async function savePlaylist() {
+  try {
+    const playlistName = document.getElementById("playlistName").textContent;
+    const songElements = document.querySelectorAll(".playlist-container p");
+    
+    if (songElements.length === 0) {
+      alert("No songs in the playlist to save!");
+      return;
+    }
+
+    const songs = Array.from(songElements).map(songElement => {
+      const songText = songElement.textContent;
+      const [name, artist] = songText.split(" by ");
+      return { name: name.trim(), artist: artist.trim() };
+    });
+
+    const response = await fetch('/send-playlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlistName, songs })
+    });
+
+    if (!response.ok) throw new Error("Failed to save playlist");
+
+    alert("Playlist saved to Apple Music!");
+  } catch (error) {
+    console.error("Error saving playlist:", error);
+    alert("Error saving playlist. Please try again.");
+  }
 }
