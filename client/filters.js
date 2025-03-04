@@ -1,28 +1,44 @@
+import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   let selectedGenres = new Set();
   let selectedSubGenres = new Set();
-  
-  async function fetchGenres() {
+  let userBackend = null;
+
+  async function initializeUserBackend() {
     try {
-      const response = await fetch('/get-genres', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      if (!response.ok) throw new Error('Failed to fetch genres');
-      const data = await response.json();
-      console.log('Fetched Genres:', data);
-      displayGenres(data.data);
+      userBackend = await getUserBackend();
+      console.log("User backend initialized: ", userBackend);
     } catch (error) {
-      console.error('Error fetching genres:', error);
+      console.error("Error initializing user backend:", error);
+    }
+  }
+  
+  function fetchGenres() {
+    try {
+      if (!userBackend || !userBackend.backendUser || !userBackend.backendUser.genre_dictionary) {
+        throw new Error("No genres found in IndexedDB");
+      }
+
+      const genres = Object.keys(userBackend.backendUser.genre_dictionary._dictionary);
+      console.log("Fetched Genres from IndexedDB:", genres);
+      displayGenres(genres);
+    } catch (error) {
+      console.error("Error fetching genres from IndexedDB:", error);
     }
   }
 
-  async function fetchSubGenres() {
+  function fetchSubGenres() {
     try {
-      const response = await fetch('/get-subgenres', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      if (!response.ok) throw new Error('Failed to fetch sub-genres');
-      const data = await response.json();
-      console.log('Fetched Sub-Genres:', data);
-      displaySubGenres(data.data);
+      if (!userBackend || !userBackend.backendUser || !userBackend.backendUser.subgenre_dictionary) {
+        throw new Error("No sub-genres found in IndexedDB");
+      }
+
+      const subGenres = Object.keys(userBackend.backendUser.subgenre_dictionary._dictionary);
+      console.log("Fetched sub-genres from IndexedDB:", subGenres);
+      displaySubGenres(subGenres);
     } catch (error) {
-      console.error('Error fetching sub-genres:', error);
+      console.error("Error fetching sub-genres from IndexedDB:", error);
     }
   }
 
@@ -183,8 +199,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  fetchGenres();
-  fetchSubGenres();
-  addSubmitButton();
+  (async function initialize() {
+    await initializeUserBackend(); // Fetch userBackend once
+    fetchGenres(); // Now use the globally initialized userBackend
+    fetchSubGenres();
+    addSubmitButton();
+  })();
 });
 
