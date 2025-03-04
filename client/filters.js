@@ -108,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateSelectedFilters();
   }
-  
 
   async function submitSelections() {
     const selectedData = {
