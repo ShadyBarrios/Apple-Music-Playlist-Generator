@@ -31,7 +31,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../client'))); // find client directory from root
 app.use(express.json());
 
-// Endpoint to handle the login API (using the developerToken from .env file)
+// endpoint to handle the login API (using the developerToken from .env file)
 app.post('/api-login', async (req, res) => {
   const { token } = req.body;
 
@@ -44,18 +44,10 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Received new user token: ', userToken);
 
   backendUser = await backend.createUser(userToken);
-  console.log("backend User size: " + getObjectSize(backendUser));
-  backend.clientUsers.push(backendUser);  // keep track of all users
-  backend.appleTokens.push(userToken);   // store user token
-  
-  console.log("Backend initialized. Total users:", backend.clientUsers.length);
+  //console.log("backend User: " + backendUser);
 
-  res.json({ message: 'User Token fetch successful' });
+  res.json({ message: 'User Token fetch successful', backendUser });
 });
-
-function getObjectSize(obj) {
-  return new TextEncoder().encode(JSON.stringify(obj)).length;
-}
 
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
