@@ -16,14 +16,20 @@ async function fetchPlaylist() {
     if (!response.ok) throw new Error('Failed to generate playlist');
 
     const data = await response.json();
-    console.log("Generated Playlist:", data);
+    console.log("Generated Playlist:", data); // Debugging
 
-    // Display the playlist
+    if (!data || !data.playlist || data.playlist.length === 0) {
+      console.error("Error: Empty or invalid playlist received");
+      alert("No songs found in the playlist.");
+      return;
+    }
+
     displayPlaylist(data.playlist);
   } catch (error) {
     console.error("Error generating playlist:", error);
   }
 }
+
 
 function displayPlaylist(playlist) {
   const container = document.querySelector('.playlist-container');

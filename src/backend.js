@@ -166,17 +166,18 @@ class UserBackend {
             console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
         }
     }
+    
+    async pushApplePlaylist(playlist, clientToken) {
+        if (!playlist || playlist.songs.length === 0) {
+          throw new Error("Cannot push an empty playlist.");
+        }
+      
+        console.log(`Pushing playlist "${playlist.name}" to Apple Music for client ${clientToken}`);
+      
+        return await DataSenders.create_user_playlist(playlist, this.dev, this.appleTokens[clientToken]);
+      }
+      
+
 }
 
 export { Playlist, UserBackend };
-
-// main
-// (async () => {
-//     let userLink = "";
-
-//     let testClient = await backend.createUser(userLink);
-//     testClient.createPlaylist("Dub Test Playlist", ["Dub"]);
-
-//     await backend.pushApplePlaylist(testClient.getPlaylistIndex(0), testClient.clientToken);
-    
-// })();
