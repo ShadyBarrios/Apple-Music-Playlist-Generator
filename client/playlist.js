@@ -1,48 +1,82 @@
+import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("Playlist Page Loaded");
   await fetchPlaylist();
 });
 
 async function fetchPlaylist() {
-  
   try {
-    const response = await fetch('/generate-playlist', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // Get playlistId from URL
+    const playlistId = getQueryParam("playlistId");
+    if (playlistId === null) {
+      console.error("No playlist ID provided");
+      return;
+    }
 
-    if (!response.ok) throw new Error('Failed to generate playlist');
+    // Retrieve userBackend from IndexedDB
+    const userBackend = await getUserBackend();
+    if (!userBackend || !userBackend.backendUser.generatedPlaylists[playlistId]) {
+      console.error("Playlist not found");
+      return;
+    }
 
-    const data = await response.json();
-    console.log("Generated Playlist:", data);
+    // Fetch the correct playlist
+    const playlist = userBackend.backendUser.generatedPlaylists[playlistId];
+    console.log("Fetched Playlist:", playlist);
 
     // Display the playlist
-    displayPlaylist(data.playlist);
+    displayPlaylist(playlist);
   } catch (error) {
-    console.error("Error generating playlist:", error);
+    console.error("Error fetching playlist from IndexedDB:", error);
   }
+}
+
+// helper function to get query parameters from URL
+function getQueryParam(param) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
 }
 
 function displayPlaylist(playlist) {
   const container = document.querySelector('.playlist-container');
   container.innerHTML = ''; // Clear previous content
 
-  // Display playlist name in the header
   const playlistTitle = document.getElementById('playlistTitle');
   playlistTitle.textContent = `Your Generated Playlist: ${playlist.name}`;
 
-  // Display each song in the playlist
   playlist.songs.forEach(song => {
     const songElement = document.createElement('p');
-    
-    // Create a bold element for the song name
+
     const songNameElement = document.createElement('strong');
     songNameElement.textContent = song.name;
 
-    // Append song name and artist text
     songElement.appendChild(songNameElement);
     songElement.appendChild(document.createTextNode(` by ${song.artist}`));
 
     container.appendChild(songElement);
+  });
+
+  // Populate and handle playlist selection dropdown
+  setupPlaylistDropdown();
+}
+
+async function setupPlaylistDropdown() {
+  const userBackend = await getUserBackend();
+  if (!userBackend) return;
+
+  const dropdown = document.getElementById("playlist-dropdown");
+  dropdown.innerHTML = userBackend.backendUser.generatedPlaylists
+    .map((_, index) => `<option value="${index}">Playlist ${index + 1}</option>`)
+    .join("");
+
+  // Set dropdown to current playlistId
+  const playlistId = getQueryParam("playlistId");
+  if (playlistId !== null) {
+    dropdown.value = playlistId;
+  }
+
+  // Redirect to selected playlist when dropdown changes
+  dropdown.addEventListener("change", (event) => {
+    window.location.href = `playlist.html?playlistId=${event.target.value}`;
   });
 }

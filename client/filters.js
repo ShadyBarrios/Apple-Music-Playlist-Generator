@@ -149,8 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("Submitting selections:", selectedData, playlistName);
 
     const playlist = await userBackend.backendUser.createPlaylist(playlistName, selectedData);
+    const playlistIndex = userBackend.backendUser.generatedPlaylists.length - 1;
 
     console.log("Generated Playlist: ", playlist);
+    console.log("Confirmation that userbackend updated: ", userBackend.backendUser.generatedPlaylists.length)
+    await storeUserBackend(userBackend);
+
+    
+    window.location.href = `playlist.html?playlistId=${playlistIndex}`; // redirect to playlist page after generation
   }
   
   function addSubmitButton() {
