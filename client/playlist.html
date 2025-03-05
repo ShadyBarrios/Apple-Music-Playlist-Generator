@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Guffle - Generated Playlists</title>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -50,6 +52,100 @@
   <div class="filters-display-container">
     <h3>Selected Filters:</h3>
     <div id="filters-list" class="filters-list"></div>
+  </div>
+
+  <!-- Playlist Stats Container -->
+  <div class="playlist-stats-container">
+    <h3>Playlist Stats:</h3>
+    <div class="stats-cards">
+      <div class="stats-card">
+        <div class="stats-icon">🎵</div>
+        <div class="stats-info">
+          <span class="stats-value" id="song-count">0</span>
+          <span class="stats-label">Songs</span>
+        </div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-icon">⏱️</div>
+        <div class="stats-info">
+          <span class="stats-value" id="total-duration">0 min</span>
+          <span class="stats-label">Total Duration</span>
+        </div>
+      </div>
+      <div class="stats-card">
+        <div class="stats-icon">🎧</div>
+        <div class="stats-info">
+          <span class="stats-value" id="listening-time">0 min</span>
+          <span class="stats-label">Listening Time</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Genre Distribution Chart Container -->
+  <div class="chart-container">
+    <h3>Genre Distribution:</h3>
+    <div class="chart-wrapper">
+      <canvas id="genre-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Detailed Playlist Stats Cards -->
+  <div class="detailed-stats-container">
+    <h3>Playlist Insights:</h3>
+    <div class="detailed-stats-grid">
+      <div class="detailed-stats-card">
+        <div class="card-header">
+          <div class="card-icon">👑</div>
+          <h4>Top Artist</h4>
+        </div>
+        <div class="card-content">
+          <p id="top-artist">Loading...</p>
+          <div class="card-stat">
+            <span id="top-artist-count">0</span> songs
+          </div>
+        </div>
+      </div>
+      
+      <div class="detailed-stats-card">
+        <div class="card-header">
+          <div class="card-icon">🔥</div>
+          <h4>Popularity</h4>
+        </div>
+        <div class="card-content">
+          <p id="avg-popularity">Average: 0%</p>
+          <div class="popularity-meter">
+            <div class="popularity-fill" id="popularity-fill"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="detailed-stats-card">
+        <div class="card-header">
+          <div class="card-icon">🎭</div>
+          <h4>Artist Variety</h4>
+        </div>
+        <div class="card-content">
+          <p id="unique-artists">0 different artists</p>
+          <div class="card-stat">
+            <span id="artist-variety">0%</span> variety score
+          </div>
+        </div>
+      </div>
+      
+      <div class="detailed-stats-card">
+        <div class="card-header">
+          <div class="card-icon">🎹</div>
+          <h4>Genre Variety</h4>
+        </div>
+        <div class="card-content">
+          <p id="unique-genres">0 different genres</p>
+          <div class="card-stat">
+            <span id="genre-variety">0%</span> variety score
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Sorting Options -->

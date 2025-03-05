@@ -6,6 +6,16 @@ let currentAudio = null;
 let currentPlayingButton = null;
 let currentPlaylist = null;
 let currentSortMethod = "default"; // Track the current sort method
+let genreChart = null; // Variable to store the chart instance
+
+// Constants for time calculations
+const AVERAGE_SONG_DURATION_MINUTES = 3.5; // Average song duration in minutes
+
+// Chart colors
+const CHART_COLORS = [
+  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+  '#FF9F40', '#8AC249', '#EA5F89', '#00D8B6', '#FFB7B2'
+];
 
 document.addEventListener("DOMContentLoaded", async () => {
   showLoading();
@@ -161,6 +171,15 @@ function displayPlaylist(playlist) {
 
   // Display the filters
   displayFilters(playlist.filters);
+  
+  // Update playlist stats
+  updatePlaylistStats(playlist.songs);
+  
+  // Update genre distribution chart
+  updateGenreChart(playlist.songs);
+  
+  // Update detailed playlist stats
+  updateDetailedStats(playlist.songs);
 
   // Sort the songs based on current sort method
   const sortedSongs = sortSongs(playlist.songs);
@@ -361,4 +380,198 @@ function sendPlaylistToLibrary() {
       hideLoading();
       alert("Failed to send playlist to library.");
     });
+}
+
+// Function to update playlist stats
+function updatePlaylistStats(songs) {
+  // Get the stats elements
+  const songCountElement = document.getElementById("song-count");
+  const totalDurationElement = document.getElementById("total-duration");
+  const listeningTimeElement = document.getElementById("listening-time");
+  
+  // Calculate stats
+  const songCount = songs.length;
+  const totalDurationMinutes = Math.round(songCount * AVERAGE_SONG_DURATION_MINUTES);
+  
+  // Format the listening time in hours and minutes if over 60 minutes
+  let listeningTimeFormatted;
+  if (totalDurationMinutes >= 60) {
+    const hours = Math.floor(totalDurationMinutes / 60);
+    const minutes = totalDurationMinutes % 60;
+    listeningTimeFormatted = `${hours} hr ${minutes} min`;
+  } else {
+    listeningTimeFormatted = `${totalDurationMinutes} min`;
+  }
+  
+  // Update the elements
+  songCountElement.textContent = songCount;
+  totalDurationElement.textContent = `${totalDurationMinutes} min`;
+  listeningTimeElement.textContent = listeningTimeFormatted;
+}
+
+// Function to update genre distribution chart
+function updateGenreChart(songs) {
+  // Get the canvas element
+  const ctx = document.getElementById('genre-chart');
+  
+  if (!ctx) return;
+  
+  // Destroy existing chart if it exists
+  if (genreChart) {
+    genreChart.destroy();
+  }
+  
+  // Count genres
+  const genreCounts = {};
+  
+  // Process each song
+  songs.forEach(song => {
+    // Use the first genre for each song (if available)
+    if (song.genres && song.genres.length > 0) {
+      const genre = song.genres[0];
+      genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+    } else if (song.subgenres && song.subgenres.length > 0) {
+      // If no genres, use the first subgenre
+      const subgenre = song.subgenres[0];
+      genreCounts[subgenre] = (genreCounts[subgenre] || 0) + 1;
+    } else {
+      // If no genres or subgenres, count as "Unknown"
+      genreCounts["Unknown"] = (genreCounts["Unknown"] || 0) + 1;
+    }
+  });
+  
+  // Sort genres by count (descending)
+  const sortedGenres = Object.keys(genreCounts).sort((a, b) => genreCounts[b] - genreCounts[a]);
+  
+  // Take top 5 genres, combine the rest as "Other"
+  const topGenres = sortedGenres.slice(0, 5);
+  const otherGenres = sortedGenres.slice(5);
+  
+  // Prepare data for the chart
+  const labels = [...topGenres];
+  const data = topGenres.map(genre => genreCounts[genre]);
+  
+  // Add "Other" category if there are more than 5 genres
+  if (otherGenres.length > 0) {
+    labels.push('Other');
+    const otherCount = otherGenres.reduce((sum, genre) => sum + genreCounts[genre], 0);
+    data.push(otherCount);
+  }
+  
+  // Create the chart
+  genreChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: CHART_COLORS.slice(0, labels.length),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            boxWidth: 15,
+            padding: 15,
+            font: {
+              size: 12
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = Math.round((value / total) * 100);
+              return `${label}: ${value} songs (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Function to update detailed playlist stats
+function updateDetailedStats(songs) {
+  if (!songs || songs.length === 0) return;
+  
+  // Calculate top artist
+  const artistCounts = {};
+  songs.forEach(song => {
+    artistCounts[song.artist] = (artistCounts[song.artist] || 0) + 1;
+  });
+  
+  // Find the artist with the most songs
+  let topArtist = '';
+  let topArtistCount = 0;
+  
+  Object.entries(artistCounts).forEach(([artist, count]) => {
+    if (count > topArtistCount) {
+      topArtist = artist;
+      topArtistCount = count;
+    }
+  });
+  
+  // Calculate average popularity
+  const totalPopularity = songs.reduce((sum, song) => sum + song.popularity, 0);
+  const avgPopularity = Math.round(totalPopularity / songs.length);
+  
+  // Calculate artist variety
+  const uniqueArtists = Object.keys(artistCounts).length;
+  const artistVariety = Math.round((uniqueArtists / songs.length) * 100);
+  
+  // Calculate genre variety
+  const allGenres = new Set();
+  songs.forEach(song => {
+    if (song.genres && song.genres.length > 0) {
+      song.genres.forEach(genre => allGenres.add(genre));
+    }
+    if (song.subgenres && song.subgenres.length > 0) {
+      song.subgenres.forEach(subgenre => allGenres.add(subgenre));
+    }
+  });
+  const uniqueGenres = allGenres.size;
+  const genreVariety = Math.min(100, Math.round((uniqueGenres / songs.length) * 100));
+  
+  // Update the DOM elements
+  document.getElementById('top-artist').textContent = topArtist;
+  document.getElementById('top-artist-count').textContent = topArtistCount;
+  
+  document.getElementById('avg-popularity').textContent = `Average: ${avgPopularity}%`;
+  const popularityFill = document.getElementById('popularity-fill');
+  if (popularityFill) {
+    popularityFill.style.width = `${avgPopularity}%`;
+    
+    // Set color based on popularity
+    popularityFill.style.background = getPopularityGradient(avgPopularity);
+  }
+  
+  document.getElementById('unique-artists').textContent = `${uniqueArtists} different artists`;
+  document.getElementById('artist-variety').textContent = `${artistVariety}%`;
+  
+  document.getElementById('unique-genres').textContent = `${uniqueGenres} different genres`;
+  document.getElementById('genre-variety').textContent = `${genreVariety}%`;
+}
+
+// Helper function to get a color gradient based on popularity
+function getPopularityGradient(popularity) {
+  if (popularity >= 80) {
+    return 'linear-gradient(90deg, #ff9a9e 0%, #fad0c4 100%)'; // High popularity (reddish)
+  } else if (popularity >= 60) {
+    return 'linear-gradient(90deg, #fad0c4 0%, #ffd1ff 100%)'; // Medium-high popularity (pink)
+  } else if (popularity >= 40) {
+    return 'linear-gradient(90deg, #a1c4fd 0%, #c2e9fb 100%)'; // Medium popularity (blue)
+  } else if (popularity >= 20) {
+    return 'linear-gradient(90deg, #d4fc79 0%, #96e6a1 100%)'; // Medium-low popularity (green)
+  } else {
+    return 'linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)'; // Low popularity (purple)
+  }
 }
