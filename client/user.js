@@ -27,14 +27,14 @@ class UserBackend {
      * @param {SubgenreDictionary} subgenre_dictionary 
      * @returns {UserBackend} backend object
      */
-    constructor(songs, genre_dictionary, subgenre_dictionary, clientToken) {
+    constructor(songs, genre_dictionary, subgenre_dictionary, clientToken, generatedPlaylists = []) {
         // check that we have good vars
         if (!songs) {
             console.error("UserBackend constructor var's are undefined");
             return;
         }
 
-        this.generatedPlaylists = [];
+        this.generatedPlaylists = generatedPlaylists;
         this.songs = Array.from(songs);
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
@@ -43,7 +43,7 @@ class UserBackend {
     }
 
     static fromJSON(json){
-        return new UserBackend(json.songs, json.genre_dictionary, json.subgenre_dictionary, json.clientToken);
+        return new UserBackend(json.songs, json.genre_dictionary, json.subgenre_dictionary, json.clientToken, json.generatedPlaylists ?? []);
     }
 
     createPlaylist(playListName, filters) {
