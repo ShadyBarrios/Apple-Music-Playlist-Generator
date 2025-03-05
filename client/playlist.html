@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playlist</title>
-    <link rel="stylesheet" href="styles.css"> 
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Playlist</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Optionally, include MusicKit JS if you plan to expand integration -->
+  <!-- <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script> -->
 </head>
 
 <nav class="navbar">
-    <img src="/images/logo.png" alt="Logo" class="logo" />
-    <div class="nav-links">
-      <a href="/">Home</a>
-      <a href="/about">About</a>
-      <a href="/contact">Contact</a>
-    </div>
+  <img src="/images/logo.png" alt="Logo" class="logo" />
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+  </div>
 </nav>
 
 <body>
-    <div style="height: 80px;"></div> 
-    
-    <h1 id="playlistTitle">
-        Your Generated Playlist: <span id="playlistName" style="font-weight: lighter;"></span>
-    </h1>
-      
-    <div class="playlist-container"></div>
+  <div style="height: 80px;"></div>
 
-    <!-- Regenerate Playlist Button -->
-    <div class="button-container">
-        <button id="regenerate-button">Regenerate Playlist</button>
-    </div>
+  <!-- Playlist Selector placed at the top -->
+  <div class="playlist-selector">
+    <label for="playlist-dropdown" class="dropdown-label">Select Playlist:</label>
+    <select id="playlist-dropdown" class="dropdown"></select>
+  </div>
 
-    <script type="module" src="playlist.js"></script>
+  <h1 id="playlistTitle">
+    Your Generated Playlist: <span id="playlistName" style="font-weight: lighter;"></span>
+  </h1>
+
+  <!-- Container where the playlist songs are displayed -->
+  <div class="playlist-container"></div>
+
+  <!-- Regenerate Playlist Button -->
+  <div class="button-container">
+    <button id="regenerate-button">Regenerate Playlist</button>
+  </div>
+
+  <script type="module" src="playlist.js"></script>
 </body>
 </html>

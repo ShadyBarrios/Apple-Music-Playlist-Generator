@@ -1,6 +1,9 @@
 import { storeUserBackend, getUserBackend } from "./indexedDB.js";
 import { UserBackend } from "./user.js";
 
+// Global variable to keep track of the currently playing audio snippet
+let currentAudio = null;
+
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchPlaylist();
 
@@ -15,77 +18,104 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function fetchPlaylist() {
-  let userBackend = null;
   try {
     // Retrieve userBackend from IndexedDB
-    userBackend = await getUserBackend();
-
+    const userBackend = await getUserBackend();
     if (!userBackend) {
       console.error("No userBackend found in IndexedDB");
       return;
     }
 
-    // Get the most recently generated playlist
-    const playlistId = userBackend.backendUser.generatedPlaylists.length - 1;
-    const playlist = userBackend.backendUser.generatedPlaylists[playlistId];
+    // Use the last generated playlist as default
+    const defaultIndex = userBackend.backendUser.generatedPlaylists.length - 1;
+    const playlist = userBackend.backendUser.generatedPlaylists[defaultIndex];
     console.log("Fetched Playlist:", playlist);
 
-    // Display the playlist
+    // Display the default playlist
     displayPlaylist(playlist);
+
+    // Set up the dropdown with all playlists and select the default one
+    setupPlaylistDropdown(userBackend.backendUser.generatedPlaylists, defaultIndex);
   } catch (error) {
     console.error("Error fetching playlist from IndexedDB:", error);
   }
 }
 
 function displayPlaylist(playlist) {
-  const container = document.querySelector('.playlist-container');
-  container.innerHTML = ''; // Clear previous content
+  const container = document.querySelector(".playlist-container");
+  container.innerHTML = ""; // Clear previous content
 
-  // Update the playlist title with the playlist name
-  const playlistTitle = document.getElementById('playlistTitle');
+  // Update the playlist title
+  const playlistTitle = document.getElementById("playlistTitle");
   playlistTitle.textContent = `Your Generated Playlist: ${playlist.name}`;
 
-  // Create elements for each song in the playlist
-  playlist.songs.forEach(song => {
-    const songElement = document.createElement('p');
+  // Update the playlist name span (if used elsewhere)
+  const playlistNameSpan = document.getElementById("playlistName");
+  if (playlistNameSpan) {
+    playlistNameSpan.textContent = playlist.name;
+  }
 
-    const songNameElement = document.createElement('strong');
+  // For each song, create a container with song info and a "Play Snippet" button
+  playlist.songs.forEach((song) => {
+    // Create a row container for the song
+    const songRow = document.createElement("div");
+    songRow.classList.add("song-row");
+
+    // Create an element to display song info (name and artist)
+    const songInfo = document.createElement("p");
+    const songNameElement = document.createElement("strong");
     songNameElement.textContent = song.name;
+    songInfo.appendChild(songNameElement);
+    songInfo.appendChild(document.createTextNode(` by ${song.artist}`));
+    songRow.appendChild(songInfo);
 
-    songElement.appendChild(songNameElement);
-    songElement.appendChild(document.createTextNode(` by ${song.artist}`));
+    // Create the "Play Snippet" button
+    const playButton = document.createElement("button");
+    playButton.classList.add("play-button");
+    playButton.textContent = "Play Snippet";
+    playButton.addEventListener("click", () => {
+      playSnippet(song);
+    });
+    songRow.appendChild(playButton);
 
-    container.appendChild(songElement);
+    container.appendChild(songRow);
   });
-
-  // Optionally, populate and handle the playlist selection dropdown if it exists
-  setupPlaylistDropdown();
 }
 
-async function setupPlaylistDropdown() {
-  const userBackend = await getUserBackend();
-  if (!userBackend) return;
-
+function setupPlaylistDropdown(playlists, currentIndex) {
   const dropdown = document.getElementById("playlist-dropdown");
   if (!dropdown) return;
 
-  dropdown.innerHTML = userBackend.backendUser.generatedPlaylists
-    .map((_, index) => `<option value="${index}">Playlist ${index + 1}</option>`)
+  dropdown.innerHTML = playlists
+    .map(
+      (playlist, index) =>
+        `<option value="${index}" ${index === currentIndex ? "selected" : ""}>
+          Playlist ${index + 1}: ${playlist.name}
+         </option>`
+    )
     .join("");
 
-  // Set dropdown to the current playlist if a query parameter is provided
-  const playlistId = getQueryParam("playlistId");
-  if (playlistId !== null) {
-    dropdown.value = playlistId;
-  }
-
-  // Redirect to the selected playlist when the dropdown changes
-  dropdown.addEventListener("change", (event) => {
-    window.location.href = `playlist.html?playlistId=${event.target.value}`;
+  // When the dropdown selection changes, update the displayed playlist
+  dropdown.addEventListener("change", async (event) => {
+    const selectedIndex = parseInt(event.target.value, 10);
+    const userBackend = await getUserBackend();
+    if (!userBackend) return;
+    const playlist = userBackend.backendUser.generatedPlaylists[selectedIndex];
+    displayPlaylist(playlist);
   });
 }
 
-function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+function playSnippet(song) {
+  // Check if a preview URL is available in the song object
+  if (!song.previewUrl) {
+    alert("Preview not available for this song.");
+    return;
+  }
+  // Pause any currently playing snippet
+  if (currentAudio) {
+    currentAudio.pause();
+  }
+  // Create a new audio element with the song's preview URL and play it
+  currentAudio = new Audio(song.previewUrl);
+  currentAudio.play();
 }
