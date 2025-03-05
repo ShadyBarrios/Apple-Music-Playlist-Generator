@@ -7,12 +7,15 @@ let currentPlayingButton = null;
 let currentPlaylist = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
+  showLoading();
   await fetchPlaylist();
+  hideLoading();
 
   // Add event listener for the Regenerate Playlist button
   const regenerateButton = document.getElementById("regenerate-button");
   if (regenerateButton) {
     regenerateButton.addEventListener("click", () => {
+      showLoading();
       window.location.href = "filters.html";
     });
   }
@@ -23,6 +26,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     sendButton.addEventListener("click", sendPlaylistToLibrary);
   }
 });
+
+// Function to show loading overlay
+function showLoading() {
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) {
+    loadingOverlay.classList.add("active");
+  }
+}
+
+// Function to hide loading overlay
+function hideLoading() {
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) {
+    loadingOverlay.classList.remove("active");
+  }
+}
 
 async function fetchPlaylist() {
   try {
@@ -129,12 +148,17 @@ function setupPlaylistDropdown(playlists, currentIndex) {
     .join("");
 
   dropdown.addEventListener("change", async (event) => {
+    showLoading();
     const selectedIndex = parseInt(event.target.value, 10);
     const userBackend = await getUserBackend();
-    if (!userBackend) return;
+    if (!userBackend) {
+      hideLoading();
+      return;
+    }
     const playlist = userBackend.backendUser.generatedPlaylists[selectedIndex];
     currentPlaylist = playlist; // update global currentPlaylist
     displayPlaylist(playlist);
+    hideLoading();
   });
 }
 
@@ -143,6 +167,7 @@ function playSnippet(song, button) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     button.textContent = "Play";
+    button.classList.remove("playing");
     currentAudio = null;
     currentPlayingButton = null;
     return;
@@ -152,6 +177,7 @@ function playSnippet(song, button) {
     currentAudio.currentTime = 0;
     if (currentPlayingButton) {
       currentPlayingButton.textContent = "Play";
+      currentPlayingButton.classList.remove("playing");
     }
   }
   if (!song.previewUrl) {
@@ -161,9 +187,11 @@ function playSnippet(song, button) {
   currentAudio = new Audio(song.previewUrl);
   currentAudio.play();
   button.textContent = "Stop";
+  button.classList.add("playing");
   currentPlayingButton = button;
   currentAudio.onended = function() {
     button.textContent = "Play";
+    button.classList.remove("playing");
     currentAudio = null;
     currentPlayingButton = null;
   };
@@ -174,6 +202,8 @@ function sendPlaylistToLibrary() {
     alert("No playlist loaded.");
     return;
   }
+
+  showLoading();
 
   // Prepare the payload using the current playlist's name and filters
   const payload = {
@@ -194,10 +224,12 @@ function sendPlaylistToLibrary() {
     })
     .then((data) => {
       console.log("Playlist sent to library:", data);
+      hideLoading();
       alert("Playlist successfully sent to your library!");
     })
     .catch((error) => {
       console.error("Error sending playlist:", error);
+      hideLoading();
       alert("Failed to send playlist to library.");
     });
 }
