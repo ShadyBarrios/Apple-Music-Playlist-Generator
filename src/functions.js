@@ -1,6 +1,7 @@
 // Pull tokens from .env
 import {Mutex} from 'async-mutex';
 import {Playlist} from '../client/user.js';
+import fetch from 'node-fetch';
 
 /*
 /////////////////////
@@ -932,7 +933,7 @@ export class ParallelDataFetchers{
      * @param {string} collection - NOT USED, describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {Request} request - fetch request info
-     * @param {string} accumulated_song_ids - array of song catalog IDs
+     * @param {string[]} accumulated_song_ids - array of song catalog IDs
      * @returns {Promise<Set<string>, string>} [accumulated_song_ids, playlist_size]
      */
     static async get_first_page_of(collection, url, request, accumulated_song_ids){
