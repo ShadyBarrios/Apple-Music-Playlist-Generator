@@ -7,18 +7,22 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 
-<nav class="navbar">
-  <img src="/images/logo.png" alt="Logo" class="logo" />
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-    <a href="/playlist.html">My Playlists</a>
-    <a href="/contact">Contact</a>
-  </div>
-</nav>
-
 <body>
+  <nav class="navbar">
+    <img src="/images/logo.png" alt="Logo" class="logo" />
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/playlist.html">My Playlists</a>
+    </div>
+  </nav>
+
   <div style="height: 80px;"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>Loading...</p>
+  </div>
 
   <!-- Playlist Selector Container -->
   <div class="playlist-selector">
@@ -39,6 +43,22 @@
   <h1 id="playlistTitle">
     Your Generated Playlist: <span id="playlistName" style="font-weight: lighter;"></span>
   </h1>
+
+  <!-- Filters Display Container -->
+  <div class="filters-display-container">
+    <h3>Selected Filters:</h3>
+    <div id="filters-list" class="filters-list"></div>
+  </div>
+
+  <!-- Sorting Options -->
+  <div class="sorting-options">
+    <span class="sorting-label">Sort by:</span>
+    <div class="sort-buttons">
+      <button id="sort-title" class="sort-button">Title</button>
+      <button id="sort-artist" class="sort-button">Artist</button>
+      <button id="sort-default" class="sort-button active">Default</button>
+    </div>
+  </div>
 
   <!-- Container where the playlist songs are displayed -->
   <div class="playlist-container"></div>

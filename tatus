@@ -1,0 +1,10 @@
+[33mcommit 03ca60bdb58e35aed9b85c32934694d8a169faf5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mplaylist-menu-update[m[33m)[m
+Author: Issa-Kakar <ikaka001@ucr.edu>
+Date:   Tue Mar 4 20:34:33 2025 -0800
+
+    Add display of selected filters in playlist view
+
+ client/playlist.html |  5 [32m+++++[m
+ client/playlist.js   | 23 [32m+++++++++++++++++++++++[m
+ client/styles.css    | 28 [32m++++++++++++++++++++++++++++[m
+ 3 files changed, 56 insertions(+)

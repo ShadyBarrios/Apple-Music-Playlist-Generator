@@ -6,13 +6,32 @@ document.addEventListener("DOMContentLoaded", () => {
   let selectedSubGenres = new Set();
   let userBackend = null;
 
+  // Function to show loading overlay
+  function showLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.classList.add("active");
+    }
+  }
+
+  // Function to hide loading overlay
+  function hideLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+      loadingOverlay.classList.remove("active");
+    }
+  }
+
   async function initializeUserBackend() {
+    showLoading();
     try {
       userBackend = await getUserBackend();
       console.log("User backend initialized: ", userBackend);
       console.log("Is instance of UserBackend:", userBackend.backendUser instanceof UserBackend);
     } catch (error) {
       console.error("Error initializing user backend:", error);
+    } finally {
+      hideLoading();
     }
   }
   
@@ -146,17 +165,24 @@ document.addEventListener("DOMContentLoaded", () => {
       playlistName = "Guffle's Generated Playlist"; // default name
     }
 
+    showLoading();
     console.log("Submitting selections:", selectedData, playlistName);
 
-    const playlist = await userBackend.backendUser.createPlaylist(playlistName, selectedData);
-    const playlistIndex = userBackend.backendUser.generatedPlaylists.length - 1;
+    try {
+      const playlist = await userBackend.backendUser.createPlaylist(playlistName, selectedData);
+      const playlistIndex = userBackend.backendUser.generatedPlaylists.length - 1;
 
-    console.log("Generated Playlist: ", playlist);
-    console.log("Confirmation that userbackend updated: ", userBackend)
-    
-    await storeUserBackend(userBackend);
+      console.log("Generated Playlist: ", playlist);
+      console.log("Confirmation that userbackend updated: ", userBackend);
+      
+      await storeUserBackend(userBackend);
 
-    window.location.href = `playlist.html`; // redirect to playlist page after generation
+      window.location.href = `playlist.html`; // redirect to playlist page after generation
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+      hideLoading();
+      alert("There was an error creating your playlist. Please try again.");
+    }
   }
   
   function addSubmitButton() {

@@ -5,14 +5,18 @@ import { UserBackend } from "./user.js";
 let currentAudio = null;
 let currentPlayingButton = null;
 let currentPlaylist = null;
+let currentSortMethod = "default"; // Track the current sort method
 
 document.addEventListener("DOMContentLoaded", async () => {
+  showLoading();
   await fetchPlaylist();
+  hideLoading();
 
   // Add event listener for the Regenerate Playlist button
   const regenerateButton = document.getElementById("regenerate-button");
   if (regenerateButton) {
     regenerateButton.addEventListener("click", () => {
+      showLoading();
       window.location.href = "filters.html";
     });
   }
@@ -22,7 +26,87 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (sendButton) {
     sendButton.addEventListener("click", sendPlaylistToLibrary);
   }
+
+  // Add event listeners for sorting buttons
+  setupSortingButtons();
 });
+
+// Function to show loading overlay
+function showLoading() {
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) {
+    loadingOverlay.classList.add("active");
+  }
+}
+
+// Function to hide loading overlay
+function hideLoading() {
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) {
+    loadingOverlay.classList.remove("active");
+  }
+}
+
+// Setup sorting buttons
+function setupSortingButtons() {
+  const sortTitleButton = document.getElementById("sort-title");
+  const sortArtistButton = document.getElementById("sort-artist");
+  const sortDefaultButton = document.getElementById("sort-default");
+
+  if (sortTitleButton) {
+    sortTitleButton.addEventListener("click", () => {
+      setActiveSortButton(sortTitleButton);
+      currentSortMethod = "title";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+
+  if (sortArtistButton) {
+    sortArtistButton.addEventListener("click", () => {
+      setActiveSortButton(sortArtistButton);
+      currentSortMethod = "artist";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+
+  if (sortDefaultButton) {
+    sortDefaultButton.addEventListener("click", () => {
+      setActiveSortButton(sortDefaultButton);
+      currentSortMethod = "default";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+}
+
+// Set active sort button
+function setActiveSortButton(activeButton) {
+  const sortButtons = document.querySelectorAll(".sort-button");
+  sortButtons.forEach(button => {
+    button.classList.remove("active");
+  });
+  activeButton.classList.add("active");
+}
+
+// Sort songs based on current sort method
+function sortSongs(songs) {
+  const songsCopy = [...songs]; // Create a copy to avoid modifying the original
+  
+  switch (currentSortMethod) {
+    case "title":
+      return songsCopy.sort((a, b) => a.name.localeCompare(b.name));
+    case "artist":
+      return songsCopy.sort((a, b) => a.artist.localeCompare(b.artist));
+    case "default":
+    default:
+      return songsCopy; // Return the original order
+  }
+}
 
 async function fetchPlaylist() {
   try {
@@ -62,8 +146,14 @@ function displayPlaylist(playlist) {
     playlistNameSpan.textContent = playlist.name;
   }
 
+  // Display the filters
+  displayFilters(playlist.filters);
+
+  // Sort the songs based on current sort method
+  const sortedSongs = sortSongs(playlist.songs);
+
   // For each song, create a flex row with song info and a play/stop button
-  playlist.songs.forEach((song) => {
+  sortedSongs.forEach((song) => {
     const songRow = document.createElement("div");
     songRow.classList.add("song-row");
 
@@ -89,6 +179,29 @@ function displayPlaylist(playlist) {
   });
 }
 
+// Function to display the filters
+function displayFilters(filters) {
+  const filtersList = document.getElementById("filters-list");
+  if (!filtersList) return;
+  
+  filtersList.innerHTML = "";
+  
+  if (!filters || filters.length === 0) {
+    const noFilters = document.createElement("p");
+    noFilters.textContent = "No filters selected";
+    filtersList.appendChild(noFilters);
+    return;
+  }
+  
+  // Create a tag for each filter
+  filters.forEach(filter => {
+    const filterTag = document.createElement("span");
+    filterTag.classList.add("filter-tag");
+    filterTag.textContent = filter;
+    filtersList.appendChild(filterTag);
+  });
+}
+
 function setupPlaylistDropdown(playlists, currentIndex) {
   const dropdown = document.getElementById("playlist-dropdown");
   if (!dropdown) return;
@@ -103,12 +216,17 @@ function setupPlaylistDropdown(playlists, currentIndex) {
     .join("");
 
   dropdown.addEventListener("change", async (event) => {
+    showLoading();
     const selectedIndex = parseInt(event.target.value, 10);
     const userBackend = await getUserBackend();
-    if (!userBackend) return;
+    if (!userBackend) {
+      hideLoading();
+      return;
+    }
     const playlist = userBackend.backendUser.generatedPlaylists[selectedIndex];
     currentPlaylist = playlist; // update global currentPlaylist
     displayPlaylist(playlist);
+    hideLoading();
   });
 }
 
@@ -117,6 +235,7 @@ function playSnippet(song, button) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
     button.textContent = "Play";
+    button.classList.remove("playing");
     currentAudio = null;
     currentPlayingButton = null;
     return;
@@ -126,6 +245,7 @@ function playSnippet(song, button) {
     currentAudio.currentTime = 0;
     if (currentPlayingButton) {
       currentPlayingButton.textContent = "Play";
+      currentPlayingButton.classList.remove("playing");
     }
   }
   if (!song.previewUrl) {
@@ -135,9 +255,11 @@ function playSnippet(song, button) {
   currentAudio = new Audio(song.previewUrl);
   currentAudio.play();
   button.textContent = "Stop";
+  button.classList.add("playing");
   currentPlayingButton = button;
   currentAudio.onended = function() {
     button.textContent = "Play";
+    button.classList.remove("playing");
     currentAudio = null;
     currentPlayingButton = null;
   };
@@ -148,6 +270,8 @@ function sendPlaylistToLibrary() {
     alert("No playlist loaded.");
     return;
   }
+
+  showLoading();
 
   // Prepare the payload using the current playlist's name and filters
   const payload = {
@@ -168,10 +292,12 @@ function sendPlaylistToLibrary() {
     })
     .then((data) => {
       console.log("Playlist sent to library:", data);
+      hideLoading();
       alert("Playlist successfully sent to your library!");
     })
     .catch((error) => {
       console.error("Error sending playlist:", error);
+      hideLoading();
       alert("Failed to send playlist to library.");
     });
 }
