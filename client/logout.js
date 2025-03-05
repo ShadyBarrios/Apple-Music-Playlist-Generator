@@ -7,8 +7,7 @@ async function logout() {
 
     try {
         console.log("Logging out...");
-
-        // Call backend logout API to clear session
+        
         const response = await fetch('/api-logout', { method: 'POST' });
 
         if (!response.ok) {
@@ -17,24 +16,20 @@ async function logout() {
             console.log("Logged out from server");
         }
 
-        // Clear IndexedDB
         await clearUserBackend();
         console.log("Cleared IndexedDB");
 
-        // Log out of Apple MusicKit
         if (window.MusicKit && MusicKit.getInstance()) {
             await MusicKit.getInstance().unauthorize();
             console.log("Logged out from Apple Music");
         }
 
-        // Redirect to login page
         //window.location.href = "login.html";
     } catch (error) {
         console.error("Error during logout:", error);
     }
 }
 
-// Attach event listener to the logout button
 document.addEventListener("DOMContentLoaded", () => {
     const logoutButton = document.getElementById("logout");
 
