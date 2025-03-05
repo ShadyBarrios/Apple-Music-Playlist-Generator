@@ -881,15 +881,29 @@ button:hover::after {
   display: flex;
   gap: 30px;
   margin-right: 20px;
-  align-items: center; 
-  
+  align-items: center;
+  box-shadow: none;
+  font-weight: bold;
+  position: relative;
+}
+
+.logout-btn::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  transition: width 0.3s ease;
 }
 
 .logout-btn:hover {
-  color: #ff4d4d; /* Red on hover */
-  text-decoration: underline;
+  color: #fc3c44; /* Red color on hover */
 }
 
+.logout-btn:hover::after {
+  width: 100%; /* Animate the underline width */
+}
 @media (max-width: 600px) {
   .nav-links {
     margin-right: 5px;
