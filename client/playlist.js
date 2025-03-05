@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   showLoading();
   await fetchPlaylist();
   hideLoading();
+  
+  // Simplified animation - just make elements visible without staggered delay
+  document.querySelectorAll('.playlist-selector, .button-container, #playlistTitle, .filters-display-container, .playlist-stats-container, .chart-container, .detailed-stats-container, .sorting-options, .playlist-container').forEach(element => {
+    element.style.opacity = '1';
+  });
 
   // Add event listener for the Regenerate Playlist button
   const regenerateButton = document.getElementById("regenerate-button");
@@ -143,6 +148,17 @@ async function fetchPlaylist() {
     const defaultIndex = userBackend.backendUser.generatedPlaylists.length - 1;
     const playlist = userBackend.backendUser.generatedPlaylists[defaultIndex];
     console.log("Fetched Playlist:", playlist);
+    
+    // Add detailed logging for genre data structure
+    if (playlist && playlist.songs && playlist.songs.length > 0) {
+      console.log("First song:", playlist.songs[0]);
+      console.log("First song genres:", playlist.songs[0].genres);
+      if (playlist.songs[0].genres && playlist.songs[0].genres.length > 0) {
+        console.log("First genre type:", typeof playlist.songs[0].genres[0]);
+        console.log("First genre value:", playlist.songs[0].genres[0]);
+        console.log("First genre JSON:", JSON.stringify(playlist.songs[0].genres[0]));
+      }
+    }
 
     // Save current playlist in a global variable
     currentPlaylist = playlist;
@@ -185,77 +201,8 @@ function displayPlaylist(playlist) {
   const sortedSongs = sortSongs(playlist.songs);
 
   // For each song, create a flex row with album artwork, song info, popularity indicator and a play/stop button
-  sortedSongs.forEach((song) => {
-    const songRow = document.createElement("div");
-    songRow.classList.add("song-row");
-
-    // Album artwork container
-    if (song.artworkUrl) {
-      const artworkContainer = document.createElement("div");
-      artworkContainer.classList.add("artwork-container");
-      
-      const artwork = document.createElement("img");
-      artwork.src = song.artworkUrl;
-      artwork.alt = `${song.name} album artwork`;
-      artwork.classList.add("song-artwork");
-      
-      artworkContainer.appendChild(artwork);
-      songRow.appendChild(artworkContainer);
-    } else {
-      // If no artwork, add a placeholder
-      const artworkPlaceholder = document.createElement("div");
-      artworkPlaceholder.classList.add("artwork-placeholder");
-      songRow.appendChild(artworkPlaceholder);
-    }
-
-    // Song info container
-    const songInfo = document.createElement("div");
-    songInfo.classList.add("song-info");
-    const songNameElement = document.createElement("strong");
-    songNameElement.textContent = song.name;
-    songInfo.appendChild(songNameElement);
-    songInfo.appendChild(document.createTextNode(` by ${song.artist}`));
-    songRow.appendChild(songInfo);
-
-    // Popularity indicator container
-    const popularityContainer = document.createElement("div");
-    popularityContainer.classList.add("popularity-container");
-    
-    // Create the popularity bar
-    const popularityBar = document.createElement("div");
-    popularityBar.classList.add("popularity-bar");
-    
-    // Create the filled portion of the bar based on popularity score
-    const popularityFill = document.createElement("div");
-    popularityFill.classList.add("popularity-fill");
-    popularityFill.style.width = `${song.popularity}%`;
-    
-    // Set color based on popularity score
-    if (song.popularity >= 80) {
-      popularityFill.classList.add("high-popularity");
-    } else if (song.popularity >= 50) {
-      popularityFill.classList.add("medium-popularity");
-    } else {
-      popularityFill.classList.add("low-popularity");
-    }
-    
-    // Add tooltip with exact popularity score
-    popularityContainer.setAttribute("title", `Popularity: ${song.popularity}/100`);
-    
-    popularityBar.appendChild(popularityFill);
-    popularityContainer.appendChild(popularityBar);
-    songRow.appendChild(popularityContainer);
-
-    // Play/Stop button container
-    const playButton = document.createElement("button");
-    playButton.classList.add("play-button");
-    playButton.textContent = "Play";
-    playButton.addEventListener("click", () => {
-      playSnippet(song, playButton);
-    });
-    songRow.appendChild(playButton);
-
-    container.appendChild(songRow);
+  sortedSongs.forEach((song, index) => {
+    displaySong(song, index, container);
   });
 }
 
@@ -311,38 +258,87 @@ function setupPlaylistDropdown(playlists, currentIndex) {
 }
 
 function playSnippet(song, button) {
-  if (currentAudio && currentAudio.src === song.previewUrl && !currentAudio.paused) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-    button.textContent = "Play";
-    button.classList.remove("playing");
-    currentAudio = null;
-    currentPlayingButton = null;
-    return;
-  }
+  // If there's already a song playing, stop it
   if (currentAudio) {
     currentAudio.pause();
-    currentAudio.currentTime = 0;
+    currentAudio = null;
+    
+    // Reset the previous button
     if (currentPlayingButton) {
-      currentPlayingButton.textContent = "Play";
       currentPlayingButton.classList.remove("playing");
+      
+      // Reset button text and icon
+      const prevButtonIcon = currentPlayingButton.querySelector("i");
+      const prevButtonText = currentPlayingButton.querySelector("span");
+      
+      if (prevButtonIcon) {
+        prevButtonIcon.classList.remove("fa-stop");
+        prevButtonIcon.classList.add("fa-play");
+      }
+      
+      if (prevButtonText) {
+        prevButtonText.textContent = " Play";
+      }
+    }
+    
+    // If the same button was clicked, just stop playing and return
+    if (currentPlayingButton === button) {
+      currentPlayingButton = null;
+      return;
     }
   }
-  if (!song.previewUrl) {
-    alert("Preview not available for this song.");
-    return;
+  
+  // If the song has a preview URL, play it
+  if (song.previewUrl) {
+    currentAudio = new Audio(song.previewUrl);
+    currentAudio.play();
+    currentPlayingButton = button;
+    button.classList.add("playing");
+    
+    // Update button text and icon
+    const buttonIcon = button.querySelector("i");
+    const buttonText = button.querySelector("span");
+    
+    if (buttonIcon) {
+      buttonIcon.classList.remove("fa-play");
+      buttonIcon.classList.add("fa-stop");
+    }
+    
+    if (buttonText) {
+      buttonText.textContent = " Stop";
+    }
+    
+    // Add ripple effect
+    const ripple = document.createElement("span");
+    ripple.classList.add("button-ripple");
+    button.appendChild(ripple);
+    
+    // Remove ripple after animation completes
+    setTimeout(() => {
+      ripple.remove();
+    }, 800);
+    
+    // When the audio ends, reset the button
+    currentAudio.addEventListener("ended", () => {
+      button.classList.remove("playing");
+      
+      // Reset button text and icon
+      if (buttonIcon) {
+        buttonIcon.classList.remove("fa-stop");
+        buttonIcon.classList.add("fa-play");
+      }
+      
+      if (buttonText) {
+        buttonText.textContent = " Play";
+      }
+      
+      currentAudio = null;
+      currentPlayingButton = null;
+    });
+  } else {
+    // If no preview URL, show an alert
+    alert("No preview available for this song.");
   }
-  currentAudio = new Audio(song.previewUrl);
-  currentAudio.play();
-  button.textContent = "Stop";
-  button.classList.add("playing");
-  currentPlayingButton = button;
-  currentAudio.onended = function() {
-    button.textContent = "Play";
-    button.classList.remove("playing");
-    currentAudio = null;
-    currentPlayingButton = null;
-  };
 }
 
 function sendPlaylistToLibrary() {
@@ -424,21 +420,41 @@ function updateGenreChart(songs) {
   // Count genres
   const genreCounts = {};
   
+  // Debug: Log the first song's genres to understand structure
+  if (songs.length > 0) {
+    console.log("First song in updateGenreChart:", songs[0]);
+    console.log("First song genres:", songs[0].genres);
+    if (songs[0].genres && songs[0].genres.length > 0) {
+      console.log("First genre in updateGenreChart:", songs[0].genres[0]);
+      console.log("First genre type:", typeof songs[0].genres[0]);
+      console.log("First genre JSON:", JSON.stringify(songs[0].genres[0]));
+      console.log("Extracted genre name:", extractGenreName(songs[0].genres[0]));
+    }
+  }
+  
   // Process each song
   songs.forEach(song => {
+    // Handle case where genres might be a string instead of an array
+    const genres = Array.isArray(song.genres) ? song.genres : (song.genres ? [song.genres] : []);
+    const subgenres = Array.isArray(song.subgenres) ? song.subgenres : (song.subgenres ? [song.subgenres] : []);
+    
     // Use the first genre for each song (if available)
-    if (song.genres && song.genres.length > 0) {
-      const genre = song.genres[0];
+    if (genres.length > 0) {
+      // Extract genre name based on possible data structures
+      let genre = extractGenreName(genres[0]);
       genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-    } else if (song.subgenres && song.subgenres.length > 0) {
+    } else if (subgenres.length > 0) {
       // If no genres, use the first subgenre
-      const subgenre = song.subgenres[0];
+      let subgenre = extractGenreName(subgenres[0]);
       genreCounts[subgenre] = (genreCounts[subgenre] || 0) + 1;
     } else {
       // If no genres or subgenres, count as "Unknown"
       genreCounts["Unknown"] = (genreCounts["Unknown"] || 0) + 1;
     }
   });
+  
+  // Debug: Log the genre counts
+  console.log("Genre counts:", genreCounts);
   
   // Sort genres by count (descending)
   const sortedGenres = Object.keys(genreCounts).sort((a, b) => genreCounts[b] - genreCounts[a]);
@@ -497,6 +513,62 @@ function updateGenreChart(songs) {
       }
     }
   });
+}
+
+// Helper function to extract genre name from various possible data structures
+function extractGenreName(genreData) {
+  // If it's a string, return it directly
+  if (typeof genreData === 'string') {
+    return genreData;
+  }
+  
+  // If it's null or undefined, return Unknown
+  if (genreData === null || genreData === undefined) {
+    return 'Unknown';
+  }
+  
+  // If it's an object, try to extract the name based on Apple Music API structure
+  if (typeof genreData === 'object') {
+    // Apple Music API structure: { id: "123", attributes: { name: "Rock" } }
+    if (genreData.attributes && genreData.attributes.name) {
+      return genreData.attributes.name;
+    }
+    
+    // Direct name property
+    if (genreData.name) {
+      return genreData.name;
+    }
+    
+    // Other common properties
+    if (genreData.genre) {
+      return genreData.genre;
+    }
+    
+    if (genreData.value) {
+      return genreData.value;
+    }
+    
+    if (genreData.id) {
+      return genreData.id;
+    }
+    
+    // If it has a toString method that doesn't return [object Object]
+    if (genreData.toString && genreData.toString() !== '[object Object]') {
+      return genreData.toString();
+    }
+    
+    // Try to get the first key-value pair if it's a simple object
+    const keys = Object.keys(genreData);
+    if (keys.length > 0) {
+      const firstValue = genreData[keys[0]];
+      if (typeof firstValue === 'string') {
+        return firstValue;
+      }
+    }
+  }
+  
+  // If all else fails, return Unknown
+  return 'Unknown';
 }
 
 // Function to update detailed playlist stats
@@ -574,4 +646,139 @@ function getPopularityGradient(popularity) {
   } else {
     return 'linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 100%)'; // Low popularity (purple)
   }
+}
+
+// Function to create and display a song row
+function displaySong(song, index, container) {
+  // Create song row container
+  const songRow = document.createElement("div");
+  songRow.classList.add("song-row");
+  songRow.setAttribute("data-index", index);
+  
+  // Song number
+  const songNumber = document.createElement("div");
+  songNumber.classList.add("song-number");
+  songNumber.textContent = index + 1;
+  songRow.appendChild(songNumber);
+
+  // Artwork container
+  const artworkContainer = document.createElement("div");
+  artworkContainer.classList.add("artwork-container");
+  
+  // Check if artwork URL exists
+  if (song.artworkUrl) {
+    const artwork = document.createElement("img");
+    artwork.src = song.artworkUrl;
+    artwork.alt = `${song.name} artwork`;
+    artwork.classList.add("song-artwork");
+    
+    artworkContainer.appendChild(artwork);
+    songRow.appendChild(artworkContainer);
+  } else {
+    // If no artwork, add a placeholder with music icon
+    const artworkPlaceholder = document.createElement("div");
+    artworkPlaceholder.classList.add("artwork-placeholder");
+    
+    // Add music icon
+    const musicIcon = document.createElement("i");
+    musicIcon.classList.add("fas", "fa-music");
+    artworkPlaceholder.appendChild(musicIcon);
+    
+    songRow.appendChild(artworkPlaceholder);
+  }
+
+  // Song info container
+  const songInfo = document.createElement("div");
+  songInfo.classList.add("song-info");
+  
+  // Song name
+  const songNameElement = document.createElement("strong");
+  songNameElement.classList.add("song-name");
+  songNameElement.textContent = song.name;
+  
+  // Artist name
+  const artistElement = document.createElement("span");
+  artistElement.classList.add("artist-name");
+  artistElement.textContent = ` by ${song.artist}`;
+  
+  // Add genre tags if available
+  const genreContainer = document.createElement("div");
+  genreContainer.classList.add("genre-tags");
+  
+  // Handle case where genres might be a string instead of an array
+  const genres = Array.isArray(song.genres) ? song.genres : (song.genres ? [song.genres] : []);
+  
+  if (genres.length > 0) {
+    // Debug: Log genre data for the first song
+    if (index === 0) {
+      console.log("First song in displaySong:", song);
+      console.log("First song genres in displaySong:", genres);
+      console.log("First genre in displaySong:", genres[0]);
+      console.log("Extracted genre name in displaySong:", extractGenreName(genres[0]));
+    }
+    
+    const genreTag = document.createElement("span");
+    genreTag.classList.add("genre-tag");
+    
+    // Use the helper function to extract genre name
+    const genreText = extractGenreName(genres[0]);
+    
+    genreTag.textContent = genreText;
+    genreContainer.appendChild(genreTag);
+  }
+  
+  songInfo.appendChild(songNameElement);
+  songInfo.appendChild(artistElement);
+  songInfo.appendChild(genreContainer);
+  songRow.appendChild(songInfo);
+
+  // Popularity indicator container
+  const popularityContainer = document.createElement("div");
+  popularityContainer.classList.add("popularity-container");
+  
+  // Create the popularity bar
+  const popularityBar = document.createElement("div");
+  popularityBar.classList.add("popularity-bar");
+  
+  // Create the filled portion of the bar based on popularity score
+  const popularityFill = document.createElement("div");
+  popularityFill.classList.add("popularity-fill");
+  popularityFill.style.width = `${song.popularity}%`;
+  
+  // Set color based on popularity score
+  if (song.popularity >= 80) {
+    popularityFill.classList.add("high-popularity");
+  } else if (song.popularity >= 50) {
+    popularityFill.classList.add("medium-popularity");
+  } else {
+    popularityFill.classList.add("low-popularity");
+  }
+  
+  // Add tooltip with exact popularity score
+  popularityContainer.setAttribute("title", `Popularity: ${song.popularity}/100`);
+  
+  popularityBar.appendChild(popularityFill);
+  popularityContainer.appendChild(popularityBar);
+  songRow.appendChild(popularityContainer);
+
+  // Play/Stop button container
+  const playButton = document.createElement("button");
+  playButton.classList.add("play-button");
+  
+  // Add play icon
+  const buttonIcon = document.createElement("i");
+  buttonIcon.classList.add("fas", "fa-play");
+  playButton.appendChild(buttonIcon);
+  
+  // Add button text
+  const buttonText = document.createElement("span");
+  buttonText.textContent = " Play";
+  playButton.appendChild(buttonText);
+  
+  playButton.addEventListener("click", () => {
+    playSnippet(song, playButton);
+  });
+  songRow.appendChild(playButton);
+
+  container.appendChild(songRow);
 }

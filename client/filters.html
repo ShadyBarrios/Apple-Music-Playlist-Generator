@@ -7,6 +7,177 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guffle - Select Genres</title>
   <link rel="stylesheet" href="/styles.css" />
+  <!-- Add Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Simplified background */
+    .animated-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    }
+    
+    /* Simplified wave animation - just one wave */
+    .wave-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      overflow: hidden;
+      z-index: -1;
+    }
+    
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0 0v46.29c47.79 22.2 103.59 32.17 158 28 70.36-5.37 136.33-33.31 206.8-37.5 73.84-4.36 147.54 16.88 218.2 35.26 69.27 18 138.3 24.88 209.4 13.08 36.15-6 69.85-17.84 104.45-29.34C989.49 25 1113-14.29 1200 52.47V0z" fill="%23fc3c4433" fill-opacity=".2"/></svg>');
+      background-size: 1200px 100%;
+      animation: wave 30s linear infinite;
+    }
+    
+    @keyframes wave {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    
+    /* Enhanced filters container */
+    .filters-page-container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 30px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .filters-main-title {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    .filters-main-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background-color: #fc3c44;
+      border-radius: 3px;
+    }
+    
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+    }
+    
+    .filters-column {
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .filters-section-title {
+      color: #333;
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 20px;
+      position: relative;
+      padding-left: 30px;
+    }
+    
+    .filters-section-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      background-color: #fc3c44;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+    
+    /* Enhanced genre and subgenre buttons */
+    .genre-buttons button, .subgenre-buttons button {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 30px;
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #333;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .genre-buttons button.selected, .subgenre-buttons button.selected {
+      background: linear-gradient(135deg, #fc3c44 0%, #e73c4e 100%);
+      color: white;
+      border-color: #fc3c44;
+      box-shadow: 0 4px 10px rgba(252, 60, 68, 0.3);
+    }
+    
+    /* Enhanced selected filters list */
+    .selected-filters-list li {
+      background: linear-gradient(135deg, #fc3c44 0%, #e73c4e 100%);
+      color: white;
+      border-radius: 30px;
+      padding: 8px 15px;
+      margin: 5px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(252, 60, 68, 0.2);
+    }
+    
+    .remove-filter {
+      background-color: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 12px;
+    }
+    
+    /* Enhanced submit button container */
+    .submit-container {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
 </head>
 
 <body>
@@ -21,6 +192,14 @@
   </nav>
 
   <div style="height: 80px;"></div> 
+  
+  <!-- Simplified background -->
+  <div class="animated-background"></div>
+  
+  <!-- Simplified wave animation - just one wave -->
+  <div class="wave-container">
+    <div class="wave"></div>
+  </div>
 
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
