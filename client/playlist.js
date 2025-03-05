@@ -1,26 +1,25 @@
 import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+import { UserBackend } from "./user.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await fetchPlaylist();
+  await fetchPlaylist()
 });
 
-async function fetchPlaylist() {
+  
+
+  async function fetchPlaylist() {
+  let userBackend = null;
   try {
-    // Get playlistId from URL
-    const playlistId = getQueryParam("playlistId");
-    if (playlistId === null) {
-      console.error("No playlist ID provided");
-      return;
-    }
-
     // Retrieve userBackend from IndexedDB
-    const userBackend = await getUserBackend();
-    if (!userBackend || !userBackend.backendUser.generatedPlaylists[playlistId]) {
-      console.error("Playlist not found");
+    userBackend = await getUserBackend();
+
+    if (!userBackend) {
+      console.error("No userBackend");
       return;
     }
 
-    // Fetch the correct playlist
+    const playlistId = userBackend.backendUser.generatedPlaylists.length - 1
+    // fetch the correct playlist
     const playlist = userBackend.backendUser.generatedPlaylists[playlistId];
     console.log("Fetched Playlist:", playlist);
 
@@ -29,12 +28,6 @@ async function fetchPlaylist() {
   } catch (error) {
     console.error("Error fetching playlist from IndexedDB:", error);
   }
-}
-
-// helper function to get query parameters from URL
-function getQueryParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
 }
 
 function displayPlaylist(playlist) {

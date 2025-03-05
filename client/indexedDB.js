@@ -3,7 +3,7 @@ import { UserBackend } from "./user.js";
 // indexedDB.js
 export function storeUserBackend(userBackend) {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("userDatabase", 1);
+        const request = indexedDB.open("userDatabase");
         
         request.onupgradeneeded = function (event) {
             const db = event.target.result;
@@ -31,7 +31,7 @@ export function storeUserBackend(userBackend) {
 
 export function getUserBackend() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open("userDatabase", 1);
+        const request = indexedDB.open("userDatabase");
         
         request.onsuccess = function (event) {
             const db = event.target.result;
