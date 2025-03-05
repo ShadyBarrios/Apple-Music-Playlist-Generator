@@ -35,6 +35,9 @@ function displayPlaylist(playlist) {
   const playlistTitle = document.getElementById('playlistTitle');
   playlistTitle.textContent = `Your Generated Playlist: ${playlist.name}`;
 
+  // Display the selected filters
+  displaySelectedFilters(playlist.filters);
+
   playlist.songs.forEach(song => {
     const songElement = document.createElement('p');
 
@@ -49,6 +52,26 @@ function displayPlaylist(playlist) {
 
   // Populate and handle playlist selection dropdown
   setupPlaylistDropdown();
+}
+
+// New function to display the selected filters
+function displaySelectedFilters(filters) {
+  const filtersList = document.querySelector('.playlist-filters-list');
+  filtersList.innerHTML = ''; // Clear previous filters
+  
+  if (!filters || filters.length === 0) {
+    const noFiltersItem = document.createElement('li');
+    noFiltersItem.textContent = 'No filters selected';
+    filtersList.appendChild(noFiltersItem);
+    return;
+  }
+  
+  // Add each filter as a list item
+  filters.forEach(filter => {
+    const filterItem = document.createElement('li');
+    filterItem.textContent = filter;
+    filtersList.appendChild(filterItem);
+  });
 }
 
 async function setupPlaylistDropdown() {
