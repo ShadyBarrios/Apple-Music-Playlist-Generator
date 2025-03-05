@@ -1,4 +1,7 @@
 //client.js
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+
 // Function to handle the login API call
 async function login_user() {
   try {
@@ -37,7 +40,6 @@ function update_loading_status(status) {
     document.getElementById("get_numbers").style.display = "none";
   }
 }
-
 
 function update_numbers(data){
   document.getElementById("numbers").innerText = data;
@@ -104,50 +106,51 @@ async function get_dev_token(){
   }
 }
 
-// Adding event listener to login button
-// document.getElementById("login").addEventListener("click", () => {
-//   login_user();  // Call the loginUser function when the login button is clicked
-// });
+// Only attach event listeners in browser environment
+if (isBrowser) {
+  // Adding event listener to login button
+  // document.getElementById("login").addEventListener("click", () => {
+  //   login_user();  // Call the loginUser function when the login button is clicked
+  // });
 
-document.getElementById("get_numbers").addEventListener("click", async () => {
-  await display_user_numbers();
-});
+  document.getElementById("get_numbers").addEventListener("click", async () => {
+    await display_user_numbers();
+  });
 
-//redirect index to home
-document.getElementById("startButton").addEventListener("click", function() {
-  window.location.href = "/home.html"; 
-});
+  //redirect index to home
+  document.getElementById("startButton").addEventListener("click", function() {
+    window.location.href = "/home.html"; 
+  });
 
+  // get user token and send to backend
+  document.getElementById("login").addEventListener("click", async () => {
+    update_loading_status("Loading...");
+    console.time("login time");
+    const developer_token = await get_dev_token();
 
+    try {
+        // Initialize MusicKit with your developer token
+        const music = await MusicKit.configure({
+            developerToken: developer_token,
+            app: {
+                name: "Custom Playlist Generator",
+                build: "1.0.0",
+            },
+        });
 
-// get user token and send to backend
-document.getElementById("login").addEventListener("click", async () => {
-  update_loading_status("Loading...");
-  console.time("login time");
-  const developer_token = await get_dev_token();
+        // Request user authorization
+        await music.authorize();
 
-  try {
-      // Initialize MusicKit with your developer token
-      const music = await MusicKit.configure({
-          developerToken: developer_token,
-          app: {
-              name: "Custom Playlist Generator",
-              build: "1.0.0",
-          },
-      });
-
-      // Request user authorization
-      await music.authorize();
-
-      // Retrieve the user token
-      const userToken = music.musicUserToken;
-      await send_user_token(userToken);
-      update_loading_status("Loaded");
-      console.timeEnd("login time");
-  } catch (error) {
-      console.error("Error authorizing with Apple Music:", error);
-  }
-});
+        // Retrieve the user token
+        const userToken = music.musicUserToken;
+        await send_user_token(userToken);
+        update_loading_status("Loaded");
+        console.timeEnd("login time");
+    } catch (error) {
+        console.error("Error authorizing with Apple Music:", error);
+    }
+  });
+}
 
 async function fetchGenres() {
   try {
@@ -165,7 +168,6 @@ async function fetchGenres() {
     const data = await response.json(); // Parse the JSON response
     console.log('Fetched Genres:', data);  // Check if genres are received
     displayGenres(data.data);
-
   } catch (error) {
     console.error('Error fetching genres:', error);
   }
@@ -192,5 +194,17 @@ function displayGenres(genres) {
     buttonsContainer.appendChild(button);
   });
 }
+
+// Export functions for testing
+export {
+    login_user,
+    update_loading_status,
+    update_numbers,
+    send_user_token,
+    display_user_numbers,
+    get_dev_token,
+    fetchGenres,
+    displayGenres
+};
 
 

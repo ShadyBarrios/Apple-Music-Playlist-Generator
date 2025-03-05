@@ -2,36 +2,31 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-// Import the classes from your file (adjust the path as needed)
+
 import { Playlist, BackendGenerator } from '../src/backend.js'; 
-import { SongDataFetchers, GlobalFunctions, Song, ParallelDataFetchers } from '../src/functions.js';
+import { SongDataFetchers, GlobalFunctions, Song } from '../src/functions.js';
 
 describe('Playlist Class', () => {
   it('should create a Playlist object with valid parameters', () => {
-    const songs = new Set([ new Song('1', ['rock'], ['indie']) ]);
-    const name = 'My Playlist';
-    const description = 'Test playlist';
-    const filters = ['rock'];
-    
-    const playlist = new Playlist(songs, name, description, filters);
-    
-    expect(playlist).to.have.property('songs').that.deep.equals(songs);
-    expect(playlist).to.have.property('name', name);
-    expect(playlist).to.have.property('description', description);
-    expect(playlist).to.have.property('filters').that.deep.equals(filters);
+    const playlist = new Playlist('Test Playlist', ['song1', 'song2'], 'Pop');
+    expect(playlist.name).to.equal('Test Playlist');
+    expect(playlist.songs).to.deep.equal(['song1', 'song2']);
+    expect(playlist.genre).to.equal('Pop');
   });
 
   it('should log an error and return undefined if required parameters are missing', () => {
     const consoleErrorStub = sinon.stub(console, 'error');
-    const result = new Playlist(null, 'name', 'desc', ['rock']);
-    expect(consoleErrorStub.calledOnce).to.be.true;
-    expect(result).to.be.undefined;
+    const playlist = new Playlist();
+    expect(playlist.name).to.be.undefined;
+    expect(playlist.songs).to.be.undefined;
+    expect(playlist.genre).to.be.undefined;
+    expect(consoleErrorStub.called).to.be.true;
     consoleErrorStub.restore();
   });
 
   it('getSongs should return the songs set', () => {
-    const songs = new Set([ new Song('1', ['pop'], ['dance']) ]);
-    const playlist = new Playlist(songs, 'Test', 'desc', ['pop']);
+    const songs = ['song1', 'song2'];
+    const playlist = new Playlist('Test Playlist', songs, 'Pop');
     expect(playlist.getSongs()).to.deep.equal(songs);
   });
 });
@@ -136,7 +131,85 @@ describe('BackendGenerator Class', () => {
       consoleErrorStub.restore();
     });
   });
-  
-  // Optionally, you could add tests for the debug functions.
-  // Because they write to process.stdout and console, you might stub those as needed.
+});
+
+describe('Backend Generator', () => {
+    let mockSongs;
+    let mockGenreDictionary;
+    let mockSubgenreDictionary;
+
+    beforeEach(() => {
+        mockSongs = new Set([
+            new Song('1', ['pop'], ['modern pop']),
+            new Song('2', ['rock'], ['classic rock'])
+        ]);
+        
+        mockGenreDictionary = {
+            'pop': 1,
+            'rock': 2
+        };
+        
+        mockSubgenreDictionary = {
+            'modern pop': 1,
+            'classic rock': 1
+        };
+
+        // Mock console
+        global.console = {
+            log: () => {},
+            error: () => {}
+        };
+    });
+
+    describe('Constructor', () => {
+        it('should create a backend generator with valid inputs', () => {
+            const backend = new BackendGenerator('token123', ['song1', 'song2'], ['Pop'], ['Rock']);
+            expect(backend.userToken).to.equal('token123');
+            expect(backend.songIDs).to.deep.equal(['song1', 'song2']);
+            expect(backend.genres).to.deep.equal(['Pop']);
+            expect(backend.subgenres).to.deep.equal(['Rock']);
+        });
+
+        it('should handle missing parameters', () => {
+            const consoleErrorStub = sinon.stub(console, 'error');
+            const backend = new BackendGenerator();
+            expect(backend.userToken).to.be.undefined;
+            expect(backend.songIDs).to.be.undefined;
+            expect(backend.genres).to.be.undefined;
+            expect(backend.subgenres).to.be.undefined;
+            expect(consoleErrorStub.called).to.be.true;
+            consoleErrorStub.restore();
+        });
+    });
+
+    describe('Playlist Creation', () => {
+        it('should create playlist with valid parameters', () => {
+            const backend = new BackendGenerator('token123', ['song1', 'song2'], ['Pop'], ['Rock']);
+            const playlist = backend.createPlaylist('Test Playlist', ['song1'], 'Pop');
+            expect(playlist.name).to.equal('Test Playlist');
+            expect(playlist.songs).to.deep.equal(['song1']);
+            expect(playlist.genre).to.equal('Pop');
+        });
+
+        it('should handle missing playlist parameters', () => {
+            const backend = new BackendGenerator('token123', ['song1', 'song2'], ['Pop'], ['Rock']);
+            const consoleErrorStub = sinon.stub(console, 'error');
+            const playlist = backend.createPlaylist();
+            expect(playlist).to.be.undefined;
+            expect(consoleErrorStub.called).to.be.true;
+            consoleErrorStub.restore();
+        });
+    });
+
+    describe('Genre Management', () => {
+        it('should handle genre filtering', () => {
+            const backend = new BackendGenerator('token123', ['song1', 'song2'], ['Pop', 'Rock'], ['Alt Rock']);
+            expect(backend.genres).to.deep.equal(['Pop', 'Rock']);
+        });
+
+        it('should handle subgenre filtering', () => {
+            const backend = new BackendGenerator('token123', ['song1', 'song2'], ['Pop'], ['Rock', 'Alt Rock']);
+            expect(backend.subgenres).to.deep.equal(['Rock', 'Alt Rock']);
+        });
+    });
 });
