@@ -5,6 +5,7 @@ import { UserBackend } from "./user.js";
 let currentAudio = null;
 let currentPlayingButton = null;
 let currentPlaylist = null;
+let currentSortMethod = "default"; // Track the current sort method
 
 document.addEventListener("DOMContentLoaded", async () => {
   showLoading();
@@ -25,6 +26,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (sendButton) {
     sendButton.addEventListener("click", sendPlaylistToLibrary);
   }
+
+  // Add event listeners for sorting buttons
+  setupSortingButtons();
 });
 
 // Function to show loading overlay
@@ -40,6 +44,67 @@ function hideLoading() {
   const loadingOverlay = document.getElementById("loading-overlay");
   if (loadingOverlay) {
     loadingOverlay.classList.remove("active");
+  }
+}
+
+// Setup sorting buttons
+function setupSortingButtons() {
+  const sortTitleButton = document.getElementById("sort-title");
+  const sortArtistButton = document.getElementById("sort-artist");
+  const sortDefaultButton = document.getElementById("sort-default");
+
+  if (sortTitleButton) {
+    sortTitleButton.addEventListener("click", () => {
+      setActiveSortButton(sortTitleButton);
+      currentSortMethod = "title";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+
+  if (sortArtistButton) {
+    sortArtistButton.addEventListener("click", () => {
+      setActiveSortButton(sortArtistButton);
+      currentSortMethod = "artist";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+
+  if (sortDefaultButton) {
+    sortDefaultButton.addEventListener("click", () => {
+      setActiveSortButton(sortDefaultButton);
+      currentSortMethod = "default";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+}
+
+// Set active sort button
+function setActiveSortButton(activeButton) {
+  const sortButtons = document.querySelectorAll(".sort-button");
+  sortButtons.forEach(button => {
+    button.classList.remove("active");
+  });
+  activeButton.classList.add("active");
+}
+
+// Sort songs based on current sort method
+function sortSongs(songs) {
+  const songsCopy = [...songs]; // Create a copy to avoid modifying the original
+  
+  switch (currentSortMethod) {
+    case "title":
+      return songsCopy.sort((a, b) => a.name.localeCompare(b.name));
+    case "artist":
+      return songsCopy.sort((a, b) => a.artist.localeCompare(b.artist));
+    case "default":
+    default:
+      return songsCopy; // Return the original order
   }
 }
 
@@ -84,8 +149,11 @@ function displayPlaylist(playlist) {
   // Display the filters
   displayFilters(playlist.filters);
 
+  // Sort the songs based on current sort method
+  const sortedSongs = sortSongs(playlist.songs);
+
   // For each song, create a flex row with song info and a play/stop button
-  playlist.songs.forEach((song) => {
+  sortedSongs.forEach((song) => {
     const songRow = document.createElement("div");
     songRow.classList.add("song-row");
 

@@ -14,6 +14,7 @@ nav {
   z-index: 1000;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  box-sizing: border-box;
 }
 
 .navbar .logo {
@@ -28,18 +29,19 @@ nav {
 
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 30px;
+  margin-right: 20px;
 }
 
 .nav-links a {
   color: #333;
   text-decoration: none;
-  margin: 0 5px;
   font-size: 16px;
   font-weight: 600;
   position: relative;
-  padding: 5px 0;
+  padding: 5px 10px;
   transition: color 0.3s ease;
+  white-space: nowrap;
 }
 
 .nav-links a::after {
@@ -240,36 +242,42 @@ video {
 
 .genre-buttons, .subgenre-buttons {
   display: flex;
-  flex-direction: column; /* Stack buttons vertically */
-  gap: 8px;
-  padding: 8px;
-  max-height: 250px; /* adjust this to control how many buttons are visible at once */
-  overflow-y: scroll;
+  flex-direction: column;
+  gap: 10px;
+  padding: 15px;
+  max-height: 350px;
+  overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  border-radius: 8px;
-  background-color: #f4f4f9;
-  box-shadow: none;
-  justify-content: flex-start;
-  width: 37%; /* Container only as wide as needed */
-}
-
-.genre-buttons-wrapper, .subgenre-buttons-wrapper {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 8px; 
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   width: 100%;
-  align-items: flex-start;
 }
 
 .genre-buttons button, .subgenre-buttons button {
-  padding: 8px 12px;
+  padding: 10px 15px;
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   white-space: nowrap;
-  width: 100%; /* Full width buttons */
+  width: 100%;
   text-align: center;
+  transition: all 0.2s ease;
+  background-color: #fc3c44;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.genre-buttons button:hover, .subgenre-buttons button:hover {
+  background-color: #8B0000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.genre-buttons button.selected, .subgenre-buttons button.selected {
+  background-color: #8B0000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* Custom scrollbar styling */
@@ -290,28 +298,69 @@ video {
 }
 
 .selected-filters-container {
-  position: absolute;
-  right: 200px;
-  top: 20px;
-  width: 200px;
-  padding: 0px 10px;
-  border: 2px solid #8B0000;
-  background-color: #f4f4f9;
-  border-radius: 8px;
+  position: static;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 }
 
 .selected-filters-list {
   list-style: none;
   padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 .selected-filters-list li {
   background-color: #fc3c44;
   color: white;
-  padding: 5px;
-  margin: 5px 0;
-  border-radius: 5px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-radius: 20px;
   text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+  position: relative;
+  padding-right: 30px;
+}
+
+.selected-filters-list li::after {
+  content: "×";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.submit-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.submit-container button {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #fc3c44;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.submit-container button:hover {
+  background-color: #8B0000;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 /* Styles for the playlist selector at the top */
@@ -584,4 +633,154 @@ button:hover::after {
   color: #333;
   font-size: 18px;
   font-weight: 600;
+}
+
+/* New Filters Page Layout */
+.filters-page-container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.filters-main-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.filters-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.filters-section-title {
+  font-size: 22px;
+  margin-bottom: 15px;
+  color: #333;
+  position: relative;
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.filters-section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background-color: #fc3c44;
+  border-radius: 3px;
+}
+
+/* Sorting Options Styles */
+.sorting-options {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  width: 90%;
+  max-width: 500px;
+}
+
+.sorting-label {
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: 15px;
+  color: #333;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.sort-button {
+  padding: 8px 15px;
+  font-size: 14px;
+  background-color: #f4f4f9;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-button:hover {
+  background-color: #eaeaea;
+  transform: translateY(-2px);
+}
+
+.sort-button.active {
+  background-color: #fc3c44;
+  color: white;
+  border-color: #fc3c44;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .genre-buttons, .subgenre-buttons, .selected-filters-container {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .nav-links {
+    gap: 15px;
+    margin-right: 10px;
+  }
+  
+  .nav-links a {
+    font-size: 14px;
+    padding: 5px 8px;
+  }
+  
+  nav {
+    padding: 10px 15px;
+  }
+  
+  .navbar .logo {
+    height: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-links {
+    gap: 10px;
+    margin-right: 5px;
+  }
+  
+  .nav-links a {
+    font-size: 13px;
+    padding: 5px 5px;
+  }
+  
+  .navbar .logo {
+    height: 35px;
+  }
+  
+  .sorting-options {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .sort-buttons {
+    width: 100%;
+    justify-content: center;
+  }
 }
