@@ -1,8 +1,8 @@
 {
-  "name": "spotify-playlist-generator",
+  "name": "apple-music-playlist-generator",
   "version": "1.0.0",
-  "description": "",
-  "main": "login.js",
+  "description": "An Apple Music playlist generator using Apple Music API and MusicKit.",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "test": "mocha --exit",
@@ -10,8 +10,13 @@
     "start": "node src/server.js",
     "create-env": "touch .env"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "apple music",
+    "playlist",
+    "generator",
+    "music kit"
+  ],
+  "author": "Your Name Here",
   "license": "ISC",
   "dependencies": {
     "async-mutex": "^0.5.0",
