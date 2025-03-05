@@ -247,9 +247,57 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!submitButton) {
       submitButton = document.createElement("button");
       submitButton.id = "submit-button";
-      submitButton.innerText = "Submit";
-      submitButton.addEventListener("click", submitSelections);
+      submitButton.className = "enhanced-submit-button";
+      
+      // Create button content with icon and text
+      const buttonContent = document.createElement("span");
+      buttonContent.className = "button-content";
+      
+      // Add icon
+      const icon = document.createElement("i");
+      icon.className = "fas fa-magic";
+      buttonContent.appendChild(icon);
+      
+      // Add text
+      const text = document.createTextNode(" Generate Playlist");
+      buttonContent.appendChild(text);
+      
+      submitButton.appendChild(buttonContent);
+      
+      submitButton.addEventListener("click", function() {
+        // Call the submit function
+        submitSelections();
+      });
+      
       container.appendChild(submitButton);
+      
+      // Add CSS for the enhanced button
+      const style = document.createElement('style');
+      style.textContent = `
+        .enhanced-submit-button {
+          background: linear-gradient(135deg, #fc3c44 0%, #e73c4e 100%);
+          color: white;
+          border: none;
+          padding: 15px 40px;
+          font-size: 18px;
+          border-radius: 30px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(252, 60, 68, 0.3);
+          font-weight: 600;
+          outline: none;
+        }
+        
+        .button-content {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .button-content i {
+          margin-right: 8px;
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
   
