@@ -62,6 +62,9 @@ function displayPlaylist(playlist) {
     playlistNameSpan.textContent = playlist.name;
   }
 
+  // Display the filters
+  displayFilters(playlist.filters);
+
   // For each song, create a flex row with song info and a play/stop button
   playlist.songs.forEach((song) => {
     const songRow = document.createElement("div");
@@ -86,6 +89,29 @@ function displayPlaylist(playlist) {
     songRow.appendChild(playButton);
 
     container.appendChild(songRow);
+  });
+}
+
+// Function to display the filters
+function displayFilters(filters) {
+  const filtersList = document.getElementById("filters-list");
+  if (!filtersList) return;
+  
+  filtersList.innerHTML = "";
+  
+  if (!filters || filters.length === 0) {
+    const noFilters = document.createElement("p");
+    noFilters.textContent = "No filters selected";
+    filtersList.appendChild(noFilters);
+    return;
+  }
+  
+  // Create a tag for each filter
+  filters.forEach(filter => {
+    const filterTag = document.createElement("span");
+    filterTag.classList.add("filter-tag");
+    filterTag.textContent = filter;
+    filtersList.appendChild(filterTag);
   });
 }
 

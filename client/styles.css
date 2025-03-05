@@ -317,3 +317,51 @@ video {
   font-size: 14px;
   cursor: pointer;
 }
+
+/* Styles for the filters display */
+.filters-display-container {
+  width: 90%;
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+  text-align: center;
+}
+
+.filters-display-container h3 {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.filters-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.filter-tag {
+  background-color: #fc3c44;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+/* Add a subtle animation for visual interest */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filter-tag {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Add a subtle hover effect for the filter tags */
+.filter-tag:hover {
+  background-color: #8B0000;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
