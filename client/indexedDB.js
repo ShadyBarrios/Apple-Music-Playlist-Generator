@@ -53,3 +53,21 @@ export function getUserBackend() {
         };
     });
 }
+
+export function clearUserBackend() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase("userDatabase");
+
+        request.onsuccess = () => {
+            console.log("IndexedDB successfully deleted");
+            resolve();
+        };
+
+        request.onerror = (event) => {
+            console.error("Error deleting IndexedDB:", event.target.error);
+            reject(event.target.error);
+        };
+
+    });
+}
+

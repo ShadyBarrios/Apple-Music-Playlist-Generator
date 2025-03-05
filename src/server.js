@@ -49,40 +49,16 @@ app.post('/api-login', async (req, res) => {
   res.json({ message: 'User Token fetch successful', backendUser });
 });
 
-app.post('/get-genres', (req, res) => {
-  console.log("Genres endpoint hit!");
+app.post('/api-logout', (req, res) => {
+  console.log('Logging out user');
 
-  if (!backendUser || !backendUser.genre_dictionary || !backendUser.genre_dictionary._dictionary) {
-    console.error("Error: genre dictionary is undefined.");
-    return res.status(500).json({ error: "Genre dictionary not found on the server." });
-  }
+  // Clear the stored user session on the server
+  userToken = null;
+  backendUser = null;
 
-  console.log(backendUser.genre_dictionary._dictionary);
+  console.log('User Token: ', userToken);
 
-  const allGenres = Object.keys(backendUser.genre_dictionary._dictionary);
-  res.json({ data: allGenres });
-});
-
-app.post('/get-backend-object-numbers', (req, res) => {
-  const obj = {
-    songsLength: backendUser.songs.length,
-    genresLength: Object.keys(backendUser.genre_dictionary._dictionary).length,
-    subgenresLength: Object.keys(backendUser.subgenre_dictionary._dictionary).length,
-  };
-
-  res.json({ data: obj });
-});
-
-app.post('/get-subgenres', (req, res) => {
-  console.log("Sub-genres endpoint hit!")
-  
-  if (!backendUser || !backendUser.subgenre_dictionary || !backendUser.subgenre_dictionary._dictionary) {
-    return res.status(500).json({ error: "Subgenre dictionary not found on the server." });
-  }
-
-  console.log(backendUser.subgenre_dictionary._dictionary);
-  const subgenres = Object.keys(backendUser.subgenre_dictionary._dictionary);
-  res.json({ data: subgenres });
+  res.json({ message: "User logged out successfully" });
 });
 
 
@@ -125,51 +101,6 @@ app.post('/send-playlist', async (req, res) => {
   }
   res.json(playlist);
 });
-
-// will be obselete
-// store the selections and playlistName globally or in a session
-// let selectedGenres = [];
-// let selectedSubGenres = [];
-// let playlistName = "";
-
-// app.post('/submit-selections', (req, res) => {
-//   const { genres, subGenres, name } = req.body;
-
-//   selectedGenres = genres;
-//   selectedSubGenres = subGenres;
-//   playlistName = name;
-
-//   console.log("Stored Genres:", selectedGenres);
-//   console.log("Stored Sub-Genres:", selectedSubGenres);
-//   console.log("Stored Playlist Name:", playlistName);
-
-//   res.json({ message: "Selections received successfully!" });
-// });
-
-// // Endpoint for generating the playlist
-// app.post('/generate-playlist', async (req, res) => {
-//   if (!backendUser) {
-//     return res.status(400).json({ error: 'User not initialized' });
-//   }
-
-//   try {
-//     const filters = [...selectedGenres, ...selectedSubGenres];
-
-//     console.log("Generating playlist with filters:", filters);
-
-//     // Generate the playlist using the provided name and filters
-//     const playlist = backendUser.createPlaylist(playlistName, filters);
-//     console.log("Playlist: ", playlist);
-
-//     if (!playlist || playlist.length === 0) {
-//       return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
-//     }
-//     res.json({ playlist });
-//   } catch (error) {
-//     console.error("Error generating playlist:", error);
-//     res.status(500).json({ error: 'Server error while generating playlist' });
-//   }
-// });
 
 // Export the app for testing
 export default app;
@@ -228,8 +159,8 @@ export class Backend {
       }
     });
 
-    console.log("User Token: " + user.clientToken);
-    console.log("User: " + user);
+    console.log("User Token: " + user.clientToken); //what are these supposed to represent?
+    console.log("User: " + user); //what is this supposed to represent?
     
     // return token
     return user;

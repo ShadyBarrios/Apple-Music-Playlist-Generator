@@ -2,45 +2,7 @@ import { storeUserBackend, getUserBackend } from "./indexedDB.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   let userToken = ""; // Will be pulled with MusicKit
-
-  // Add clear IndexedDB functionality
-  const clearDbButton = document.getElementById('clear-db');
-  if (clearDbButton) {
-    clearDbButton.addEventListener('click', async () => {
-      await clearUserData();
-      alert('IndexedDB data cleared. You can now try logging in again.');
-    });
-  }
-
-  async function clearUserData() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open("userDatabase");
-      
-      request.onsuccess = function(event) {
-        const db = event.target.result;
-        const transaction = db.transaction("userBackend", "readwrite");
-        const store = transaction.objectStore("userBackend");
-        
-        const clearRequest = store.clear();
-        
-        clearRequest.onsuccess = function() {
-          console.log("User data cleared from IndexedDB");
-          resolve();
-        };
-        
-        clearRequest.onerror = function() {
-          console.error("Error clearing user data:", clearRequest.error);
-          reject(clearRequest.error);
-        };
-      };
-      
-      request.onerror = function() {
-        console.error("Error opening database:", request.error);
-        reject(request.error);
-      };
-    });
-  }
-
+  
   async function get_dev_token() {
     try {
       console.log("Fetching developer token...");
