@@ -85,9 +85,10 @@ export class Song {
      * @param {Genres[]} genres - array of genre objects
      * @param {string[]} subgenres - array of subgenre names
      * @param {string} previewUrl - URL for the song preview snippet
+     * @param {string} artworkUrl - URL for the song's album artwork
      */
-    constructor(id, name, artist, genres, subgenres, previewUrl) {
-        // check that we have good vars; previewUrl can be an empty string if not available
+    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl) {
+        // check that we have good vars; previewUrl and artworkUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
@@ -98,7 +99,8 @@ export class Song {
         this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
-        this.previewUrl = previewUrl; // new property for snippet playback
+        this.previewUrl = previewUrl; // URL for snippet playback
+        this.artworkUrl = artworkUrl; // URL for album artwork
     }
 }
 
@@ -1064,7 +1066,7 @@ export class ParallelDataFetchers{
 
     /**
      * Returns set containing all songs given song catalog ID partition.
-     * Modified to include the song preview URL from Apple Music.
+     * Modified to include the song preview URL and artwork URL from Apple Music.
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {Request} request - fetch request info
@@ -1105,13 +1107,25 @@ export class ParallelDataFetchers{
                     const previewUrl = (data.data[i].attributes.previews && data.data[i].attributes.previews.length > 0)
                       ? data.data[i].attributes.previews[0].url 
                       : "";
+                    
+                    // Extract artwork URL from attributes.artwork (if available)
+                    // Apple Music API typically provides artwork in different sizes
+                    // We'll use the URL and replace {w} and {h} with specific dimensions
+                    let artworkUrl = "";
+                    if (data.data[i].attributes.artwork) {
+                        const artwork = data.data[i].attributes.artwork;
+                        // Create URL with 100x100 dimensions (can be adjusted as needed)
+                        artworkUrl = artwork.url.replace('{w}', '100').replace('{h}', '100');
+                    }
+                    
                     songs.push(new Song(
                       data.data[i].id, 
                       data.data[i].attributes.name, 
                       data.data[i].attributes.artistName, 
                       genres, 
                       data.data[i].attributes.genreNames,
-                      previewUrl
+                      previewUrl,
+                      artworkUrl
                     ));
                 }
             }
@@ -1119,6 +1133,7 @@ export class ParallelDataFetchers{
             return [...new Set(songs)];
         }catch(error){
             console.error("Error fetching songs from " + collection + ": ", error);
+            return [];
         }
     }
-s}
+}

@@ -152,10 +152,29 @@ function displayPlaylist(playlist) {
   // Sort the songs based on current sort method
   const sortedSongs = sortSongs(playlist.songs);
 
-  // For each song, create a flex row with song info and a play/stop button
+  // For each song, create a flex row with album artwork, song info and a play/stop button
   sortedSongs.forEach((song) => {
     const songRow = document.createElement("div");
     songRow.classList.add("song-row");
+
+    // Album artwork container
+    if (song.artworkUrl) {
+      const artworkContainer = document.createElement("div");
+      artworkContainer.classList.add("artwork-container");
+      
+      const artwork = document.createElement("img");
+      artwork.src = song.artworkUrl;
+      artwork.alt = `${song.name} album artwork`;
+      artwork.classList.add("song-artwork");
+      
+      artworkContainer.appendChild(artwork);
+      songRow.appendChild(artworkContainer);
+    } else {
+      // If no artwork, add a placeholder
+      const artworkPlaceholder = document.createElement("div");
+      artworkPlaceholder.classList.add("artwork-placeholder");
+      songRow.appendChild(artworkPlaceholder);
+    }
 
     // Song info container
     const songInfo = document.createElement("div");
