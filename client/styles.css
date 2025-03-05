@@ -424,10 +424,45 @@ video {
   outline: none;
 }
 
+/* Album Artwork Styles */
+.artwork-container {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.song-artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.artwork-container:hover .song-artwork {
+  transform: scale(1.05);
+}
+
+.artwork-placeholder {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  border-radius: 6px;
+  background-color: #eaeaea;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+/* Update song row to accommodate artwork */
 .song-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 16px;
   border-bottom: 1px solid #eaeaea;
   transition: background-color 0.2s ease;
@@ -798,5 +833,99 @@ button:hover::after {
   .sort-buttons {
     width: 100%;
     justify-content: center;
+  }
+  
+  .artwork-container, .artwork-placeholder {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+  }
+  
+  .song-info {
+    font-size: 14px;
+  }
+}
+
+/* Popularity Indicator Styles */
+.popularity-container {
+  width: 100px;
+  margin: 0 15px;
+  flex-shrink: 0;
+}
+
+.popularity-bar {
+  height: 8px;
+  background-color: #eaeaea;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.popularity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.high-popularity {
+  background-color: #1DB954; /* Spotify green for high popularity */
+  box-shadow: 0 0 5px rgba(29, 185, 84, 0.5);
+}
+
+.medium-popularity {
+  background-color: #FFC107; /* Amber for medium popularity */
+  box-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+}
+
+.low-popularity {
+  background-color: #FF5722; /* Deep orange for low popularity */
+  box-shadow: 0 0 5px rgba(255, 87, 34, 0.5);
+}
+
+/* Update song row to accommodate popularity indicator */
+.song-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eaeaea;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .popularity-container {
+    width: 70px;
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .song-row {
+    flex-wrap: wrap;
+  }
+  
+  .artwork-container, .artwork-placeholder {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+  }
+  
+  .song-info {
+    font-size: 14px;
+    width: calc(100% - 70px);
+    margin-bottom: 8px;
+  }
+  
+  .popularity-container {
+    width: calc(100% - 70px);
+    margin: 0 0 8px 60px;
+    order: 3;
+  }
+  
+  .play-button {
+    order: 4;
   }
 }

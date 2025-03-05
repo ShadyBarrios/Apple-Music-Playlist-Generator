@@ -51,6 +51,7 @@ function hideLoading() {
 function setupSortingButtons() {
   const sortTitleButton = document.getElementById("sort-title");
   const sortArtistButton = document.getElementById("sort-artist");
+  const sortPopularityButton = document.getElementById("sort-popularity");
   const sortDefaultButton = document.getElementById("sort-default");
 
   if (sortTitleButton) {
@@ -67,6 +68,16 @@ function setupSortingButtons() {
     sortArtistButton.addEventListener("click", () => {
       setActiveSortButton(sortArtistButton);
       currentSortMethod = "artist";
+      if (currentPlaylist) {
+        displayPlaylist(currentPlaylist);
+      }
+    });
+  }
+
+  if (sortPopularityButton) {
+    sortPopularityButton.addEventListener("click", () => {
+      setActiveSortButton(sortPopularityButton);
+      currentSortMethod = "popularity";
       if (currentPlaylist) {
         displayPlaylist(currentPlaylist);
       }
@@ -102,6 +113,8 @@ function sortSongs(songs) {
       return songsCopy.sort((a, b) => a.name.localeCompare(b.name));
     case "artist":
       return songsCopy.sort((a, b) => a.artist.localeCompare(b.artist));
+    case "popularity":
+      return songsCopy.sort((a, b) => b.popularity - a.popularity); // Sort by popularity (high to low)
     case "default":
     default:
       return songsCopy; // Return the original order
@@ -152,10 +165,29 @@ function displayPlaylist(playlist) {
   // Sort the songs based on current sort method
   const sortedSongs = sortSongs(playlist.songs);
 
-  // For each song, create a flex row with song info and a play/stop button
+  // For each song, create a flex row with album artwork, song info, popularity indicator and a play/stop button
   sortedSongs.forEach((song) => {
     const songRow = document.createElement("div");
     songRow.classList.add("song-row");
+
+    // Album artwork container
+    if (song.artworkUrl) {
+      const artworkContainer = document.createElement("div");
+      artworkContainer.classList.add("artwork-container");
+      
+      const artwork = document.createElement("img");
+      artwork.src = song.artworkUrl;
+      artwork.alt = `${song.name} album artwork`;
+      artwork.classList.add("song-artwork");
+      
+      artworkContainer.appendChild(artwork);
+      songRow.appendChild(artworkContainer);
+    } else {
+      // If no artwork, add a placeholder
+      const artworkPlaceholder = document.createElement("div");
+      artworkPlaceholder.classList.add("artwork-placeholder");
+      songRow.appendChild(artworkPlaceholder);
+    }
 
     // Song info container
     const songInfo = document.createElement("div");
@@ -165,6 +197,35 @@ function displayPlaylist(playlist) {
     songInfo.appendChild(songNameElement);
     songInfo.appendChild(document.createTextNode(` by ${song.artist}`));
     songRow.appendChild(songInfo);
+
+    // Popularity indicator container
+    const popularityContainer = document.createElement("div");
+    popularityContainer.classList.add("popularity-container");
+    
+    // Create the popularity bar
+    const popularityBar = document.createElement("div");
+    popularityBar.classList.add("popularity-bar");
+    
+    // Create the filled portion of the bar based on popularity score
+    const popularityFill = document.createElement("div");
+    popularityFill.classList.add("popularity-fill");
+    popularityFill.style.width = `${song.popularity}%`;
+    
+    // Set color based on popularity score
+    if (song.popularity >= 80) {
+      popularityFill.classList.add("high-popularity");
+    } else if (song.popularity >= 50) {
+      popularityFill.classList.add("medium-popularity");
+    } else {
+      popularityFill.classList.add("low-popularity");
+    }
+    
+    // Add tooltip with exact popularity score
+    popularityContainer.setAttribute("title", `Popularity: ${song.popularity}/100`);
+    
+    popularityBar.appendChild(popularityFill);
+    popularityContainer.appendChild(popularityBar);
+    songRow.appendChild(popularityContainer);
 
     // Play/Stop button container
     const playButton = document.createElement("button");
