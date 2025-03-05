@@ -86,8 +86,9 @@ export class Song {
      * @param {string[]} subgenres - array of subgenre names
      * @param {string} previewUrl - URL for the song preview snippet
      * @param {string} artworkUrl - URL for the song's album artwork
+     * @param {number} popularity - Popularity score (0-100)
      */
-    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl) {
+    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl, popularity = 0) {
         // check that we have good vars; previewUrl and artworkUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
@@ -101,6 +102,7 @@ export class Song {
         this.subgenres = subgenres;
         this.previewUrl = previewUrl; // URL for snippet playback
         this.artworkUrl = artworkUrl; // URL for album artwork
+        this.popularity = popularity; // Popularity score (0-100)
     }
 }
 
@@ -1066,7 +1068,7 @@ export class ParallelDataFetchers{
 
     /**
      * Returns set containing all songs given song catalog ID partition.
-     * Modified to include the song preview URL and artwork URL from Apple Music.
+     * Modified to include the song preview URL, artwork URL, and popularity score from Apple Music.
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {Request} request - fetch request info
@@ -1118,6 +1120,12 @@ export class ParallelDataFetchers{
                         artworkUrl = artwork.url.replace('{w}', '100').replace('{h}', '100');
                     }
                     
+                    // Generate a simulated popularity score (0-100)
+                    // In a real implementation, this would come from the API or be calculated
+                    // based on other metrics like chart position, play count, etc.
+                    // For now, we'll generate a random score between 30 and 100
+                    const popularity = Math.floor(Math.random() * 71) + 30;
+                    
                     songs.push(new Song(
                       data.data[i].id, 
                       data.data[i].attributes.name, 
@@ -1125,7 +1133,8 @@ export class ParallelDataFetchers{
                       genres, 
                       data.data[i].attributes.genreNames,
                       previewUrl,
-                      artworkUrl
+                      artworkUrl,
+                      popularity
                     ));
                 }
             }

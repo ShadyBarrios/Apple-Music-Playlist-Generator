@@ -845,3 +845,87 @@ button:hover::after {
     font-size: 14px;
   }
 }
+
+/* Popularity Indicator Styles */
+.popularity-container {
+  width: 100px;
+  margin: 0 15px;
+  flex-shrink: 0;
+}
+
+.popularity-bar {
+  height: 8px;
+  background-color: #eaeaea;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.popularity-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.high-popularity {
+  background-color: #1DB954; /* Spotify green for high popularity */
+  box-shadow: 0 0 5px rgba(29, 185, 84, 0.5);
+}
+
+.medium-popularity {
+  background-color: #FFC107; /* Amber for medium popularity */
+  box-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+}
+
+.low-popularity {
+  background-color: #FF5722; /* Deep orange for low popularity */
+  box-shadow: 0 0 5px rgba(255, 87, 34, 0.5);
+}
+
+/* Update song row to accommodate popularity indicator */
+.song-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eaeaea;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .popularity-container {
+    width: 70px;
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .song-row {
+    flex-wrap: wrap;
+  }
+  
+  .artwork-container, .artwork-placeholder {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+  }
+  
+  .song-info {
+    font-size: 14px;
+    width: calc(100% - 70px);
+    margin-bottom: 8px;
+  }
+  
+  .popularity-container {
+    width: calc(100% - 70px);
+    margin: 0 0 8px 60px;
+    order: 3;
+  }
+  
+  .play-button {
+    order: 4;
+  }
+}
