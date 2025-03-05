@@ -17,7 +17,7 @@ import fetch from 'node-fetch';
  * @property {string} attributes.name - Genre name
  */
 
-/**f
+/**
  * Songs object from Apple API
  * @typedef {Object} Songs
  * @property {string} id - Song ID
@@ -28,6 +28,7 @@ import fetch from 'node-fetch';
  * @property {Object} relationships - Song relationships
  * @property {Object} relationships.genres - Song genre data
  * @property {Genres[]} relationships.genres.data - Song genre data
+ * @property {Object[]} attributes.previews - Array of preview objects (each with a URL)
  */
 
 /**
@@ -53,7 +54,6 @@ import fetch from 'node-fetch';
  * @property {string} attributes.description
  * @property {string} attributes.name
  * @property {Object} relationships - Playlist relationships
- * @property {Object} relationships.tracks - Playlist tracks
  * @property {Object[]} relationships.tracks.data - Playlist tracks data
  * @property {string} relationships.tracks.data.id - Song catalog ID
  * @property {string} relationships.tracks.data.type - Song type 
@@ -75,18 +75,19 @@ import fetch from 'node-fetch';
  */
 
 /** 
- * Lighweight class only containing vital Song information
+ * Lightweight class only containing vital Song information
  * */
 export class Song {
     /**
      * @param {string} id - Catalog ID
      * @param {string} name - Song name
      * @param {string} artist - Artist name
-     * @param {Genres[]} genres - array of genre IDs
-     * @param {string[]} subgenres - array of subgenres names
+     * @param {Genres[]} genres - array of genre objects
+     * @param {string[]} subgenres - array of subgenre names
+     * @param {string} previewUrl - URL for the song preview snippet
      */
-    constructor(id, name, artist, genres, subgenres) {
-        // check that we have good vars (note that isLiked is bool, so we use typeof)
+    constructor(id, name, artist, genres, subgenres, previewUrl) {
+        // check that we have good vars; previewUrl can be an empty string if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
@@ -97,7 +98,8 @@ export class Song {
         this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
-      }
+        this.previewUrl = previewUrl; // new property for snippet playback
+    }
 }
 
 /**
@@ -202,9 +204,7 @@ export class GenreDictionary extends Dictionary{
      */
     get_id(genre_name){
         let id = undefined;
-
         id = this._dictionary[genre_name];
-
         return id;
     }
 }
@@ -217,7 +217,7 @@ export class SubgenreDictionary extends Dictionary{
     /** 
      * Returns copy of _dictionary while only containing "visible" entries
      * @returns {Record<string, number>} dictionary
-     * */
+     */
     get(){
         let copy = Object.entries(this._dictionary).filter(subgenre => subgenre[1] > 0);
         return copy;
@@ -243,9 +243,7 @@ export class SubgenreDictionary extends Dictionary{
      */
     exists(subgenre_name){
         let exists = false;
-
         exists = this._dictionary[subgenre_name] != undefined;
-
         return exists;
     }
 
@@ -368,7 +366,7 @@ class InteractAPI{
  */
 export class DataFetchers{
     /**
-     * This class is not meant to be instantiated
+     * This class is not meant to be instantiated.
      */
     constructor() {
         throw new Error("This class cannot be instantiated.");
@@ -419,7 +417,7 @@ export class DataFetchers{
  */
 export class DataSenders{
     /**
-     * This class is not meant to be instantiated
+     * This class is not meant to be instantiated.
      */
     constructor() {
         throw new Error("This class cannot be instantiated.");
@@ -453,7 +451,7 @@ export class DataSenders{
  */
 export class SongDataFetchers{
     /**
-     * This class is not meant to be instantiated
+     * This class is not meant to be instantiated.
      */
     constructor() {
         throw new Error("This class cannot be instantiated.");
@@ -507,7 +505,7 @@ export class SongDataFetchers{
     }
 
     /** 
-     * Returns set containing all songs IDs found in user's library and playlists.
+     * Returns set containing all song IDs found in user's library and playlists.
      * @param {Request} request - fetch request info
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
@@ -559,7 +557,6 @@ export class SongDataFetchers{
      */
     static async get_all_library_song_IDs(request){
         const url = "https://api.music.apple.com/v1/me/library/songs?limit=100&offset=";
-
         console.log("Retrieving all song IDs from user library...");
         let result = await ParallelDataFetchers.get_all_song_IDs_from("User Library", url, request);
         return result;
@@ -614,7 +611,7 @@ export class SongDataFetchers{
  */
 export class PlaylistDataFetchers{
     /**
-     * This class is not meant to be instantiated
+     * This class is not meant to be instantiated.
      */
     constructor() {
         throw new Error("This class cannot be instantiated.");
@@ -627,7 +624,7 @@ export class PlaylistDataFetchers{
      */
     static async get_playlists(request){
         const url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
-        console.log("Retrieving playlists...")
+        console.log("Retrieving playlists...");
         try{
             const response = await InteractAPI.fetch_data(url, request);
 
@@ -653,7 +650,7 @@ export class PlaylistDataFetchers{
 
         try{
             accumulated_playlist_IDs = await PlaylistDataFetchers.get_playlist_IDs(url, request, accumulated_playlist_IDs);
-            return accumulated_playlist_IDs;
+            return [...new Set(accumulated_playlist_IDs)];
         }catch(error){
             console.error("Error fetching user library playlist IDs: ", error);
             return [];
@@ -675,9 +672,8 @@ export class PlaylistDataFetchers{
                 if(!response.ok){
                     if (response.status === 504) {
                         console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                        continue; // Retry
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        continue;
                     }else {
                         throw new Error("HTTP Error! Status: " + response.status);
                     }
@@ -685,8 +681,7 @@ export class PlaylistDataFetchers{
 
                 const data = await response.json();
 
-                /** @type {LibraryPlaylists[]} */ 
-                data.data.forEach(playlist=>accumulated_playlist_IDs.push(playlist.id));
+                data.data.forEach(playlist => accumulated_playlist_IDs.push(playlist.id));
             
                 if(data.next){
                     url = "https://api.music.apple.com" + data.next + "&limit=100";
@@ -708,7 +703,7 @@ export class PlaylistDataFetchers{
  */
 export class PlaylistDataSenders{
     /**
-     * This class is not meant to be instantiated
+     * This class is not meant to be instantiated.
      */
     constructor() {
         throw new Error("This class cannot be instantiated.");
@@ -778,7 +773,7 @@ export class ParallelDataFetchers{
         }
         
         set_size = set_size - 100; // first 100 fetched in main thread
-        const thread_counts = Array.from({length: upper_limit}, (_, i) => i + 1.0); // ex: upper_limit = 5 ==> thread_counts = [1.0, 2.0, 3.0, 4.0, 5.0]
+        const thread_counts = Array.from({length: upper_limit}, (_, i) => i + 1.0);
         let result = [];
 
         for(let i = 0; i < thread_counts.length; i++)
@@ -795,7 +790,7 @@ export class ParallelDataFetchers{
      * @returns {string[][]} array of songID partitions
      */
     static #song_ids_partitioner(songIDs){
-        let songIDsCopy = songIDs.slice(); // shallow copy
+        let songIDsCopy = songIDs.slice();
         const songIDsPartitions = [];
         while (songIDsCopy.length) {
             songIDsPartitions.push(songIDsCopy.splice(0, 300)); 
@@ -816,11 +811,11 @@ export class ParallelDataFetchers{
      * Parallelizes API fetch process when URL uses offset pagination
      * @param {function} func - function to be parallelized
      * @param {string} collection - describes where resource is being pulled from
-     * @param {string} url - URL used in API fetch requesets
-     * @param {number} offset - offset useed in fetch request URLs
+     * @param {string} url - URL used in API fetch requests
+     * @param {number} offset - offset used in fetch request URLs
      * @param {Request} request - fetch request info
      * @param {number} thread_count - number of threads to be used
-     * @param {number} listSize - size of list to be fetched/processed
+     * @param {number} list_size - size of list to be fetched/processed
      * @returns {Promise<string, Set<string>>} array of fetch results (fulfilled?, data)
      */
     static async parallelize_using_offset(func, collection, url, offset, request, thread_count, list_size){
@@ -968,7 +963,7 @@ export class ParallelDataFetchers{
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
     static async get_all_song_IDs_from(collection, url, request){
-        let offset = 0; // will parallelize to 5 fetches working at 100 offset differences (0,100,200,300,400)
+        let offset = 0;
         let accumulated_song_ids = [];
 
         try{
@@ -1010,9 +1005,8 @@ export class ParallelDataFetchers{
                 if(!response.ok){
                     if (response.status === 504) {
                         console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-                        continue; // Retry
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                        continue;
                     }else if(response.status === 404){
                         throw new Error(response.status)
                     }
@@ -1023,18 +1017,17 @@ export class ParallelDataFetchers{
 
                 const data = await response.json();
                 
-                /** @type {LibrarySongs[]} */ 
                 accumulated_song_ids.push(...data.data.map(song=>song.attributes.playParams?.catalogId).filter(id => id != undefined));
-                offset += (thread_count * 100); // max fetch size is 100, works with parallelism
+                offset += (thread_count * 100);
                 
-                if(offset >= list_size){ // end of playlist reached
+                if(offset >= list_size){
                     return [...new Set(accumulated_song_ids)];
                 }
 
-                await new Promise(res => setTimeout(res, 300)); // 300 ms buffer
+                await new Promise(res => setTimeout(res, 300));
             }
         }catch(error){ 
-            if(Number(error.message) === 404){ // reached end of playlist
+            if(Number(error.message) === 404){
                 return [...new Set(accumulated_song_ids)];
             }
 
@@ -1070,32 +1063,29 @@ export class ParallelDataFetchers{
     }
 
     /**
-     * Returns set containing all songs given song catalog ID partition
+     * Returns set containing all songs given song catalog ID partition.
+     * Modified to include the song preview URL from Apple Music.
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
+     * @param {Request} request - fetch request info
      * @param {string[][]} partitions - partitions used to fetch from Apple API URL
-     * @param {number} start_index - Starting-point-partition used in fetch request URLs
+     * @param {number} start_index - Starting partition index
      * @param {number} thread_count - number of threads to be used
-     * @returns {Promise<Set<Song>>} accumulated_songs - array of song catalog IDs
+     * @returns {Promise<Set<Song>>} set of Song objects
      */
     static async get_songs_from(collection, url, request, partitions, start_index, thread_count){
-        let index = start_index;
         let songs = [];
-        let count = 0;
-
         try{
-            for(let i = index; i < partitions.length; i += thread_count){
+            for(let i = start_index; i < partitions.length; i += thread_count){
                 const ids = partitions[i].join(",");
-
                 const response = await InteractAPI.fetch_data(url + ids, request);
 
                 if(!response.ok){
                     if (response.status === 504) {
                         console.error("Gateway Timeout (504) - Retrying...");
-                        // Retry after a delay (see below)
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-                        i -= thread_count; // Retry
-                        continue; // Retry
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        i -= thread_count;
+                        continue;
                     }else {
                         throw new Error("HTTP Error! Status: " + response.status);
                     }
@@ -1111,7 +1101,18 @@ export class ParallelDataFetchers{
                             name: genre.attributes.name
                         }
                     }));
-                    songs.push(new Song(data.data[i].id, data.data[i].attributes.name, data.data[i].attributes.artistName, genres, data.data[i].attributes.genreNames));
+                    // Extract preview URL from attributes.previews (if available)
+                    const previewUrl = (data.data[i].attributes.previews && data.data[i].attributes.previews.length > 0)
+                      ? data.data[i].attributes.previews[0].url 
+                      : "";
+                    songs.push(new Song(
+                      data.data[i].id, 
+                      data.data[i].attributes.name, 
+                      data.data[i].attributes.artistName, 
+                      genres, 
+                      data.data[i].attributes.genreNames,
+                      previewUrl
+                    ));
                 }
             }
 
