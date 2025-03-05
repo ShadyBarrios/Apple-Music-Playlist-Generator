@@ -7,7 +7,7 @@ async function logout() {
 
     try {
         console.log("Logging out...");
-        
+
         const response = await fetch('/api-logout', { method: 'POST' });
 
         if (!response.ok) {
@@ -24,7 +24,7 @@ async function logout() {
             console.log("Logged out from Apple Music");
         }
 
-        //window.location.href = "login.html";
+        window.location.href = "login.html";
     } catch (error) {
         console.error("Error during logout:", error);
     }

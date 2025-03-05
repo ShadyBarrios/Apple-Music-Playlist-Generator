@@ -68,9 +68,6 @@ export function clearUserBackend() {
             reject(event.target.error);
         };
 
-        request.onblocked = () => {
-            console.warn("Delete request blocked. Close all tabs using the database and try again.");
-        };
     });
 }
 
