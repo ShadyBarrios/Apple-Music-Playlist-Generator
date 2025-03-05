@@ -717,9 +717,11 @@ button:hover::after {
 .sort-buttons {
   display: flex;
   gap: 10px;
+  justify-content: center;
 }
 
 .sort-button {
+  width: auto;
   padding: 8px 15px;
   font-size: 14px;
   background-color: #f4f4f9;
