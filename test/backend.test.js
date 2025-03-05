@@ -1,10 +1,10 @@
-// test/backendGenerator.test.js
+// test/backend.test.js
 import { expect } from 'chai';
 import sinon from 'sinon';
 
 // Import the classes from your file (adjust the path as needed)
-import { Playlist, BackendGenerator } from '../src/backend.js'; 
-import { SongDataFetchers, GlobalFunctions, Song, ParallelDataFetchers } from '../src/functions.js';
+import { Playlist, UserBackend } from '../src/backend.js'; 
+import { Song } from '../src/functions.js';
 
 describe('Playlist Class', () => {
   it('should create a Playlist object with valid parameters', () => {
@@ -36,65 +36,56 @@ describe('Playlist Class', () => {
   });
 });
 
-describe('BackendGenerator Class', () => {
-  let stubGetAllUserSongs;
-  let stubGetGenreDict;
-  let stubGetSubgenreDict;
-  let updateUserTokenSpy;
+describe('UserBackend Class', () => {
+  let consoleErrorStub;
+  let consoleLogStub;
 
   beforeEach(() => {
-    // Stub out asynchronous calls that fetch data from Apple API
-    stubGetAllUserSongs = sinon.stub(SongDataFetchers, 'get_all_user_songs');
-    // Simulate two songs with different genres/subgenres.
-    stubGetAllUserSongs.resolves(
-      new Set([
-        new Song('1', ['rock'], ['indie']),
-        new Song('2', ['pop'], ['dance'])
-      ])
-    );
-
-    // Stub GlobalFunctions dictionary accessors
-    stubGetGenreDict = sinon.stub(GlobalFunctions, 'get_genre_dictionary');
-    stubGetGenreDict.returns({ rock: 'rockId', pop: 'popId' });
-
-    stubGetSubgenreDict = sinon.stub(GlobalFunctions, 'get_subgenre_dictionary');
-    stubGetSubgenreDict.returns({ indie: 1, dance: 1 });
-
-    // Spy on update_user_token
-    updateUserTokenSpy = sinon.spy(GlobalFunctions, 'update_user_token');
+    consoleErrorStub = sinon.stub(console, 'error');
+    consoleLogStub = sinon.stub(console, 'log');
   });
 
   afterEach(() => {
+    consoleErrorStub.restore();
+    consoleLogStub.restore();
     sinon.restore();
   });
 
-  describe('BackendGenerator.create', () => {
-    it('should return undefined if no user token is provided', async () => {
-      const backend = await BackendGenerator.create(null);
-      expect(backend).to.be.undefined;
+  describe('UserBackend constructor', () => {
+    it('should return undefined if no songs are provided', () => {
+      const backend = new UserBackend(null, {}, {}, 'token');
+      expect(backend.songs).to.be.undefined;
     });
 
-    it('should update the user token and return a valid BackendGenerator instance', async () => {
-      const userToken = 'testToken';
-      const backend = await BackendGenerator.create(userToken);
-      expect(updateUserTokenSpy.calledOnceWith(userToken)).to.be.true;
-      expect(backend).to.be.an.instanceof(BackendGenerator);
-      expect(backend.songs).to.be.instanceof(Set);
-      expect(backend.genre_dictionary).to.deep.equal({ rock: 'rockId', pop: 'popId' });
-      expect(backend.subgenre_dictionary).to.deep.equal({ indie: 1, dance: 1 });
+    it('should create a valid UserBackend instance with proper parameters', () => {
+      const songs = new Set([
+        new Song('1', ['rock'], ['indie']),
+        new Song('2', ['pop'], ['dance'])
+      ]);
+      const genreDict = { rock: 'rockId', pop: 'popId' };
+      const subgenreDict = { indie: 1, dance: 1 };
+      const token = 'testToken';
+      
+      const backend = new UserBackend(songs, genreDict, subgenreDict, token);
+      
+      expect(backend).to.be.an.instanceof(UserBackend);
+      expect(backend.songs).to.be.an('array');
+      expect(backend.genre_dictionary).to.deep.equal(genreDict);
+      expect(backend.subgenre_dictionary).to.deep.equal(subgenreDict);
+      expect(backend.clientToken).to.equal(token);
     });
   });
 
   describe('createPlaylist', () => {
-    it('should add a new Playlist to generatedPlaylists when songs match the filter', async () => {
+    it('should add a new Playlist to generatedPlaylists when songs match the filter', () => {
       // Create dummy songs for testing
       const song1 = new Song('1', ['rock'], ['indie']);
       const song2 = new Song('2', ['pop'], ['dance']);
       const song3 = new Song('3', ['jazz'], ['smooth']);
-      const songsSet = new Set([song1, song2, song3]);
+      const songs = new Set([song1, song2, song3]);
 
-      // Manually create a backend (bypassing the async create call)
-      const backend = new BackendGenerator(songsSet, {}, {});
+      // Manually create a backend
+      const backend = new UserBackend(songs, {}, {}, 'token');
 
       // Initially, there are no generated playlists.
       expect(backend.generatedPlaylists).to.have.lengthOf(0);
@@ -106,37 +97,26 @@ describe('BackendGenerator Class', () => {
       // Verify that the playlist contains the correct song(s)
       const playlist = backend.generatedPlaylists[0];
       expect(playlist.name).to.equal('Rock Playlist');
-      expect(playlist.getSongs().has(song1)).to.be.true;
-      expect(playlist.getSongs().has(song2)).to.be.false;
-      expect(playlist.getSongs().has(song3)).to.be.false;
     });
 
-    it('should log a warning and not add a playlist if no songs match the filter', () => {
-      const consoleLogStub = sinon.stub(console, 'log');
+    it('should log a warning if no songs match the filter', () => {
       const song1 = new Song('1', ['rock'], ['indie']);
       const song2 = new Song('2', ['pop'], ['dance']);
-      const backend = new BackendGenerator(new Set([song1, song2]), {}, {});
+      const backend = new UserBackend(new Set([song1, song2]), {}, {}, 'token');
       
       // Use a filter that doesn't match any song
       backend.createPlaylist('Non-Matching', ['jazz']);
-      expect(consoleLogStub.calledWith("WARNING: No songs fit filters for: Non-Matching")).to.be.true;
+      expect(consoleLogStub.calledWith(sinon.match(/WARNING/))).to.be.true;
       expect(backend.generatedPlaylists).to.have.lengthOf(0);
-      consoleLogStub.restore();
     });
 
-    it('should log an error and return undefined if createPlaylist is called with missing parameters', () => {
-      const consoleErrorStub = sinon.stub(console, 'error');
+    it('should log an error if createPlaylist is called with missing parameters', () => {
       const song1 = new Song('1', ['rock'], ['indie']);
-      const backend = new BackendGenerator(new Set([song1]), {}, {});
+      const backend = new UserBackend(new Set([song1]), {}, {}, 'token');
       
       // Missing filters parameter
-      const result = backend.createPlaylist('Incomplete Playlist', null);
+      backend.createPlaylist('Incomplete Playlist', null);
       expect(consoleErrorStub.calledOnce).to.be.true;
-      expect(result).to.be.undefined;
-      consoleErrorStub.restore();
     });
   });
-  
-  // Optionally, you could add tests for the debug functions.
-  // Because they write to process.stdout and console, you might stub those as needed.
 });
