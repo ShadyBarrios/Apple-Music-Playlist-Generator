@@ -108,14 +108,68 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add selected genres
     selectedGenres.forEach(genre => {
       const listItem = document.createElement("li");
-      listItem.innerText = genre;
+      listItem.classList.add("selected-filter-item");
+      
+      // Create filter text
+      const filterText = document.createElement("span");
+      filterText.innerText = genre;
+      listItem.appendChild(filterText);
+      
+      // Create remove button (x)
+      const removeButton = document.createElement("span");
+      removeButton.classList.add("remove-filter");
+      removeButton.innerHTML = "&times;";
+      removeButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedGenres.delete(genre);
+        
+        // Update the corresponding genre button UI
+        const genreButtons = document.querySelectorAll('.genre-buttons button');
+        genreButtons.forEach(button => {
+          if (button.innerText === genre) {
+            button.classList.remove("selected");
+            button.style.backgroundColor = "#fc3c44"; // Reset color
+          }
+        });
+        
+        updateSelectedFilters();
+      });
+      
+      listItem.appendChild(removeButton);
       selectedFiltersList.appendChild(listItem);
     });
   
     // Add selected sub-genres
     selectedSubGenres.forEach(subGenre => {
       const listItem = document.createElement("li");
-      listItem.innerText = subGenre;
+      listItem.classList.add("selected-filter-item");
+      
+      // Create filter text
+      const filterText = document.createElement("span");
+      filterText.innerText = subGenre;
+      listItem.appendChild(filterText);
+      
+      // Create remove button (x)
+      const removeButton = document.createElement("span");
+      removeButton.classList.add("remove-filter");
+      removeButton.innerHTML = "&times;";
+      removeButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        selectedSubGenres.delete(subGenre);
+        
+        // Update the corresponding subgenre button UI
+        const subGenreButtons = document.querySelectorAll('.subgenre-buttons button');
+        subGenreButtons.forEach(button => {
+          if (button.innerText === subGenre) {
+            button.classList.remove("selected");
+            button.style.backgroundColor = "#fc3c44"; // Reset color
+          }
+        });
+        
+        updateSelectedFilters();
+      });
+      
+      listItem.appendChild(removeButton);
       selectedFiltersList.appendChild(listItem);
     });
   }

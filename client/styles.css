@@ -324,17 +324,31 @@ video {
   text-align: center;
   animation: fadeIn 0.3s ease-in-out;
   position: relative;
-  padding-right: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.selected-filters-list li::after {
-  content: "×";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+.selected-filter-item {
+  cursor: default;
+}
+
+.remove-filter {
+  cursor: pointer;
+  margin-left: 8px;
   font-size: 18px;
   font-weight: bold;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+  text-align: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.remove-filter:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .submit-container {
