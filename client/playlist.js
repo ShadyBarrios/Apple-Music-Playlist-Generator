@@ -1,8 +1,10 @@
 import { storeUserBackend, getUserBackend } from "./indexedDB.js";
 import { UserBackend } from "./user.js";
 
-// Global variable to keep track of the currently playing audio snippet
+// Global variables to track current audio, button, and playlist
 let currentAudio = null;
+let currentPlayingButton = null;
+let currentPlaylist = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchPlaylist();
@@ -11,15 +13,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   const regenerateButton = document.getElementById("regenerate-button");
   if (regenerateButton) {
     regenerateButton.addEventListener("click", () => {
-      // Redirect to filters.html so the user can reselect filters and generate a new playlist
       window.location.href = "filters.html";
     });
+  }
+
+  // Add event listener for the Send Playlist button
+  const sendButton = document.getElementById("send-playlist-button");
+  if (sendButton) {
+    sendButton.addEventListener("click", sendPlaylistToLibrary);
   }
 });
 
 async function fetchPlaylist() {
   try {
-    // Retrieve userBackend from IndexedDB
     const userBackend = await getUserBackend();
     if (!userBackend) {
       console.error("No userBackend found in IndexedDB");
@@ -30,6 +36,9 @@ async function fetchPlaylist() {
     const defaultIndex = userBackend.backendUser.generatedPlaylists.length - 1;
     const playlist = userBackend.backendUser.generatedPlaylists[defaultIndex];
     console.log("Fetched Playlist:", playlist);
+
+    // Save current playlist in a global variable
+    currentPlaylist = playlist;
 
     // Display the default playlist
     displayPlaylist(playlist);
@@ -43,38 +52,36 @@ async function fetchPlaylist() {
 
 function displayPlaylist(playlist) {
   const container = document.querySelector(".playlist-container");
-  container.innerHTML = ""; // Clear previous content
+  container.innerHTML = "";
 
-  // Update the playlist title
+  // Update playlist title and name span
   const playlistTitle = document.getElementById("playlistTitle");
   playlistTitle.textContent = `Your Generated Playlist: ${playlist.name}`;
-
-  // Update the playlist name span (if used elsewhere)
   const playlistNameSpan = document.getElementById("playlistName");
   if (playlistNameSpan) {
     playlistNameSpan.textContent = playlist.name;
   }
 
-  // For each song, create a container with song info and a "Play Snippet" button
+  // For each song, create a flex row with song info and a play/stop button
   playlist.songs.forEach((song) => {
-    // Create a row container for the song
     const songRow = document.createElement("div");
     songRow.classList.add("song-row");
 
-    // Create an element to display song info (name and artist)
-    const songInfo = document.createElement("p");
+    // Song info container
+    const songInfo = document.createElement("div");
+    songInfo.classList.add("song-info");
     const songNameElement = document.createElement("strong");
     songNameElement.textContent = song.name;
     songInfo.appendChild(songNameElement);
     songInfo.appendChild(document.createTextNode(` by ${song.artist}`));
     songRow.appendChild(songInfo);
 
-    // Create the "Play Snippet" button
+    // Play/Stop button container
     const playButton = document.createElement("button");
     playButton.classList.add("play-button");
-    playButton.textContent = "Play Snippet";
+    playButton.textContent = "Play";
     playButton.addEventListener("click", () => {
-      playSnippet(song);
+      playSnippet(song, playButton);
     });
     songRow.appendChild(playButton);
 
@@ -95,27 +102,76 @@ function setupPlaylistDropdown(playlists, currentIndex) {
     )
     .join("");
 
-  // When the dropdown selection changes, update the displayed playlist
   dropdown.addEventListener("change", async (event) => {
     const selectedIndex = parseInt(event.target.value, 10);
     const userBackend = await getUserBackend();
     if (!userBackend) return;
     const playlist = userBackend.backendUser.generatedPlaylists[selectedIndex];
+    currentPlaylist = playlist; // update global currentPlaylist
     displayPlaylist(playlist);
   });
 }
 
-function playSnippet(song) {
-  // Check if a preview URL is available in the song object
+function playSnippet(song, button) {
+  if (currentAudio && currentAudio.src === song.previewUrl && !currentAudio.paused) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    button.textContent = "Play";
+    currentAudio = null;
+    currentPlayingButton = null;
+    return;
+  }
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    if (currentPlayingButton) {
+      currentPlayingButton.textContent = "Play";
+    }
+  }
   if (!song.previewUrl) {
     alert("Preview not available for this song.");
     return;
   }
-  // Pause any currently playing snippet
-  if (currentAudio) {
-    currentAudio.pause();
-  }
-  // Create a new audio element with the song's preview URL and play it
   currentAudio = new Audio(song.previewUrl);
   currentAudio.play();
+  button.textContent = "Stop";
+  currentPlayingButton = button;
+  currentAudio.onended = function() {
+    button.textContent = "Play";
+    currentAudio = null;
+    currentPlayingButton = null;
+  };
+}
+
+function sendPlaylistToLibrary() {
+  if (!currentPlaylist) {
+    alert("No playlist loaded.");
+    return;
+  }
+
+  // Prepare the payload using the current playlist's name and filters
+  const payload = {
+    playlistName: currentPlaylist.name,
+    filters: currentPlaylist.filters,
+  };
+
+  fetch("/send-playlist", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to send playlist to library.");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      console.log("Playlist sent to library:", data);
+      alert("Playlist successfully sent to your library!");
+    })
+    .catch((error) => {
+      console.error("Error sending playlist:", error);
+      alert("Failed to send playlist to library.");
+    });
 }
