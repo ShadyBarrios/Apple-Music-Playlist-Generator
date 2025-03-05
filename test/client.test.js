@@ -1,6 +1,7 @@
 // test/client.test.js
 import { expect } from 'chai';
 import sinon from 'sinon';
+import fetch from 'node-fetch';
 
 describe('Client-side Tests', () => {
     let mockDocument;
