@@ -2,12 +2,10 @@ import { storeUserBackend, getUserBackend } from "./indexedDB.js";
 import { UserBackend } from "./user.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await fetchPlaylist()
+  await fetchPlaylist();
 });
 
-  
-
-  async function fetchPlaylist() {
+async function fetchPlaylist() {
   let userBackend = null;
   try {
     // Retrieve userBackend from IndexedDB

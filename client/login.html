@@ -8,6 +8,20 @@
   <title>Music Playlist Generator - Login</title>
   <link rel="stylesheet" href="/styles.css" />
   <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+  <style>
+    .debug-button {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      background-color: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
 </head>
 
 <nav class="navbar">
@@ -29,6 +43,8 @@
     </video>
     <p id="loading_status"></p>
   </div>
+
+  <button id="clear-db" class="debug-button">Clear IndexedDB (Debug)</button>
 
   <script type="module" src="login.js"></script>
 </body>
