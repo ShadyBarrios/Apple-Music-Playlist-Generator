@@ -28,7 +28,7 @@ async function logout() {
         }
 
         // Redirect to login page
-        window.location.href = "login.html";
+        //window.location.href = "login.html";
     } catch (error) {
         console.error("Error during logout:", error);
     }
