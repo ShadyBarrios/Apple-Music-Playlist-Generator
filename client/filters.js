@@ -1,28 +1,46 @@
+import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+import { UserBackend } from "./user.js";
+
 document.addEventListener("DOMContentLoaded", () => {
   let selectedGenres = new Set();
   let selectedSubGenres = new Set();
-  
-  async function fetchGenres() {
+  let userBackend = null;
+
+  async function initializeUserBackend() {
     try {
-      const response = await fetch('/get-genres', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      if (!response.ok) throw new Error('Failed to fetch genres');
-      const data = await response.json();
-      console.log('Fetched Genres:', data);
-      displayGenres(data.data);
+      userBackend = await getUserBackend();
+      console.log("User backend initialized: ", userBackend);
+      console.log("Is instance of UserBackend:", userBackend.backendUser instanceof UserBackend);
     } catch (error) {
-      console.error('Error fetching genres:', error);
+      console.error("Error initializing user backend:", error);
+    }
+  }
+  
+  function fetchGenres() {
+    try {
+      if (!userBackend || !userBackend.backendUser || !userBackend.backendUser.genre_dictionary) {
+        throw new Error("No genres found in IndexedDB");
+      }
+
+      const genres = Object.keys(userBackend.backendUser.genre_dictionary._dictionary);
+      console.log("Fetched Genres from IndexedDB:", genres);
+      displayGenres(genres);
+    } catch (error) {
+      console.error("Error fetching genres from IndexedDB:", error);
     }
   }
 
-  async function fetchSubGenres() {
+  function fetchSubGenres() {
     try {
-      const response = await fetch('/get-subgenres', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-      if (!response.ok) throw new Error('Failed to fetch sub-genres');
-      const data = await response.json();
-      console.log('Fetched Sub-Genres:', data);
-      displaySubGenres(data.data);
+      if (!userBackend || !userBackend.backendUser || !userBackend.backendUser.subgenre_dictionary) {
+        throw new Error("No sub-genres found in IndexedDB");
+      }
+
+      const subGenres = Object.keys(userBackend.backendUser.subgenre_dictionary._dictionary);
+      console.log("Fetched sub-genres from IndexedDB:", subGenres);
+      displaySubGenres(subGenres);
     } catch (error) {
-      console.error('Error fetching sub-genres:', error);
+      console.error("Error fetching sub-genres from IndexedDB:", error);
     }
   }
 
@@ -108,20 +126,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateSelectedFilters();
   }
-  
 
   async function submitSelections() {
-    const selectedData = {
-      genres: Array.from(selectedGenres),
-      subGenres: Array.from(selectedSubGenres),
-    };
+    const selectedData = [
+      ...Array.from(selectedGenres), 
+      ...Array.from(selectedSubGenres)
+    ];
+    
   
     if (selectedData.length === 0) {
       alert("Please select at least one filter to generate a playlist.");
       return;
     }
   
-    // Ask user for the playlist name
+    // ask user for the playlist name
     let playlistName = window.prompt("Please enter a name for your playlist:");
   
     if (!playlistName) {
@@ -129,43 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     console.log("Submitting selections:", selectedData, playlistName);
-  
-    try {
-      const response = await fetch('/submit-selections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          genres: selectedData.genres,
-          subGenres: selectedData.subGenres,
-          name: playlistName
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Failed to submit selections');
-      
-      const data = await response.json();
-      console.log("Server Confrimation:", data.message);
-  
-      // Now trigger the playlist generation
-      const playlistResponse = await fetch('/generate-playlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playlistName: playlistName,
-          filters: selectedData, // Send the filters for the playlist generation
-        }),
-      });
-  
-      if (!playlistResponse.ok) throw new Error('Failed to generate playlist');
-      const playlistData = await playlistResponse.json();
-      console.log("Playlist generated:", playlistData.playlist);
-      
-      // Redirect or handle the playlist data as needed
-      window.location.href = "playlist.html"; // Redirect to playlist page after generation
-  
-    } catch (error) {
-      console.error("Error submitting selections or generating playlist:", error);
-    }
+
+    const playlist = await userBackend.backendUser.createPlaylist(playlistName, selectedData);
+    const playlistIndex = userBackend.backendUser.generatedPlaylists.length - 1;
+
+    console.log("Generated Playlist: ", playlist);
+    console.log("Confirmation that userbackend updated: ", userBackend)
+    
+    await storeUserBackend(userBackend);
+
+    window.location.href = `playlist.html`; // redirect to playlist page after generation
   }
   
   function addSubmitButton() {
@@ -182,8 +173,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  fetchGenres();
-  fetchSubGenres();
-  addSubmitButton();
+  (async function initialize() {
+    await initializeUserBackend(); // Fetch userBackend once
+    fetchGenres(); // Now use the globally initialized userBackend
+    fetchSubGenres();
+    addSubmitButton();
+  })();
 });
 

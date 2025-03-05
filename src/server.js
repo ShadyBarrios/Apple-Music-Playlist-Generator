@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import {UserBackend} from './backend.js';
+import {UserBackend} from '../client/user.js';
 import {Mutex} from 'async-mutex';
 import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders} from "./functions.js"
 
@@ -31,7 +31,7 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, '../client'))); // find client directory from root
 app.use(express.json());
 
-// Endpoint to handle the login API (using the developerToken from .env file)
+// endpoint to handle the login API (using the developerToken from .env file)
 app.post('/api-login', async (req, res) => {
   const { token } = req.body;
 
@@ -44,16 +44,10 @@ app.post('/api-login', async (req, res) => {
   console.log('SERVER.JS: Received new user token: ', userToken);
 
   backendUser = await backend.createUser(userToken);
-  console.log("backend User size: " + getObjectSize(backendUser));
-  
-  console.log("Backend initialized. Total users:", backend.clientUsers.length);
+  //console.log("backend User: " + backendUser);
 
-  res.json({ message: 'User Token fetch successful' });
+  res.json({ message: 'User Token fetch successful', backendUser });
 });
-
-function getObjectSize(obj) {
-  return new TextEncoder().encode(JSON.stringify(obj)).length;
-}
 
 app.post('/get-genres', (req, res) => {
   console.log("Genres endpoint hit!");
@@ -112,54 +106,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 }
 
-// Store the selections and playlistName globally or in a session
-let selectedGenres = [];
-let selectedSubGenres = [];
-let playlistName = "";
-
-app.post('/submit-selections', (req, res) => {
-  const { genres, subGenres, name } = req.body;
-
-  if (!genres || !subGenres || genres.length === 0 || subGenres.length === 0) {
-    return res.status(400).json({ error: "Missing genre selections" });
-  }
-
-  selectedGenres = genres;
-  selectedSubGenres = subGenres;
-  playlistName = name;
-
-  console.log("Stored Genres:", selectedGenres);
-  console.log("Stored Sub-Genres:", selectedSubGenres);
-  console.log("Stored Playlist Name:", playlistName);
-
-  res.json({ message: "Selections received successfully!" });
-});
-
-// Endpoint for generating the playlist
-app.post('/generate-playlist', async (req, res) => {
-  if (!backendUser) {
-    return res.status(400).json({ error: 'User not initialized' });
-  }
-
-  try {
-    const filters = [...selectedGenres, ...selectedSubGenres];
-
-    console.log("Generating playlist with filters:", filters);
-
-    // Generate the playlist using the provided name and filters
-    const playlist = backendUser.createPlaylist(playlistName, filters);
-    console.log("Playlist: ", playlist);
-
-    if (!playlist || playlist.length === 0) {
-      return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
-    }
-    res.json({ playlist });
-  } catch (error) {
-    console.error("Error generating playlist:", error);
-    res.status(500).json({ error: 'Server error while generating playlist' });
-  }
-});
-
 app.post('/send-playlist', async (req, res) => {
   const { playlistName, filters } = req.body;
   if (!backendUser) {
@@ -179,6 +125,51 @@ app.post('/send-playlist', async (req, res) => {
   }
   res.json(playlist);
 });
+
+// will be obselete
+// store the selections and playlistName globally or in a session
+// let selectedGenres = [];
+// let selectedSubGenres = [];
+// let playlistName = "";
+
+// app.post('/submit-selections', (req, res) => {
+//   const { genres, subGenres, name } = req.body;
+
+//   selectedGenres = genres;
+//   selectedSubGenres = subGenres;
+//   playlistName = name;
+
+//   console.log("Stored Genres:", selectedGenres);
+//   console.log("Stored Sub-Genres:", selectedSubGenres);
+//   console.log("Stored Playlist Name:", playlistName);
+
+//   res.json({ message: "Selections received successfully!" });
+// });
+
+// // Endpoint for generating the playlist
+// app.post('/generate-playlist', async (req, res) => {
+//   if (!backendUser) {
+//     return res.status(400).json({ error: 'User not initialized' });
+//   }
+
+//   try {
+//     const filters = [...selectedGenres, ...selectedSubGenres];
+
+//     console.log("Generating playlist with filters:", filters);
+
+//     // Generate the playlist using the provided name and filters
+//     const playlist = backendUser.createPlaylist(playlistName, filters);
+//     console.log("Playlist: ", playlist);
+
+//     if (!playlist || playlist.length === 0) {
+//       return res.status(500).json({ error: 'Failed to generate playlist or no songs found' });
+//     }
+//     res.json({ playlist });
+//   } catch (error) {
+//     console.error("Error generating playlist:", error);
+//     res.status(500).json({ error: 'Server error while generating playlist' });
+//   }
+// });
 
 // Export the app for testing
 export default app;
