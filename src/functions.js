@@ -256,7 +256,7 @@ export class SubgenreDictionary extends Dictionary{
     }
 
     /**
-     * Deletes genres taht do not meet a frequency threshold
+     * Deletes genres that do not meet a frequency threshold
      * @param {number} threshold - minimum frequency count
      */
     hide_below(threshold){
