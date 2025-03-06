@@ -218,15 +218,6 @@ export class GenreDictionary extends Dictionary{
  * @extends Dictionary
  */
 export class SubgenreDictionary extends Dictionary{
-    /** 
-     * Returns copy of _dictionary while only containing "visible" entries
-     * @returns {Record<string, number>} dictionary
-     */
-    get(){
-        let copy = Object.entries(this._dictionary).filter(subgenre => subgenre[1] > 0);
-        return copy;
-    }
-
     /**
      * Adds subgenres to the dictionary if not already included (dictionary[name] = 1 if exists)
      * @param {string[]} subgenres - array of subgenre names
@@ -265,13 +256,13 @@ export class SubgenreDictionary extends Dictionary{
     }
 
     /**
-     * "Hides" entries that do no meet frequency threshold. (<0 is considered "hidden")
+     * Deletes genres that do not meet a frequency threshold
      * @param {number} threshold - minimum frequency count
      */
     hide_below(threshold){
         let subgenres = Object.keys(this._dictionary);
         subgenres.forEach(subgenre => {
-            if(this._dictionary[subgenre] < threshold) this._dictionary[subgenre] *= -1;
+            if(this._dictionary[subgenre] < threshold) delete this._dictionary[subgenre];
         });
     }
 
@@ -394,6 +385,9 @@ export class DataFetchers{
 
         let subgenre_dictionary = SubgenreDictionary.create(songs.map(song => song.subgenres).flat());
         subgenre_dictionary.clean(genres.map(genre => genre.attributes.name)); // delete subgenres that are also genres
+        let threshold = songs.length * 0.05; // will remove subgenres present in less than 5% of songs, these are usually useless
+        threshold = (threshold * (threshold < 15)) + (15 * (threshold >= 15)); // my attempt at branchless programming lol, maxes threshold at 15
+        subgenre_dictionary.hide_below(threshold);
 
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }
