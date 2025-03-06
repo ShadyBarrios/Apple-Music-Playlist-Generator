@@ -383,8 +383,6 @@ export class DataFetchers{
     static async get_all_user_data(developerToken, userToken){
         const request = InteractAPI.retrieve_data_request(developerToken, userToken);
         
-        console.log("Fetching user music data...");
-        
         // get all song IDs from user library
         const library_song_ids = await SongDataFetchers.get_all_library_song_IDs(request);
         
@@ -407,7 +405,8 @@ export class DataFetchers{
             subgenre_dictionary.add(song.subgenres);
         }
         
-        console.log(`Loaded ${songs.length} songs, ${Object.keys(genre_dictionary.get()).length} genres, ${Object.keys(subgenre_dictionary.get()).length} subgenres`);
+        // Remove even the simplified log - not essential
+        // console.log(`Music library loaded: ${songs.length} songs`);
         
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }

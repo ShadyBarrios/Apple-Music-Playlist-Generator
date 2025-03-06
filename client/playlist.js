@@ -147,19 +147,7 @@ async function fetchPlaylist() {
     // Use the last generated playlist as default
     const defaultIndex = userBackend.backendUser.generatedPlaylists.length - 1;
     const playlist = userBackend.backendUser.generatedPlaylists[defaultIndex];
-    console.log("Fetched Playlist:", playlist);
     
-    // Add detailed logging for genre data structure
-    if (playlist && playlist.songs && playlist.songs.length > 0) {
-      console.log("First song:", playlist.songs[0]);
-      console.log("First song genres:", playlist.songs[0].genres);
-      if (playlist.songs[0].genres && playlist.songs[0].genres.length > 0) {
-        console.log("First genre type:", typeof playlist.songs[0].genres[0]);
-        console.log("First genre value:", playlist.songs[0].genres[0]);
-        console.log("First genre JSON:", JSON.stringify(playlist.songs[0].genres[0]));
-      }
-    }
-
     // Save current playlist in a global variable
     currentPlaylist = playlist;
 
