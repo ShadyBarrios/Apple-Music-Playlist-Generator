@@ -25,15 +25,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginHeading = document.querySelector(".login-container h1");
     const featuresSection = document.querySelector(".features-section");
     const welcomeText = document.querySelector(".login-container p:not(#loading_status)");
+    const loadingContainer = document.querySelector(".loading-container");
     
     if (statusElement) statusElement.innerText = status;
-    if (loadingAnimate) loadingAnimate.style.display = status === "Loading..." ? "block" : "none";
-    if (loginButton) loginButton.style.display = status === "Loading..." ? "none" : "block";
+    
+    // Show/hide loading animation
+    if (loadingAnimate) {
+      loadingAnimate.style.display = status === "Loading..." ? "block" : "none";
+    }
+    
+    if (loginButton) {
+      loginButton.style.display = status === "Loading..." ? "none" : "block";
+    }
+    
+    // Show/hide loading container
+    if (loadingContainer) {
+      loadingContainer.style.display = status === "Loading..." ? "flex" : "none";
+    }
     
     // Hide/show additional elements during loading
-    if (loginHeading) loginHeading.style.display = status === "Loading..." ? "none" : "block";
-    if (featuresSection) featuresSection.style.display = status === "Loading..." ? "none" : "flex";
-    if (welcomeText) welcomeText.style.display = status === "Loading..." ? "none" : "block";
+    if (loginHeading) {
+      loginHeading.style.display = status === "Loading..." ? "none" : "block";
+    }
+    
+    if (featuresSection) {
+      featuresSection.style.display = status === "Loading..." ? "none" : "flex";
+    }
+    
+    if (welcomeText) {
+      welcomeText.style.display = status === "Loading..." ? "none" : "block";
+    }
   }
 
   const loginButton = document.getElementById("login");
