@@ -40,23 +40,18 @@ app.post('/api-login', async (req, res) => {
   }
 
   userToken = token;  // store the token only once
-  console.log('SERVER.JS: Using developer token from .env: ', developerToken);
-  console.log('SERVER.JS: Received new user token: ', userToken);
+  console.log('User logged in');
 
   backendUser = await backend.createUser(userToken);
-  //console.log("backend User: " + backendUser);
 
   res.json({ message: 'User Token fetch successful', backendUser });
 });
 
 app.post('/api-logout', (req, res) => {
-  console.log('Logging out user');
-
   // Clear the stored user session on the server
+  console.log('User logged out');
   userToken = null;
   backendUser = null;
-
-  console.log('User Token: ', userToken);
 
   res.json({ message: "User logged out successfully" });
 });
@@ -94,7 +89,7 @@ app.post('/send-playlist', async (req, res) => {
   // Then push to Apple Music
   try {
     await backend.pushApplePlaylist(playlist, backendUser.clientToken);
-    console.log("Pushing playlist to user")
+    console.log(`Playlist "${playlistName}" created and pushed to Apple Music`);
   } catch (error) {
     console.error("Error pushing playlist:", error);
     return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
@@ -136,7 +131,10 @@ export class Backend {
       let clientToken = this.clientUsers.length;
       const clientExists = this.appleTokens.includes(appleToken);
       const clientIndex = this.appleTokens.indexOf(appleToken);
-      console.log(clientExists);
+      
+      // Log whether this is a new or existing user
+      console.log(`User ${clientExists ? 'reconnected' : 'connected'}`);
+      
       if(clientExists) // if client exists, find its token
         clientToken = this.clientUsers[clientIndex].clientToken;
 
@@ -158,9 +156,6 @@ export class Backend {
         this.appleTokens.push(appleToken);
       }
     });
-
-    console.log("User Token: " + user.clientToken); //what are these supposed to represent?
-    console.log("User: " + user); //what is this supposed to represent?
     
     // return token
     return user;
