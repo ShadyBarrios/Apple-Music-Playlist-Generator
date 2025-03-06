@@ -89,9 +89,9 @@ app.post('/send-playlist', async (req, res) => {
   // Then push to Apple Music
   try {
     await backend.pushApplePlaylist(playlist, backendUser.clientToken);
-    console.log(`Playlist "${playlistName}" created and pushed to Apple Music`);
+    console.log(`Playlist "${playlistName}" successfully pushed to Apple Music`);
   } catch (error) {
-    console.error("Error pushing playlist:", error);
+    console.error("Error pushing playlist to Apple Music:", error.message);
     return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
   }
   res.json(playlist);
@@ -131,9 +131,6 @@ export class Backend {
       let clientToken = this.clientUsers.length;
       const clientExists = this.appleTokens.includes(appleToken);
       const clientIndex = this.appleTokens.indexOf(appleToken);
-      
-      // Log whether this is a new or existing user
-      console.log(`User ${clientExists ? 'reconnected' : 'connected'}`);
       
       if(clientExists) // if client exists, find its token
         clientToken = this.clientUsers[clientIndex].clientToken;

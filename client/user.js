@@ -75,7 +75,7 @@ class UserBackend {
 
         // check if we have a size of 0
         if (possibleSongs.size == 0) {
-            console.warn("No songs fit filters for: " + playListName);
+            console.error(`No songs match the selected filters for playlist: ${playListName}`);
             return [];
         }
 
