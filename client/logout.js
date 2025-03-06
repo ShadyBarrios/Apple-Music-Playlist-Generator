@@ -6,22 +6,16 @@ async function logout() {
     if (!confirmLogout) return;
 
     try {
-        console.log("Logging out...");
-
         const response = await fetch('/api-logout', { method: 'POST' });
 
         if (!response.ok) {
             console.error("Failed to log out from server");
-        } else {
-            console.log("Logged out from server");
         }
 
         await clearUserBackend();
-        console.log("Cleared IndexedDB");
 
         if (window.MusicKit && MusicKit.getInstance()) {
             await MusicKit.getInstance().unauthorize();
-            console.log("Logged out from Apple Music");
         }
 
         window.location.href = "login.html";

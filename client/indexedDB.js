@@ -59,7 +59,6 @@ export function clearUserBackend() {
         const request = indexedDB.deleteDatabase("userDatabase");
 
         request.onsuccess = () => {
-            console.log("IndexedDB successfully deleted");
             resolve();
         };
 
@@ -67,7 +66,6 @@ export function clearUserBackend() {
             console.error("Error deleting IndexedDB:", event.target.error);
             reject(event.target.error);
         };
-
     });
 }
 

@@ -39,7 +39,6 @@ class UserBackend {
         this.genre_dictionary = genre_dictionary;
         this.subgenre_dictionary = subgenre_dictionary;
         this.clientToken = clientToken;
-        console.log("CLIENT: " + this.clientToken);
     }
 
     static fromJSON(json){
@@ -76,7 +75,7 @@ class UserBackend {
 
         // check if we have a size of 0
         if (possibleSongs.size == 0) {
-            console.log("WARNING: No songs fit filters for: " + playListName);
+            console.warn("No songs fit filters for: " + playListName);
             return [];
         }
 
@@ -111,27 +110,16 @@ class UserBackend {
     getPlaylistIndex(index) {
         // return playlist of an index
         if (index < 0 || index > this.generatedPlaylists.length - 1) { 
-            console.log("NO PLAYLIST AT THIS INDEX!");
+            console.error("No playlist at this index");
             return []; 
         }
 
-        let playlist = this.generatedPlaylists[index]
-        
-        console.log("Name: " + playlist.name + ", desc: " + playlist.description);
-        let cnt = 0;
-        for (let i of playlist.songs) {
-            process.stdout.write(i.id + ", ");
-            cnt++;
-            if (cnt == 10) {
-                console.log(";");
-                cnt = 0;
-            }
-        }
-        console.log();
-
+        let playlist = this.generatedPlaylists[index];
         return playlist;
     }
 
+    // Debug methods below are kept but commented out in case they're needed for development
+    /*
     DEBUG_backendPrint() {
         for (let i = 0; i < 20; i++) {
             process.stdout.write(i + ": " + this.songs[i].id + ";\t");
@@ -166,6 +154,7 @@ class UserBackend {
             console.log("Threads for list size " + i + ": " + ParallelDataFetchers.thread_count_calculator(i, 5));
         }
     }
+    */
 }
 
 export { Playlist, UserBackend };

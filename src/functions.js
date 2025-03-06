@@ -89,7 +89,6 @@ export class Song {
      * @param {number} popularity - Popularity score (0-100)
      */
     constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl, popularity = 0) {
-        // check that we have good vars; previewUrl and artworkUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
@@ -100,9 +99,9 @@ export class Song {
         this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
-        this.previewUrl = previewUrl; // URL for snippet playback
-        this.artworkUrl = artworkUrl; // URL for album artwork
-        this.popularity = popularity; // Popularity score (0-100)
+        this.previewUrl = previewUrl;
+        this.artworkUrl = artworkUrl;
+        this.popularity = popularity;
     }
 }
 
@@ -116,7 +115,6 @@ export class UserData{
      * @param {SubgenreDictionary} subgenre_dictionary - SubgenreDictionary object
      */
     constructor(songs, genre_dictionary, subgenre_dictionary) {
-        // check that we have good vars
         if (!songs || !genre_dictionary || !subgenre_dictionary) {
             console.error("UserData constructor var's are undefined");
             return;
@@ -370,31 +368,47 @@ class InteractAPI{
  */
 export class DataFetchers{
     /**
-     * This class is not meant to be instantiated.
+     * Constructor
      */
     constructor() {
-        throw new Error("This class cannot be instantiated.");
+        throw new Error("DataFetchers is a static class and cannot be instantiated");
     }
 
     /**
-     * Gets all users' songs, genres and subgenres
-     * @param {string} developerToken - Developer Token
-     * @param {string} userToken - Apple Music User Token
-     * @returns {Promise<UserData>} Songs, Genres, Subgenres
+     * Get all user data
+     * @param {string} developerToken 
+     * @param {string} userToken 
+     * @returns {UserData} user data
      */
     static async get_all_user_data(developerToken, userToken){
         const request = InteractAPI.retrieve_data_request(developerToken, userToken);
-
-        let songs = await SongDataFetchers.get_all_songs(request);
-
-        let genres = Array.from(
-            new Map(songs.flatMap(song => song.genres).map(genre => [genre.id, genre])).values()
-        );
-        let genre_dictionary = GenreDictionary.create(genres)
-
-        let subgenre_dictionary = SubgenreDictionary.create(songs.map(song => song.subgenres).flat());
-        subgenre_dictionary.clean(genres.map(genre => genre.attributes.name)); // delete subgenres that are also genres
-
+        
+        console.log("Fetching user music data...");
+        
+        // get all song IDs from user library
+        const library_song_ids = await SongDataFetchers.get_all_library_song_IDs(request);
+        
+        // get all song IDs from user playlists
+        const playlist_song_ids = await SongDataFetchers.get_all_playlist_song_IDs(request);
+        
+        // combine all song IDs
+        const all_song_ids = [...new Set([...library_song_ids, ...playlist_song_ids])];
+        
+        // get all songs
+        const songs = await SongDataFetchers.get_songs(all_song_ids, request);
+        
+        // create genre and subgenre dictionaries
+        const genre_dictionary = new GenreDictionary();
+        const subgenre_dictionary = new SubgenreDictionary();
+        
+        // add genres and subgenres to dictionaries
+        for (const song of songs) {
+            genre_dictionary.add(song.genres);
+            subgenre_dictionary.add(song.subgenres);
+        }
+        
+        console.log(`Loaded ${songs.length} songs, ${Object.keys(genre_dictionary.get()).length} genres, ${Object.keys(subgenre_dictionary.get()).length} subgenres`);
+        
         return new UserData(songs, genre_dictionary, subgenre_dictionary);
     }
 
@@ -435,18 +449,14 @@ export class DataSenders{
      * @returns {Promise<boolean>} true if successful
      */
     static async create_user_playlist(playlist, developerToken, userToken){
-        const songs = playlist.songs;
-        const song_ids = songs.map(song => song.id);
-        const playlist_name = playlist.getName();
-        const description = playlist.getDescription();
-
-        const body = PlaylistDataSenders.create_body(playlist_name, description, song_ids);
-        const request = InteractAPI.send_data_request(developerToken, userToken, body);
-
-        // add playlist to user library
-        const result = await PlaylistDataSenders.send_playlist(request);
-
-        return result;
+        try {
+            const request = InteractAPI.send_data_request(developerToken, userToken, PlaylistDataSenders.create_body(playlist.getName(), playlist.getDescription(), playlist.getSongs().map(song => song.id)));
+            await PlaylistDataSenders.send_playlist(request);
+            return true;
+        } catch (error) {
+            console.error("Error sending playlist to user library: ", error);
+            return false;
+        }
     }
 }
 
@@ -468,19 +478,18 @@ export class SongDataFetchers{
      * @returns {Promise<Songs[]>} array of Songs objects
      */ 
     static async get_recently_played(limit, request){
-        const url = "https://api.music.apple.com/v1/me/recent/played/tracks?limit=" + limit;
-        console.log("Retrieving recently played songs...");
-
-        try{
-            const response = await InteractAPI.fetch_data(url, request);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
+        try {
+            const response = await InteractAPI.fetch_data(`https://api.music.apple.com/v1/me/recent/played/tracks?limit=${limit}`, request);
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
             const data = await response.json();
-    
             return data.data;
-        } catch(error){
+        } catch (error) {
             console.error("Error fetching top songs: ", error);
+            return [];
         }
     }
 
@@ -525,21 +534,27 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns all song catalog ID's from all user's playlists.
-     * @param {Request} request - fetch request info
-     * @returns {Promise<string[]>} array of song catalog IDs
+     * Get all song IDs from user playlists
+     * @param {Object} request - Request object
+     * @returns {Promise<string[]>} Song IDs
      */
     static async get_all_playlist_song_IDs(request){
-        const playlistIDs = await PlaylistDataFetchers.get_all_playlist_IDs(request);
-        let playlistSongIDs = [];
-        
-        console.log("Retrieving all song IDs from user playlists...");
-
-        for(let i = 0; i < playlistIDs.length; i++){
-            playlistSongIDs.push(await SongDataFetchers.get_playlist_song_IDs(playlistIDs[i], request));
+        try {
+            const playlist_ids = await PlaylistDataFetchers.get_all_playlist_IDs(request);
+            const song_ids = new Set();
+            
+            for (const playlist_id of playlist_ids) {
+                const playlist_song_ids = await SongDataFetchers.get_playlist_song_IDs(playlist_id, request);
+                for (const song_id of playlist_song_ids) {
+                    song_ids.add(song_id);
+                }
+            }
+            
+            return Array.from(song_ids);
+        } catch (error) {
+            console.error("Error fetching playlist song IDs: ", error);
+            return [];
         }
-
-        return [...new Set(playlistSongIDs.flat())];
     }
 
     /**
@@ -555,15 +570,17 @@ export class SongDataFetchers{
     }
 
     /**
-     * Returns set of all song catalog IDs in user's library.
-     * @param {Request} request - fetch request info
-     * @returns {Promise<string[]>} array of song catalog IDs
+     * Get all song IDs from user library
+     * @param {Object} request - Request object
+     * @returns {Promise<string[]>} Song IDs
      */
     static async get_all_library_song_IDs(request){
-        const url = "https://api.music.apple.com/v1/me/library/songs?limit=100&offset=";
-        console.log("Retrieving all song IDs from user library...");
-        let result = await ParallelDataFetchers.get_all_song_IDs_from("User Library", url, request);
-        return result;
+        try {
+            return await ParallelDataFetchers.get_all_song_IDs_from("library-songs", "https://api.music.apple.com/v1/me/library/songs", request);
+        } catch (error) {
+            console.error("Error fetching library song IDs: ", error);
+            return [];
+        }
     }
 
     /**
@@ -573,17 +590,18 @@ export class SongDataFetchers{
      * @returns {Promise<Genres>} array of Genres objects
      */
     static async get_genres(song_id, request){
-        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id + "?include=genres";
-        console.log("Retrieving genres for: " + song_id);
-        try{
-            const response = await InteractAPI.fetch_data(url, request);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
+        try {
+            const response = await InteractAPI.fetch_data(`https://api.music.apple.com/v1/catalog/us/songs/${song_id}?include=genres`, request);
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
             const data = await response.json();
             return data.data[0].relationships.genres.data;
-        }catch(error){
+        } catch (error) {
             console.error("Error fetching genres: ", error);
+            return [];
         }
     }
 
@@ -594,18 +612,18 @@ export class SongDataFetchers{
      * @returns {string[]} array of subgenre names
      */
     static async get_subgenres(song_id, request){
-        let url = "https://api.music.apple.com/v1/catalog/us/songs/" + song_id;
-        console.log("Retrieving subgenres for: " + song_id);
-        try{
-            const response = await InteractAPI.fetch_data(url, request);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
+        try {
+            const response = await InteractAPI.fetch_data(`https://api.music.apple.com/v1/catalog/us/songs/${song_id}?include=genres`, request);
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
             const data = await response.json();
             return data.data[0].attributes.genreNames;
-        }
-        catch(error){
+        } catch (error) {
             console.error("Error fetching subgenres: ", error);
+            return [];
         }
     }
 }
@@ -615,47 +633,44 @@ export class SongDataFetchers{
  */
 export class PlaylistDataFetchers{
     /**
-     * This class is not meant to be instantiated.
+     * Constructor
      */
     constructor() {
-        throw new Error("This class cannot be instantiated.");
+        throw new Error("PlaylistDataFetchers is a static class and cannot be instantiated");
     }
 
     /**
-     * Returns array of user's playlists - maximum size is 100 playlists
-     * @param {Request} request - fetch request info
-     * @returns {Promise<LibraryPlaylists[]>} array of LibraryPlaylists objects
+     * Get all playlists from user library
+     * @param {Object} request - Request object
+     * @returns {Promise<Object[]>} Playlists
      */
     static async get_playlists(request){
-        const url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
-        console.log("Retrieving playlists...");
-        try{
-            const response = await InteractAPI.fetch_data(url, request);
-
-            if(!response.ok) throw new Error("HTTP Error! Status: " + response.status);
-
+        try {
+            const response = await InteractAPI.fetch_data("https://api.music.apple.com/v1/me/library/playlists", request);
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
             const data = await response.json();
             
             return data.data;
-        } catch(error){
+        } catch (error) {
             console.error("Error fetching playlists: ", error);
+            return [];
         }
     }
 
     /**
-     * Returns array of all playlist IDs in user's library
-     * @param {Request} request - fetch request info
-     * @returns {Promise<string[]>} array of LibraryPlaylists IDs
+     * Get all playlist IDs from user library
+     * @param {Object} request - Request object
+     * @returns {Promise<string[]>} Playlist IDs
      */
     static async get_all_playlist_IDs(request){
-        let url = "https://api.music.apple.com/v1/me/library/playlists?limit=100";
-        console.log("Retrieving user library playlist IDs...");
-        let accumulated_playlist_IDs = [];
-
-        try{
-            accumulated_playlist_IDs = await PlaylistDataFetchers.get_playlist_IDs(url, request, accumulated_playlist_IDs);
-            return [...new Set(accumulated_playlist_IDs)];
-        }catch(error){
+        try {
+            const playlists = await PlaylistDataFetchers.get_playlists(request);
+            return playlists.map(playlist => playlist.id);
+        } catch (error) {
             console.error("Error fetching user library playlist IDs: ", error);
             return [];
         }
@@ -936,26 +951,39 @@ export class ParallelDataFetchers{
      * @returns {Promise<Set<string>, string>} [accumulated_song_ids, playlist_size]
      */
     static async get_first_page_of(collection, url, request, accumulated_song_ids){
-        try{
-            const response = await InteractAPI.fetch_data(url + '0', request);
-
-            if(!response.ok) {
-                if(response.status === 404){
-                    return [[], 0];
-                }
-
-                throw new Error("HTTP Error! Status: " + response.status);
+        try {
+            const response = await InteractAPI.fetch_data(url, request);
+            
+            // Handle 404 errors gracefully - this is normal for users with no playlists
+            if (response.status === 404) {
+                return { next: null, total: 0 };
             }
-
+            
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
             const data = await response.json();
-
-            // add all non-undefined song IDs to the array
-            accumulated_song_ids.push(...data.data.map(song=>song.attributes.playParams?.catalogId).filter(id => id != undefined));
-
-            return [[...new Set(accumulated_song_ids)], data.meta.total];
-        }catch(error){
-            console.error("Error fetching first page from " + collection + ": " + error);
-            return [[], 0];
+            
+            if (!data.data || data.data.length === 0) {
+                return { next: null, total: 0 };
+            }
+            
+            for (const item of data.data) {
+                if (collection === "library-songs") {
+                    accumulated_song_ids.add(item.attributes.playParams.catalogId);
+                } else {
+                    accumulated_song_ids.add(item.id);
+                }
+            }
+            
+            return { next: data.next, total: data.meta ? data.meta.total : 0 };
+        } catch (error) {
+            // Only log errors that aren't 404s
+            if (!error.message.includes("404")) {
+                console.error("Error fetching first page from " + collection + ": " + error);
+            }
+            return { next: null, total: 0 };
         }
     }
 
@@ -967,24 +995,21 @@ export class ParallelDataFetchers{
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
     static async get_all_song_IDs_from(collection, url, request){
-        let offset = 0;
-        let accumulated_song_ids = [];
-
-        try{
-            const first_page = await ParallelDataFetchers.get_first_page_of(collection, url + '0', request, []);
-            const playlist_size = first_page[1];
-
-            const thread_count_max = 5;
-            const thread_count = ParallelDataFetchers.#thread_count_calculator(playlist_size, thread_count_max);
+        try {
+            const accumulated_song_ids = new Set();
+            const { next, total } = await ParallelDataFetchers.get_first_page_of(collection, url, request, accumulated_song_ids);
             
-            let result = [];
-            result = await ParallelDataFetchers.parallelize_using_offset(ParallelDataFetchers.get_song_IDs_from, collection, url, offset, request, thread_count, playlist_size);
-    
-            first_page[0].forEach(songID => accumulated_song_ids.push(songID));
-            result.forEach(songIDs => accumulated_song_ids.push(...songIDs.value.flat()));
-           
-            return [...new Set(accumulated_song_ids)];
-        }catch(error){
+            if (!next || total <= 0) {
+                return Array.from(accumulated_song_ids);
+            }
+            
+            const offset = next.split("offset=")[1].split("&")[0];
+            const thread_count = ParallelDataFetchers.#thread_count_calculator(total, 100);
+            
+            await ParallelDataFetchers.get_song_IDs_from(collection, url, offset, request, thread_count, total, accumulated_song_ids);
+            
+            return Array.from(accumulated_song_ids);
+        } catch (error) {
             console.error("Error fetching song catalog IDs from " + collection + ": ", error);
             return [];
         }
@@ -1002,41 +1027,65 @@ export class ParallelDataFetchers{
      * @returns {Promise<Set<string>>} set of song catalog IDs
      */
     static async get_song_IDs_from(collection, url, offset, request, thread_count, list_size, accumulated_song_ids){
-        try{
-            while(true){
-                const response = await InteractAPI.fetch_data(url + offset, request);
-
-                if(!response.ok){
-                    if (response.status === 504) {
-                        console.error("Gateway Timeout (504) - Retrying...");
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                        continue;
-                    }else if(response.status === 404){
-                        throw new Error(response.status)
-                    }
-                    else {
-                        throw new Error("HTTP Error! Status: " + response.status);
-                    }
+        try {
+            const promises = [];
+            const offset_int = parseInt(offset);
+            const chunk_size = Math.ceil((list_size - offset_int) / thread_count);
+            
+            for (let i = 0; i < thread_count; i++) {
+                const current_offset = offset_int + (i * chunk_size);
+                
+                if (current_offset >= list_size) {
+                    break;
                 }
-
+                
+                promises.push(
+                    (async () => {
+                        try {
+                            const response = await InteractAPI.fetch_data(`${url}?offset=${current_offset}&limit=${chunk_size}`, request);
+                            
+                            if (response.status === 504) {
+                                // Retry once on timeout
+                                const retry_response = await InteractAPI.fetch_data(`${url}?offset=${current_offset}&limit=${chunk_size}`, request);
+                                
+                                if (!retry_response.ok) {
+                                    throw new Error(`API error: ${retry_response.status}`);
+                                }
+                                
+                                return retry_response;
+                            }
+                            
+                            if (!response.ok) {
+                                throw new Error(`API error: ${response.status}`);
+                            }
+                            
+                            return response;
+                        } catch (error) {
+                            throw error;
+                        }
+                    })()
+                );
+            }
+            
+            const responses = await Promise.all(promises);
+            
+            for (const response of responses) {
                 const data = await response.json();
                 
-                accumulated_song_ids.push(...data.data.map(song=>song.attributes.playParams?.catalogId).filter(id => id != undefined));
-                offset += (thread_count * 100);
-                
-                if(offset >= list_size){
-                    return [...new Set(accumulated_song_ids)];
+                if (!data.data || data.data.length === 0) {
+                    continue;
                 }
-
-                await new Promise(res => setTimeout(res, 300));
+                
+                for (const item of data.data) {
+                    if (collection === "library-songs") {
+                        accumulated_song_ids.add(item.attributes.playParams.catalogId);
+                    } else {
+                        accumulated_song_ids.add(item.id);
+                    }
+                }
             }
-        }catch(error){ 
-            if(Number(error.message) === 404){
-                return [...new Set(accumulated_song_ids)];
-            }
-
+        } catch (error) {
             console.error("Error fetching song IDs from " + collection + ": " + error);
-            return [];
         }
     }
 

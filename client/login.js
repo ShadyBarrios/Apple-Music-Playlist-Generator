@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   async function get_dev_token() {
     try {
-      console.log("Fetching developer token...");
       const response = await fetch('/get-dev-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -13,7 +12,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       if (!response.ok) throw new Error('Failed to get developer token');
       const data = await response.json();
-      console.log("Developer token received");
       return data.data;
     } catch (error) {
       console.error('Error getting developer token:', error);
@@ -41,29 +39,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loginButton = document.getElementById("login");
 
   if (loginButton) {
-    console.log("Login button found, adding click event listener");
     loginButton.addEventListener("click", async () => {
-      console.log("Login button clicked");
       update_loading_status("Loading...");
       const developer_token = await get_dev_token();
-      console.log("Developer token:", developer_token ? "Received" : "Not received");
 
       try {
-        console.log("Configuring MusicKit...");
         const music = await MusicKit.configure({
           developerToken: developer_token,
           app: { name: "Custom Playlist Generator", build: "1.0.0" },
         });
-        console.log("MusicKit configured");
 
-        console.log("Authorizing with Apple Music...");
         await music.authorize();
-        console.log("Authorization successful");
         userToken = music.musicUserToken;
 
         if (userToken) {
-          console.log("User Token:", userToken);
-          console.log("Sending token to server...");
           const response = await fetch('/api-login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -72,7 +61,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
           if (response.ok) {
             const responseData = await response.json();
-            console.log("API Login Response:", responseData);
             await storeUserBackend(responseData); // store user backend object in IndexedDB
             update_loading_status("Loaded");
             
