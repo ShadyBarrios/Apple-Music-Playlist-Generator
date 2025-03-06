@@ -132,7 +132,7 @@ function sortSongs(songs) {
       return songsCopy.sort((a, b) => b.popularity - a.popularity); // Sort by popularity (high to low)
     case "default":
     default:
-      return songsCopy; // Return the original order
+      return songsCopy; // Return the original shuffled order
   }
 }
 
@@ -190,9 +190,6 @@ function displayPlaylist(playlist) {
   
   // Update playlist stats
   updatePlaylistStats(playlist.songs);
-  
-  // Update genre distribution chart
-  updateGenreChart(playlist.songs);
   
   // Update detailed playlist stats
   updateDetailedStats(playlist.songs);
@@ -701,35 +698,8 @@ function displaySong(song, index, container) {
   artistElement.classList.add("artist-name");
   artistElement.textContent = ` by ${song.artist}`;
   
-  // Add genre tags if available
-  const genreContainer = document.createElement("div");
-  genreContainer.classList.add("genre-tags");
-  
-  // Handle case where genres might be a string instead of an array
-  const genres = Array.isArray(song.genres) ? song.genres : (song.genres ? [song.genres] : []);
-  
-  if (genres.length > 0) {
-    // Debug: Log genre data for the first song
-    if (index === 0) {
-      console.log("First song in displaySong:", song);
-      console.log("First song genres in displaySong:", genres);
-      console.log("First genre in displaySong:", genres[0]);
-      console.log("Extracted genre name in displaySong:", extractGenreName(genres[0]));
-    }
-    
-    const genreTag = document.createElement("span");
-    genreTag.classList.add("genre-tag");
-    
-    // Use the helper function to extract genre name
-    const genreText = extractGenreName(genres[0]);
-    
-    genreTag.textContent = genreText;
-    genreContainer.appendChild(genreTag);
-  }
-  
   songInfo.appendChild(songNameElement);
   songInfo.appendChild(artistElement);
-  songInfo.appendChild(genreContainer);
   songRow.appendChild(songInfo);
 
   // Popularity indicator container
