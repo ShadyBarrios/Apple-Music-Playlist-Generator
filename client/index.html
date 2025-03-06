@@ -34,5 +34,16 @@
         Your browser does not support the video tag.
     </video>
     <img src="/images/skip.png" class="skip-button" onclick="window.location.href='login.html'" alt="Skip">
+
+    <script type="module">
+        import { clearUserBackend } from './indexedDB.js';
+
+        window.addEventListener('DOMContentLoaded', () => {
+            clearUserBackend();
+            console.log("User data cleared from IndexedDB.");
+        });
+
+    </script>
+
 </body>
 </html>

@@ -898,11 +898,11 @@ button:hover::after {
 }
 
 .logout-btn:hover {
-  color: #fc3c44; /* Red color on hover */
+  color: #fc3c44; /* red color on hover */
 }
 
 .logout-btn:hover::after {
-  width: 100%; /* Animate the underline width */
+  width: 100%;
 }
 @media (max-width: 600px) {
   .nav-links {
