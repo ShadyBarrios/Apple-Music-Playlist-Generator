@@ -1,5 +1,4 @@
 // Pull tokens from .env
-import {Mutex} from 'async-mutex';
 import {Playlist} from '../client/user.js';
 import fetch from 'node-fetch';
 
@@ -85,11 +84,10 @@ export class Song {
      * @param {Genres[]} genres - array of genre objects
      * @param {string[]} subgenres - array of subgenre names
      * @param {string} previewUrl - URL for the song preview snippet
-     * @param {string} artworkUrl - URL for the song's album artwork
-     * @param {number} popularity - Popularity score (0-100)
+     * @param {string} artworkUrl - URL for the song artwork
      */
-    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl, popularity = 0) {
-        // check that we have good vars; previewUrl and artworkUrl can be empty strings if not available
+    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl) {
+        // check that we have good vars; previewUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
@@ -100,9 +98,8 @@ export class Song {
         this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
-        this.previewUrl = previewUrl; // URL for snippet playback
-        this.artworkUrl = artworkUrl; // URL for album artwork
-        this.popularity = popularity; // Popularity score (0-100)
+        this.previewUrl = previewUrl;
+        this.artworkUrl = artworkUrl;
     }
 }
 
@@ -1062,7 +1059,6 @@ export class ParallelDataFetchers{
 
     /**
      * Returns set containing all songs given song catalog ID partition.
-     * Modified to include the song preview URL, artwork URL, and popularity score from Apple Music.
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {Request} request - fetch request info
@@ -1073,9 +1069,11 @@ export class ParallelDataFetchers{
      */
     static async get_songs_from(collection, url, request, partitions, start_index, thread_count){
         let songs = [];
+
         try{
             for(let i = start_index; i < partitions.length; i += thread_count){
                 const ids = partitions[i].join(",");
+
                 const response = await InteractAPI.fetch_data(url + ids, request);
 
                 if(!response.ok){
@@ -1099,26 +1097,19 @@ export class ParallelDataFetchers{
                             name: genre.attributes.name
                         }
                     }));
-                    // Extract preview URL from attributes.previews (if available)
+
+                    // Extract preview URL from attributes.previews (if available) - Issa
                     const previewUrl = (data.data[i].attributes.previews && data.data[i].attributes.previews.length > 0)
                       ? data.data[i].attributes.previews[0].url 
                       : "";
-                    
-                    // Extract artwork URL from attributes.artwork (if available)
-                    // Apple Music API typically provides artwork in different sizes
-                    // We'll use the URL and replace {w} and {h} with specific dimensions
+
+                    // Extract artwork URL from attributes.artwork (if available) - Issa
                     let artworkUrl = "";
                     if (data.data[i].attributes.artwork) {
                         const artwork = data.data[i].attributes.artwork;
                         // Create URL with 100x100 dimensions (can be adjusted as needed)
                         artworkUrl = artwork.url.replace('{w}', '100').replace('{h}', '100');
                     }
-                    
-                    // Generate a simulated popularity score (0-100)
-                    // In a real implementation, this would come from the API or be calculated
-                    // based on other metrics like chart position, play count, etc.
-                    // For now, we'll generate a random score between 30 and 100
-                    const popularity = Math.floor(Math.random() * 71) + 30;
                     
                     songs.push(new Song(
                       data.data[i].id, 
@@ -1127,8 +1118,7 @@ export class ParallelDataFetchers{
                       genres, 
                       data.data[i].attributes.genreNames,
                       previewUrl,
-                      artworkUrl,
-                      popularity
+                      artworkUrl
                     ));
                 }
             }

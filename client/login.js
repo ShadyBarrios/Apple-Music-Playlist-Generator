@@ -1,4 +1,4 @@
-import { storeUserBackend, getUserBackend } from "./indexedDB.js";
+import { storeUserBackend } from "./indexedDB.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   let userToken = ""; // Will be pulled with MusicKit
@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function update_loading_status(status) {
+    const topBuffer = document.getElementById("top-buffer");
     const statusElement = document.getElementById("loading_status");
     const loadingAnimate = document.getElementById("loading_animate");
     const loginButton = document.getElementById("login");
@@ -29,6 +30,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const welcomeText = document.querySelector(".login-container p:not(#loading_status)");
     const loadingContainer = document.querySelector(".loading-container");
     
+    // adding this so that loading is centered on the page
+    // the 80px is used in other pages for the nav bar
+    if (topBuffer) topBuffer.style.height = status === "Loading..." ? "0px;" : "80px;";
+
     if (statusElement) statusElement.innerText = status;
     if (loadingAnimate) loadingAnimate.style.display = status === "Loading..." ? "block" : "none";
     if (loginButton) loginButton.style.display = status === "Loading..." ? "none" : "block";
@@ -50,20 +55,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Developer token:", developer_token ? "Received" : "Not received");
 
       try {
-        console.log("Configuring MusicKit...");
         const music = await MusicKit.configure({
           developerToken: developer_token,
           app: { name: "Custom Playlist Generator", build: "1.0.0" },
         });
-        console.log("MusicKit configured");
 
-        console.log("Authorizing with Apple Music...");
         await music.authorize();
         console.log("Authorization successful");
         userToken = music.musicUserToken;
 
         if (userToken) {
-          console.log("User Token:", userToken);
           console.log("Sending token to server...");
           const response = await fetch('/api-login', {
             method: 'POST',

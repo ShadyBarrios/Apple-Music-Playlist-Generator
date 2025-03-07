@@ -227,12 +227,21 @@
       width: 100%;
       padding: 20px 0;
     }
+
+    /*  This will make the loading animation look more natural 
+        since it kinda blends into the background now
+        looks better than the sharp edges
+    */
+    .loading-container video{
+      -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+      mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    }
   </style>
 </head>
 
 <body>
   
-  <div style="height: 80px;"></div>
+  <div id="top-buffer" style="height: 0px;"></div>
   
   <!-- Animated background -->
   <div class="animated-background" id="animated-background"></div>

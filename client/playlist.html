@@ -237,14 +237,6 @@
     </div>
   </div>
 
-  <!-- Genre Distribution Chart Container -->
-  <div class="chart-container">
-    <h3>Genre Distribution:</h3>
-    <div class="chart-wrapper">
-      <canvas id="genre-chart"></canvas>
-    </div>
-  </div>
-
   <!-- Detailed Playlist Stats Cards -->
   <div class="detailed-stats-container">
     <h3>Playlist Insights:</h3>
@@ -264,43 +256,13 @@
       
       <div class="detailed-stats-card">
         <div class="card-header">
-          <div class="card-icon">🔥</div>
-          <h4>Popularity</h4>
-        </div>
-        <div class="card-content">
-          <p id="avg-popularity">Average: 0%</p>
-          <div class="popularity-meter">
-            <div class="popularity-fill" id="popularity-fill"></div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="detailed-stats-card">
-        <div class="card-header">
           <div class="card-icon">🎭</div>
           <h4>Artist Variety</h4>
         </div>
         <div class="card-content">
           <p id="unique-artists">0 different artists</p>
-          <div class="card-stat">
-            <span id="artist-variety">0%</span> variety score
-          </div>
         </div>
       </div>
-      
-      <div class="detailed-stats-card">
-        <div class="card-header">
-          <div class="card-icon">🎹</div>
-          <h4>Genre Variety</h4>
-        </div>
-        <div class="card-content">
-          <p id="unique-genres">0 different genres</p>
-          <div class="card-stat">
-            <span id="genre-variety">0%</span> variety score
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Sorting Options -->
@@ -309,8 +271,7 @@
     <div class="sort-buttons">
       <button id="sort-title" class="sort-button">Title</button>
       <button id="sort-artist" class="sort-button">Artist</button>
-      <button id="sort-popularity" class="sort-button">Popularity</button>
-      <button id="sort-default" class="sort-button active">Default</button>
+      <button id="sort-default" class="sort-button active">Shuffle</button>
     </div>
   </div>
 
