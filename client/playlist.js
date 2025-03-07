@@ -201,7 +201,7 @@ function setupPlaylistDropdown(playlists, currentIndex) {
     .map(
       (playlist, index) =>
         `<option value="${index}" ${index === currentIndex ? "selected" : ""}>
-          Playlist ${index + 1}: ${playlist.name}
+          ${playlist.name}
          </option>`
     )
     .join("");
