@@ -1,5 +1,4 @@
 // Pull tokens from .env
-import {Playlist} from '../client/user.js';
 import fetch from 'node-fetch';
 
 /*

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "mocha --exit",
-    "docs": "jsdoc src/functions.js src/backend.js -d docs -t node_modules/docdash",
+    "docs": "jsdoc src/functions.js -d docs -t node_modules/docdash",
     "start": "node src/server.js",
     "create-env": "touch .env"
   },

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import {UserBackend} from '../client/user.js';
 import {Mutex} from 'async-mutex';
-import { ParallelDataFetchers, DataFetchers, Song, GenreDictionary, SubgenreDictionary, DataSenders} from "./functions.js"
+import {DataFetchers, DataSenders} from "./functions.js"
 
 // Create .env in root folder with the following:
 const isInSrc = process.cwd().endsWith('\\src');
