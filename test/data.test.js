@@ -7,20 +7,15 @@ describe('Data Management', () => {
     let consoleErrorStub;
 
     beforeEach(() => {
-        // Save original fetch if it exists
         originalFetch = global.fetch;
-        
-        // Mock fetch
         global.fetch = sinon.stub();
-        
-        // Mock console
         consoleErrorStub = sinon.stub(console, 'error');
     });
 
     afterEach(() => {
-        // Restore original fetch
         global.fetch = originalFetch;
         consoleErrorStub.restore();
+        sinon.restore();
     });
 
     describe('Song Data Management', () => {
@@ -35,14 +30,13 @@ describe('Data Management', () => {
             expect(songs).to.be.an('array').that.is.empty;
         });
 
-        it('should handle API errors', () => {
-            // Mock fetch to simulate API error
-            global.fetch = async () => ({
-                ok: false,
-                status: 404
+        it('should handle API errors', async () => {
+            // Simulate an API error response
+            global.fetch.resolves({
+              ok: false,
+              status: 403,
+              json: async () => { throw new Error('Forbidden'); }
             });
-
-            // Call a function that uses fetch
             const fetchData = async () => {
                 try {
                     const response = await fetch('/api/test');
@@ -56,8 +50,7 @@ describe('Data Management', () => {
                     return null;
                 }
             };
-
-            fetchData();
+            await fetchData();
             expect(consoleErrorStub.called).to.be.true;
         });
     });
@@ -78,16 +71,14 @@ describe('Data Management', () => {
         });
 
         it('should handle network timeout', () => {
-            // This is a synchronous test that just verifies error handling
             const handleTimeout = (error) => {
                 if (error && error.message === 'Network timeout') {
                     return [];
                 }
                 throw error;
             };
-            
             const result = handleTimeout(new Error('Network timeout'));
             expect(result).to.be.an('array').that.is.empty;
         });
     });
-}); 
+});

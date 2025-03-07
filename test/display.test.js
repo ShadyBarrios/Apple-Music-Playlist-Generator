@@ -6,14 +6,12 @@ describe('Display Functions', () => {
     let consoleErrorStub;
     
     beforeEach(() => {
-        // Mock document
         mockDocument = {
             getElementById: sinon.stub(),
             querySelector: sinon.stub(),
             createElement: sinon.stub()
         };
 
-        // Mock DOM elements
         const mockPlaylistContainer = {
             innerHTML: '',
             appendChild: sinon.stub()
@@ -23,19 +21,21 @@ describe('Display Functions', () => {
             innerText: ''
         };
 
+        // Stub getElementById to return our fake elements
         mockDocument.getElementById.withArgs('playlist-container').returns(mockPlaylistContainer);
         mockDocument.getElementById.withArgs('song-count').returns(mockSongCount);
 
-        // Save original document
-        global.document = mockDocument;
+        // When creating a 'div', return a fake element that can hold innerHTML.
+        mockDocument.createElement.withArgs('div').returns({ innerHTML: '', appendChild: sinon.stub() });
 
-        // Mock console
+        global.document = mockDocument;
         consoleErrorStub = sinon.stub(console, 'error');
     });
 
     afterEach(() => {
         consoleErrorStub.restore();
         delete global.document;
+        sinon.restore();
     });
 
     describe('Playlist Display', () => {
@@ -57,8 +57,8 @@ describe('Display Functions', () => {
                 container.appendChild(div);
             });
 
-            expect(mockDocument.createElement.calledTwice).to.be.true;
-            expect(container.appendChild.calledTwice).to.be.true;
+            expect(mockDocument.createElement.withArgs('div').callCount).to.equal(2);
+            expect(container.appendChild.callCount).to.equal(2);
         });
     });
 
@@ -80,9 +80,7 @@ describe('Display Functions', () => {
 
     describe('Error Handling', () => {
         it('should handle display errors gracefully', () => {
-            // Simulate missing DOM element
             mockDocument.getElementById.withArgs('playlist-container').returns(null);
-
             const playlists = [{ name: 'Test Playlist', songs: [] }];
             try {
                 const container = document.getElementById('playlist-container');
@@ -102,4 +100,4 @@ describe('Display Functions', () => {
             expect(consoleErrorStub.called).to.be.true;
         });
     });
-}); 
+});
