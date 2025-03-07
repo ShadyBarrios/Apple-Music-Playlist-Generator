@@ -1,6 +1,4 @@
 import { storeUserBackend, getUserBackend } from "./indexedDB.js";
-import { UserBackend } from "./user.js";
-
 document.addEventListener("DOMContentLoaded", () => {
   let selectedGenres = new Set();
   let selectedSubGenres = new Set();

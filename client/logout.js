@@ -1,5 +1,4 @@
 import { clearUserBackend, getUserBackend } from "./indexedDB.js";
-import { UserBackend } from "./user.js";
 
 async function logout() {
     const confirmLogout = confirm("Are you sure you want to log out?");
