@@ -1,5 +1,4 @@
 // Pull tokens from .env
-import {Mutex} from 'async-mutex';
 import {Playlist} from '../client/user.js';
 import fetch from 'node-fetch';
 
@@ -66,12 +65,21 @@ import fetch from 'node-fetch';
  * @property {string} MusicUserToken - User Token
  * @property {string} [ContentType] - Optional Content Type
  */
+
 /**
  * Fetch Request description
  * @typedef {Object} Request
  * @property {string} [method] - optional, usually "POST"
  * @property {Headers} headers - request headers
  * @property {string} [body] - request body
+ */
+
+/**
+ * Lightweight playlist for uploading
+ * @typedef {Object} LitePlaylist
+ * @property {string} name - Playlist name
+ * @property {string} description - Playlist description
+ * @property {string[]} songs - array of song catalog IDs
  */
 
 /** 
@@ -85,11 +93,10 @@ export class Song {
      * @param {Genres[]} genres - array of genre objects
      * @param {string[]} subgenres - array of subgenre names
      * @param {string} previewUrl - URL for the song preview snippet
-     * @param {string} artworkUrl - URL for the song's album artwork
-     * @param {number} popularity - Popularity score (0-100)
+     * @param {string} artworkUrl - URL for the song artwork
      */
-    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl, popularity = 0) {
-        // check that we have good vars; previewUrl and artworkUrl can be empty strings if not available
+    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl) {
+        // check that we have good vars; previewUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
             return;
@@ -100,9 +107,8 @@ export class Song {
         this.artist = artist;
         this.genres = genres;
         this.subgenres = subgenres;
-        this.previewUrl = previewUrl; // URL for snippet playback
-        this.artworkUrl = artworkUrl; // URL for album artwork
-        this.popularity = popularity; // Popularity score (0-100)
+        this.previewUrl = previewUrl;
+        this.artworkUrl = artworkUrl;
     }
 }
 
@@ -423,17 +429,16 @@ export class DataSenders{
 
     /**
      * Adds playlist (with songs) to user library
-     * @param {Playlist} playlist - Playlist object
+     * @param {LitePlaylist} playlist - Playlist object
      * @param {string} developerToken - Apple Music Developer Token
      * @param {string} userToken - Apple Music User Token
      * @returns {Promise<boolean>} true if successful
      */
     static async create_user_playlist(playlist, developerToken, userToken){
-        const songs = playlist.songs;
-        const song_ids = songs.map(song => song.id);
-        const playlist_name = playlist.getName();
-        const description = playlist.getDescription();
-
+        const playlist_name = playlist.name;
+        const description = playlist.description;
+        const song_ids = playlist.songs;
+        
         const body = PlaylistDataSenders.create_body(playlist_name, description, song_ids);
         const request = InteractAPI.send_data_request(developerToken, userToken, body);
 
@@ -1062,7 +1067,6 @@ export class ParallelDataFetchers{
 
     /**
      * Returns set containing all songs given song catalog ID partition.
-     * Modified to include the song preview URL, artwork URL, and popularity score from Apple Music.
      * @param {string} collection - describes where resource is being pulled from
      * @param {string} url - Apple API URL
      * @param {Request} request - fetch request info
@@ -1073,9 +1077,11 @@ export class ParallelDataFetchers{
      */
     static async get_songs_from(collection, url, request, partitions, start_index, thread_count){
         let songs = [];
+
         try{
             for(let i = start_index; i < partitions.length; i += thread_count){
                 const ids = partitions[i].join(",");
+
                 const response = await InteractAPI.fetch_data(url + ids, request);
 
                 if(!response.ok){
@@ -1099,26 +1105,19 @@ export class ParallelDataFetchers{
                             name: genre.attributes.name
                         }
                     }));
-                    // Extract preview URL from attributes.previews (if available)
+
+                    // Extract preview URL from attributes.previews (if available) - Issa
                     const previewUrl = (data.data[i].attributes.previews && data.data[i].attributes.previews.length > 0)
                       ? data.data[i].attributes.previews[0].url 
                       : "";
-                    
-                    // Extract artwork URL from attributes.artwork (if available)
-                    // Apple Music API typically provides artwork in different sizes
-                    // We'll use the URL and replace {w} and {h} with specific dimensions
+
+                    // Extract artwork URL from attributes.artwork (if available) - Issa
                     let artworkUrl = "";
                     if (data.data[i].attributes.artwork) {
                         const artwork = data.data[i].attributes.artwork;
                         // Create URL with 100x100 dimensions (can be adjusted as needed)
                         artworkUrl = artwork.url.replace('{w}', '100').replace('{h}', '100');
                     }
-                    
-                    // Generate a simulated popularity score (0-100)
-                    // In a real implementation, this would come from the API or be calculated
-                    // based on other metrics like chart position, play count, etc.
-                    // For now, we'll generate a random score between 30 and 100
-                    const popularity = Math.floor(Math.random() * 71) + 30;
                     
                     songs.push(new Song(
                       data.data[i].id, 
@@ -1127,8 +1126,7 @@ export class ParallelDataFetchers{
                       genres, 
                       data.data[i].attributes.genreNames,
                       previewUrl,
-                      artworkUrl,
-                      popularity
+                      artworkUrl
                     ));
                 }
             }

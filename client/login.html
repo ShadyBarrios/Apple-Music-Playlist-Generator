@@ -201,12 +201,47 @@
       color: #333;
       margin: 0;
     }
+
+    #loading_animate {
+      display: block;
+      margin: 0 auto;
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    
+    #loading_status {
+      text-align: center;
+      font-size: 16px;
+      color: #333;
+      margin-top: 10px;
+    }
+    
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 20px 0;
+    }
+
+    /*  This will make the loading animation look more natural 
+        since it kinda blends into the background now
+        looks better than the sharp edges
+    */
+    .loading-container video{
+      -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
+      mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
+    }
   </style>
 </head>
 
 <body>
   
-  <div style="height: 80px;"></div>
+  <div id="top-buffer" style="height: 0px;"></div>
   
   <!-- Animated background -->
   <div class="animated-background" id="animated-background"></div>
@@ -221,13 +256,14 @@
   <div class="login">
     <div class="login-container">
       <h1>Welcome to Guffle</h1>
-      <p>Your personalized Apple Music playlist generator</p>
       <button id="login" class="login-button"><i class="fab fa-apple"></i> Login with Apple Music</button>
-      <video id="loading_animate" autoplay loop muted playsinline style="display: none;">
-        <source src="/images/output.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
-      <p id="loading_status"></p>
+      <div class="loading-container" style="display: none;">
+        <video id="loading_animate" autoplay loop muted playsinline>
+          <source src="/images/output.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <p id="loading_status"></p>
+      </div>
       
       <!-- Features section -->
       <div class="features-section">
