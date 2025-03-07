@@ -1,4 +1,4 @@
-import { clearUserBackend } from "./indexedDB.js";
+import { clearUserBackend, getUserBackend } from "./indexedDB.js";
 import { UserBackend } from "./user.js";
 
 async function logout() {
@@ -6,9 +6,14 @@ async function logout() {
     if (!confirmLogout) return;
 
     try {
-        console.log("Logging out...");
+        showLoading()
+        const user = await getUserBackend();
+        if (!user) {
+            console.error("User not found in IndexedDB");
+            return;
+        }
 
-        const response = await fetch('/api-logout', { method: 'POST' });
+        const response = await fetch('/api-logout', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ token: user.backendUser.clientToken})});
 
         if (!response.ok) {
             console.error("Failed to log out from server");
@@ -24,6 +29,7 @@ async function logout() {
             console.log("Logged out from Apple Music");
         }
 
+        hideLoading();
         window.location.href = "login.html";
     } catch (error) {
         console.error("Error during logout:", error);
@@ -39,3 +45,19 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Logout button not found");
     }
 });
+
+// Function to show loading overlay
+function showLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+        loadingOverlay.classList.add("active");
+    }
+}
+
+// Function to hide loading overlay
+function hideLoading() {
+    const loadingOverlay = document.getElementById("loading-overlay");
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove("active");
+    }
+}

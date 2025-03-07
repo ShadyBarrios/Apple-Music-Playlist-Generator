@@ -65,12 +65,21 @@ import fetch from 'node-fetch';
  * @property {string} MusicUserToken - User Token
  * @property {string} [ContentType] - Optional Content Type
  */
+
 /**
  * Fetch Request description
  * @typedef {Object} Request
  * @property {string} [method] - optional, usually "POST"
  * @property {Headers} headers - request headers
  * @property {string} [body] - request body
+ */
+
+/**
+ * Lightweight playlist for uploading
+ * @typedef {Object} LitePlaylist
+ * @property {string} name - Playlist name
+ * @property {string} description - Playlist description
+ * @property {string[]} songs - array of song catalog IDs
  */
 
 /** 
@@ -420,17 +429,16 @@ export class DataSenders{
 
     /**
      * Adds playlist (with songs) to user library
-     * @param {Playlist} playlist - Playlist object
+     * @param {LitePlaylist} playlist - Playlist object
      * @param {string} developerToken - Apple Music Developer Token
      * @param {string} userToken - Apple Music User Token
      * @returns {Promise<boolean>} true if successful
      */
     static async create_user_playlist(playlist, developerToken, userToken){
-        const songs = playlist.songs;
-        const song_ids = songs.map(song => song.id);
-        const playlist_name = playlist.getName();
-        const description = playlist.getDescription();
-
+        const playlist_name = playlist.name;
+        const description = playlist.description;
+        const song_ids = playlist.songs;
+        
         const body = PlaylistDataSenders.create_body(playlist_name, description, song_ids);
         const request = InteractAPI.send_data_request(developerToken, userToken, body);
 

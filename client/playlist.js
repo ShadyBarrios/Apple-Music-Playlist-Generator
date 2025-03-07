@@ -305,7 +305,7 @@ function playSnippet(song, button) {
   }
 }
 
-function sendPlaylistToLibrary() {
+async function sendPlaylistToLibrary() {
   if (!currentPlaylist) {
     alert("No playlist loaded.");
     return;
@@ -314,9 +314,18 @@ function sendPlaylistToLibrary() {
   showLoading();
 
   // Prepare the payload using the current playlist's name and filters
+  const user = await getUserBackend();
+  if(!user){
+    hideLoading();
+    alert("Failed to send playlist to library.");
+    return;
+  }
+
   const payload = {
-    playlistName: currentPlaylist.name,
-    filters: currentPlaylist.filters,
+    name: currentPlaylist.name,
+    description: currentPlaylist.description,
+    songs: currentPlaylist.songs.map(song => song.id),
+    token: user.backendUser.clientToken
   };
 
   fetch("/send-playlist", {
@@ -558,7 +567,7 @@ function intersectFiltersAndSong(song, filters){
 
   const result = intersectSubgenres.length > 0 ? intersectSubgenres : intersectGenres;
 
-  const reduced = result.length > 5 ? result.slice(0, 5) : result;
+  const reduced = result.length > 3 ? result.slice(0, 3).concat("..."): result;
   const string = reduced.join(" | ");
 
   return string;

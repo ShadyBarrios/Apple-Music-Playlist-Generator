@@ -233,8 +233,8 @@
         looks better than the sharp edges
     */
     .loading-container video{
-      -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
-      mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+      -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
+      mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
     }
   </style>
 </head>
@@ -256,7 +256,6 @@
   <div class="login">
     <div class="login-container">
       <h1>Welcome to Guffle</h1>
-      <p>Your personalized Apple Music playlist generator</p>
       <button id="login" class="login-button"><i class="fab fa-apple"></i> Login with Apple Music</button>
       <div class="loading-container" style="display: none;">
         <video id="loading_animate" autoplay loop muted playsinline>

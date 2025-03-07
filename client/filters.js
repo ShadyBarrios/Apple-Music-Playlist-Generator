@@ -26,8 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
     showLoading();
     try {
       userBackend = await getUserBackend();
-      console.log("User backend initialized: ", userBackend);
-      console.log("Is instance of UserBackend:", userBackend.backendUser instanceof UserBackend);
     } catch (error) {
       console.error("Error initializing user backend:", error);
     } finally {

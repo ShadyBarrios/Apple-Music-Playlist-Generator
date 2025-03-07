@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error('Error getting developer token:', error);
     }
   }
-
+  
   function update_loading_status(status) {
     const topBuffer = document.getElementById("top-buffer");
     const statusElement = document.getElementById("loading_status");
@@ -47,9 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const loginButton = document.getElementById("login");
 
   if (loginButton) {
-    console.log("Login button found, adding click event listener");
     loginButton.addEventListener("click", async () => {
-      console.log("Login button clicked");
       update_loading_status("Loading...");
       const developer_token = await get_dev_token();
       console.log("Developer token:", developer_token ? "Received" : "Not received");
@@ -76,9 +74,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const responseData = await response.json();
             console.log("API Login Response:", responseData);
             await storeUserBackend(responseData); // store user backend object in IndexedDB
-            update_loading_status("Loaded");
             
             setTimeout(() => {
+              update_loading_status("Loaded");
               window.location.href = "filters.html";
             }, 500);
           } else {

@@ -15,9 +15,6 @@ const developerToken = process.env.DEVELOPER_TOKEN;
 const app = express();
 const port = 3000;
 
-let userToken = "";  // get user token from frontend
-let backendUser = null; // user-specific backend object
-
 // Uncomment for windows machine
 // const initialDirname = path.dirname(new URL(import.meta.url).pathname);
 // let processedDirname = initialDirname.startsWith('/') ? initialDirname.slice(1) : initialDirname; // removes the leading /
@@ -39,24 +36,22 @@ app.post('/api-login', async (req, res) => {
     return res.status(400).json({ error: 'User Token fetch failed' });
   }
 
-  userToken = token;  // store the token only once
-  console.log('SERVER.JS: Using developer token from .env: ', developerToken);
-  console.log('SERVER.JS: Received new user token: ', userToken);
-
-  backendUser = await backend.createUser(userToken);
-  //console.log("backend User: " + backendUser);
+  const userToken = token;  // store the token only once
+  let backendUser = await backend.createUser(userToken);
 
   res.json({ message: 'User Token fetch successful', backendUser });
 });
 
-app.post('/api-logout', (req, res) => {
+app.post('/api-logout', async (req, res) => {
   console.log('Logging out user');
 
-  // Clear the stored user session on the server
-  userToken = null;
-  backendUser = null;
+  const { token } = req.body;
 
-  console.log('User Token: ', userToken);
+  if (token == null) {
+    return res.status(400).json({ error: 'User token not provided' });
+  }
+
+  await backend.deleteUser(token);
 
   res.json({ message: "User logged out successfully" });
 });
@@ -83,23 +78,25 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 app.post('/send-playlist', async (req, res) => {
-  const { playlistName, filters } = req.body;
-  if (!backendUser) {
-    return res.status(400).json({ error: 'User not initialized' });
+  const { name, description, songs, token } = req.body;
+  
+  if(name == null || description == null || !songs || token == null) {
+    return res.status(400).json({ error: 'Missing required fields' });
   }
-  const playlist = backendUser.createPlaylist(playlistName, filters);
-  if (!playlist || playlist.length === 0) {
+
+  if (songs.length === 0) {
     return res.status(500).json({ error: 'Failed to create playlist' });
   }
   // Then push to Apple Music
   try {
-    await backend.pushApplePlaylist(playlist, backendUser.clientToken);
+    await backend.pushApplePlaylist({name: name, description: description, songs: songs}, token);
     console.log("Pushing playlist to user")
   } catch (error) {
     console.error("Error pushing playlist:", error);
     return res.status(500).json({ error: 'Failed to push playlist to Apple Music' });
   }
-  res.json(playlist);
+
+  res.json({ message: "Playlist uploaded successfully" });
 });
 
 // Export the app for testing
@@ -123,12 +120,7 @@ export class Backend {
       this.dev = developerToken;
   }
 
-   /**
-   * Adds new user to the backend
-   * @param {string} appleToken 
-   * @returns 
-   */
-   async createUser(appleToken) {
+  async createUser(appleToken) {
     let user = null;
 
     await this.backendMutex.runExclusive(async () => {
@@ -136,7 +128,7 @@ export class Backend {
       let clientToken = this.clientUsers.length;
       const clientExists = this.appleTokens.includes(appleToken);
       const clientIndex = this.appleTokens.indexOf(appleToken);
-      console.log(clientExists);
+
       if(clientExists) // if client exists, find its token
         clientToken = this.clientUsers[clientIndex].clientToken;
 
@@ -159,16 +151,23 @@ export class Backend {
       }
     });
 
-    console.log("User Token: " + user.clientToken); //what are these supposed to represent?
-    console.log("User: " + user); //what is this supposed to represent?
-    
-    // return token
     return user;
   }
 
+  async deleteUser(clientToken) {
+    await this.backendMutex.runExclusive(() => {
+      if (this.clientUsers[clientToken] && this.clientUsers[clientToken] != null){
+        this.clientUsers[clientToken] == null;
+      }
+      if (this.appleTokens[clientToken] && this.appleTokens[clientToken] != null){
+        this.appleTokens[clientToken] == null;
+      }
+    });
+  }
+
   async pushApplePlaylist(playlist, clientToken) {
-      // will get a playlist from client side and then create it in user library
-      await this.backendMutex.runExclusive(() => DataSenders.create_user_playlist(playlist, this.dev, this.appleTokens[clientToken]));
+    // will get a playlist from client side and then create it in user library
+    await this.backendMutex.runExclusive(() => DataSenders.create_user_playlist(playlist, this.dev, this.appleTokens[clientToken]));
   }
 }
 
