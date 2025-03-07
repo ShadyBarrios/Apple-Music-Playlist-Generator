@@ -201,7 +201,7 @@ function setupPlaylistDropdown(playlists, currentIndex) {
     .map(
       (playlist, index) =>
         `<option value="${index}" ${index === currentIndex ? "selected" : ""}>
-          Playlist ${index + 1}: ${playlist.name}
+          ${playlist.name}
          </option>`
     )
     .join("");
@@ -359,8 +359,10 @@ function updatePlaylistStats(songs) {
   const listeningTimeElement = document.getElementById("listening-time");
   
   // Calculate stats
-  const songCount = songs.length;
-  const totalDurationMinutes = Math.round(songCount * AVERAGE_SONG_DURATION_MINUTES);
+  let durationInMillis = 0;
+  songs.forEach(song => durationInMillis += song.durationInMillis);
+  const durationInSeconds = durationInMillis / 1000.0;
+  const totalDurationMinutes = Math.round(durationInSeconds / 60);
   
   // Format the listening time in hours and minutes if over 60 minutes
   let listeningTimeFormatted;
@@ -373,7 +375,7 @@ function updatePlaylistStats(songs) {
   }
   
   // Update the elements
-  songCountElement.textContent = songCount;
+  songCountElement.textContent = songs.length;
   totalDurationElement.textContent = `${totalDurationMinutes} min`;
   listeningTimeElement.textContent = listeningTimeFormatted;
 }
