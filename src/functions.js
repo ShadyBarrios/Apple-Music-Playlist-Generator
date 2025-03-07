@@ -24,6 +24,7 @@ import fetch from 'node-fetch';
  * @property {string} attributes.name - Song name
  * @property {string} attributes.artistName - Song artist name
  * @property {string[]} attributes.genreNames - Song genre names
+ * @property {number} attributes.durationInMillis - Song duration in milliseconds
  * @property {Object} relationships - Song relationships
  * @property {Object} relationships.genres - Song genre data
  * @property {Genres[]} relationships.genres.data - Song genre data
@@ -94,8 +95,9 @@ export class Song {
      * @param {string[]} subgenres - array of subgenre names
      * @param {string} previewUrl - URL for the song preview snippet
      * @param {string} artworkUrl - URL for the song artwork
+     * @param {number} durationInMillis - Song duration in milliseconds
      */
-    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl) {
+    constructor(id, name, artist, genres, subgenres, previewUrl, artworkUrl, durationInMillis) {
         // check that we have good vars; previewUrl can be empty strings if not available
         if (!id || !name || !artist || !genres || !subgenres) {
             console.error("Song constructor var's are undefined");
@@ -109,6 +111,7 @@ export class Song {
         this.subgenres = subgenres;
         this.previewUrl = previewUrl;
         this.artworkUrl = artworkUrl;
+        this.durationInMillis = durationInMillis;
     }
 }
 
@@ -1126,7 +1129,8 @@ export class ParallelDataFetchers{
                       genres, 
                       data.data[i].attributes.genreNames,
                       previewUrl,
-                      artworkUrl
+                      artworkUrl,
+                      data.data[i].attributes.durationInMillis
                     ));
                 }
             }
