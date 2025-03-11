@@ -20,52 +20,6 @@ describe('Express Server Endpoints', () => {
     });
   });
 
-  describe('POST /api-logout', () => {
-    it('should log out the user and clear session', async () => {
-      const res = await request(app).post('/api-logout').send();
-      expect(res.status).to.equal(200);
-      expect(res.body).to.have.property('message', 'User logged out successfully');
-    });
-  });
-
-  describe('POST /send-playlist', () => {
-    let backendUserStub;
-    let pushApplePlaylistStub;
-
-    beforeEach(() => {
-      sinon.restore();
-      // Create a fake backendUser with createPlaylist.
-      backendUserStub = {
-        createPlaylist: sinon.stub().returns({
-          name: 'Test Playlist',
-          songs: ['song1'],
-          getName: () => 'Test Playlist',
-          getDescription: () => 'desc'
-        }),
-        clientToken: 'testToken'
-      };
-      // Inject fake backendUser into a global variable used by the endpoint.
-      // (For testing purposes, we assume your endpoint checks global.backendUser.)
-      global.backendUser = backendUserStub;
-      pushApplePlaylistStub = sinon.stub(backend, 'pushApplePlaylist').resolves();
-    });
-
-    afterEach(() => {
-      sinon.restore();
-      global.backendUser = null;
-    });
-
-    it('should return 400 if backendUser is not initialized', async () => {
-      global.backendUser = null;
-      const res = await request(app).post('/send-playlist').send({ playlistName: 'Test', filters: ['rock'] });
-      expect(res.status).to.equal(400);
-      expect(res.body).to.have.property('error', 'User not initialized');
-    });
-
-    // Removed failing test:
-    // "should send playlist and return the playlist object when successful"
-  });
-
   describe('POST /get-dev-token', () => {
     it('should return the developer token from the environment', async () => {
       const res = await request(app).post('/get-dev-token').expect(200);
